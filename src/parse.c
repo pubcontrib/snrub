@@ -33,7 +33,7 @@ parse_link_t *parse_list_document(char *document)
     head = NULL;
     tail = NULL;
 
-    while (cursor->status != LEX_STATUS_CLOSED)
+    do
     {
         parse_expression_t *expression;
 
@@ -79,7 +79,7 @@ parse_link_t *parse_list_document(char *document)
             lex_destroy_cursor(cursor);
             return NULL;
         }
-    }
+    } while (cursor->status != LEX_STATUS_CLOSED);
 
     lex_destroy_cursor(cursor);
 

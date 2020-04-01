@@ -10,7 +10,11 @@ static lex_identifier_t match_identifier(char symbol);
 
 lex_cursor_t *lex_iterate_document(char *document)
 {
-    return create_cursor(document, 0, LEX_STATUS_ROAMING);
+    lex_status_t status;
+
+    status = strlen(document) == 0 ? LEX_STATUS_CLOSED : LEX_STATUS_ROAMING;
+
+    return create_cursor(document, 0, status);
 }
 
 lex_token_t *lex_next_token(lex_cursor_t *cursor)
