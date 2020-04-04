@@ -6,7 +6,7 @@
 #define PROGRAM_NAME "snrub"
 #define PROGRAM_VERSION "v0.1.2"
 
-static int run_script(char *path);
+static int run_script(char *document);
 static char *read_file(char *path, size_t limit);
 static void print_version();
 static void print_usage();
@@ -17,51 +17,88 @@ static char *get_option(int argc, char **argv, char *name);
 
 int main(int argc, char **argv)
 {
+    char *file, *text;
+    int limit;
+
+    limit = 1024 * 4;
+
     if (get_flag(argc, argv, "--version") || get_flag(argc, argv, "-v"))
     {
         print_version();
         return 0;
     }
 
-    if (get_option(argc, argv, "--file"))
+    file = get_option(argc, argv, "--file");
+
+    if (!file)
     {
-        return run_script(get_option(argc, argv, "--file"));
+        file = get_option(argc, argv, "-f");
     }
 
-    if (get_option(argc, argv, "-f"))
+    if (file)
     {
-        return run_script(get_option(argc, argv, "-f"));
+        char *document;
+        int size;
+
+        printf("Checking %s for a script...\n", file);
+
+        document = read_file(file, limit);
+
+        if (!document)
+        {
+            fprintf(stderr, "No script found.\n");
+            return 1;
+        }
+
+        size = strlen(document);
+
+        if (size >= limit - 1)
+        {
+            free(document);
+            fprintf(stderr, "Script exceeds the size limit of %d bytes.\n", limit);
+            return 1;
+        }
+
+        return run_script(document);
+    }
+
+    text = get_option(argc, argv, "--text");
+
+    if (!text)
+    {
+        text = get_option(argc, argv, "-t");
+    }
+
+    if (text)
+    {
+        char *document;
+
+        if (strlen(text) >= limit - 1)
+        {
+            fprintf(stderr, "Script exceeds the size limit of %d bytes.\n", limit);
+            return 1;
+        }
+
+        document = malloc(sizeof(char) * limit);
+
+        if (!document)
+        {
+            fprintf(stderr, "No script found.\n");
+            return 1;
+        }
+
+        strcpy(document, text);
+
+        return run_script(document);
     }
 
     print_usage();
     return 0;
 }
 
-static int run_script(char *path)
+static int run_script(char *document)
 {
-    char *document;
-    int limit, size;
     execute_store_t *store;
-
-    printf("Checking %s for a script...\n", path);
-
-    limit = 1024 * 4;
-    document = read_file(path, limit);
-
-    if (!document)
-    {
-        fprintf(stderr, "No script found.\n");
-        return 1;
-    }
-
-    size = strlen(document);
-
-    if (size >= limit - 1)
-    {
-        free(document);
-        fprintf(stderr, "Script exceeds the size limit of %d bytes.\n", limit);
-        return 1;
-    }
 
     store = execute_do_document(document);
 
