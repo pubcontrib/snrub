@@ -192,6 +192,7 @@ static void print_usage()
     printf("Options:\n");
     printf("  -v --version  Show version.\n");
     printf("  -f --file     Execute a script file.\n");
+    printf("  -t --text     Execute script text.\n");
 }
 
 static void print_error(execute_error_t error)
