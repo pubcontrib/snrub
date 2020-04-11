@@ -5,7 +5,7 @@ execute_text()
 
     echo $text
 
-    output=`snrub -t "$text"`
+    output=`$program -t "$text"`
     exit_code=$?
 }
 
@@ -34,6 +34,8 @@ fail()
         exit 1
     fi
 }
+
+program=$1
 
 # Null
 pass '?'

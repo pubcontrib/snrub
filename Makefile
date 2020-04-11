@@ -25,7 +25,7 @@ clean:
 	$(RM) -f $(BIN)/$(EXE) $(OBJS)
 
 check: $(BIN)/$(EXE)
-	$(SH) $(TEST)/run.sh
+	$(SH) $(TEST)/run.sh $(BIN)/$(EXE)
 
 install: $(BIN)/$(EXE)
 	$(CP) $(BIN)/$(EXE) $(BINDIR)/$(EXE)
