@@ -1,4 +1,12 @@
 #!/bin/sh
+program=$1
+
+if [ -z $program ]
+then
+    echo "Script failed! No program path given."
+    exit 1
+fi
+
 execute_text()
 {
     text=$1
@@ -33,8 +41,6 @@ fail()
         exit 1
     fi
 }
-
-program=$1
 
 # Null
 pass '?'
