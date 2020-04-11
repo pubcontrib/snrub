@@ -2,9 +2,6 @@
 execute_text()
 {
     text=$1
-
-    echo $text
-
     output=`$program -t "$text"`
     exit_code=$?
 }
@@ -17,7 +14,8 @@ pass()
 
     if [ $exit_code -ne 0 ]
     then
-        echo "Error!"
+        echo "$text"
+        echo "Test failed! Expected pass."
         exit 1
     fi
 }
@@ -30,7 +28,8 @@ fail()
 
     if [ $exit_code -eq 0 ]
     then
-        echo "Error!"
+        echo "$text"
+        echo "Test failed! Expected fail."
         exit 1
     fi
 }
