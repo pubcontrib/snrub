@@ -4,7 +4,7 @@
 #include "execute.h"
 
 #define PROGRAM_NAME "snrub"
-#define PROGRAM_VERSION "v0.3.0"
+#define PROGRAM_VERSION "v0.3.1"
 
 static int run_script(char *document);
 static char *read_file(char *path, size_t limit);
