@@ -3,6 +3,7 @@ CC = gcc
 RM = rm
 CP = cp
 SH = sh
+MKDIR = mkdir
 EXE = snrub
 SRC = src
 OBJ = obj
@@ -34,7 +35,9 @@ uninstall:
 	$(RM) -f $(BINDIR)/$(EXE)
 
 $(BIN)/$(EXE): $(OBJS)
+	$(MKDIR) -p $(BIN)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(OBJ)/%.o: $(SRC)/%.c
+	$(MKDIR) -p $(OBJ)
 	$(CC) $(CFLAGS) -c $< -o $@
