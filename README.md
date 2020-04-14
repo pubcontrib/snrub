@@ -17,6 +17,21 @@ Fastest way to get the program built and installed into a system with Make:
 make install
 ```
 
+## Running
+Once you've built and installed the project you'll have the interpreter at your
+system's disposal. Try one of the available options: `--file`, `--text`,
+`--help`, `--version`.
+
+Run code from a file:
+```shell
+snrub --file script.txt
+```
+
+Run code without a file:
+```shell
+snrub --text "+(#1# #2#)"
+```
+
 ## Usage
 Random sample of syntax:
 ```
