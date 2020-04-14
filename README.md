@@ -2,6 +2,13 @@
 > Snrub is an open-source, platform-independent, and interpreted programming
 language.
 
+```
+~("set numbers a and b then put their sum into c")
+>("a" #1#)
+>("b" #2#)
+>("c" +(<("a") <("b")))
+```
+
 ## License
 Snrub is licensed under the MIT license. Review the LICENSE file included in the
 project before using Snrub to understand your rights.
@@ -30,19 +37,6 @@ snrub --file script.txt
 Run code without a file:
 ```shell
 snrub --text "+(#1# #2#)"
-```
-
-## Usage
-Random sample of syntax:
-```
-~("comments")
->("set-number" #100#)
->("set-string" "one hundred")
-+(#1# #2#)
--(#1# #2#)
-*(#1# #2#)
-/(#1# #2#)
-<("get")
 ```
 
 ## Support
