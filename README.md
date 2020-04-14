@@ -8,26 +8,13 @@ project before using Snrub to understand your rights.
 
 ## Building
 The codebase is written using the 1989 ANSI standard of C. Builds are automated
-using Make.
+using Make. Try one of the available targets: `all`, `clean`, `check`,
+`install`, `uninstall`. Each target tries to conform to the GNU Makefile best
+practices.
 
-To build run:
+Fastest way to get the program built and installed into a system with Make:
 ```shell
-$ make
-```
-
-To clean up everything built run:
-```shell
-$ make clean
-```
-
-To build and install into local system run:
-```shell
-$ make install
-```
-
-To uninstall from local system run:
-```shell
-$ make uninstall
+make install
 ```
 
 ## Usage
