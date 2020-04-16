@@ -17,11 +17,13 @@ static execute_passback_t *apply_operator(parse_expression_t *expression, execut
 static execute_passback_t *value_object(execute_store_t *store, char *key);
 static void assign_object(execute_store_t *store, char *key, execute_type_t type, void *unsafe, size_t size);
 
-execute_store_t *execute_do_document(char *document)
+execute_passback_t *execute_do_document(char *document)
 {
     parse_link_t *head, *current;
     execute_store_t *store;
+    execute_passback_t *last;
 
+    last = NULL;
     head = parse_list_document(document);
 
     if (!head)
@@ -41,31 +43,31 @@ execute_store_t *execute_do_document(char *document)
     {
         execute_passback_t *passback;
 
+        if (last)
+        {
+            execute_destroy_passback(last);
+            last = NULL;
+        }
+
         passback = apply_expression(current->expression, store);
 
         if (!passback)
         {
-            execute_destroy_store(store);
-            parse_destroy_link(head);
-            return NULL;
+            break;
         }
 
-        if (passback->error != EXECUTE_ERROR_UNKNOWN)
+        last = passback;
+
+        if (last->error != EXECUTE_ERROR_UNKNOWN)
         {
-            store->error = passback->error;
-
-            execute_destroy_passback(passback);
-            parse_destroy_link(head);
-
-            return store;
+            break;
         }
-
-        execute_destroy_passback(passback);
     }
 
+    execute_destroy_store(store);
     parse_destroy_link(head);
 
-    return store;
+    return last;
 }
 
 void execute_destroy_store(execute_store_t *store)

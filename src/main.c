@@ -11,7 +11,7 @@ static char *read_file(char *path, size_t limit);
 static void print_version();
 static void print_usage();
 static void print_error(execute_error_t error);
-static void print_object(execute_object_t *object);
+static void print_value(execute_passback_t *passback);
 static int get_flag(int argc, char **argv, char *name);
 static char *get_option(int argc, char **argv, char *name);
 
@@ -98,30 +98,23 @@ int main(int argc, char **argv)
 
 static int run_script(char *document)
 {
-    execute_store_t *store;
+    execute_passback_t *last;
 
-    store = execute_do_document(document);
+    last = execute_do_document(document);
 
-    if (store)
+    if (last)
     {
-        if (store->error != EXECUTE_ERROR_UNKNOWN)
+        if (last->error != EXECUTE_ERROR_UNKNOWN)
         {
-            print_error(store->error);
-            execute_destroy_store(store);
+            print_error(last->error);
+            execute_destroy_passback(last);
             return 1;
         }
         else
         {
-            execute_object_t *object;
-
-            printf("[OBJECTS]\n");
-
-            for (object = store->objects; object != NULL; object = object->next)
-            {
-                print_object(object);
-            }
-
-            execute_destroy_store(store);
+            print_value(last);
+            execute_destroy_passback(last);
+            return 0;
         }
     }
     else
@@ -129,8 +122,6 @@ static int run_script(char *document)
         fprintf(stderr, "Ran out of memory.\n");
         return 1;
     }
-
-    return 0;
 }
 
 static char *read_file(char *path, size_t limit)
@@ -222,18 +213,18 @@ static void print_error(execute_error_t error)
     }
 }
 
-static void print_object(execute_object_t *object)
+static void print_value(execute_passback_t *passback)
 {
-    switch (object->type)
+    switch (passback->type)
     {
         case EXECUTE_TYPE_NULL:
-            printf("(NULL) %s\n", object->key);
+            printf("(NULL)\n");
             break;
         case EXECUTE_TYPE_NUMBER:
-            printf("(NUMBER) %s %d\n", object->key, ((int *) object->unsafe)[0]);
+            printf("(NUMBER) %d\n", ((int *) passback->unsafe)[0]);
             break;
         case EXECUTE_TYPE_STRING:
-            printf("(STRING) %s %s\n", object->key, (char *) object->unsafe);
+            printf("(STRING) %s\n", (char *) passback->unsafe);
             break;
         default:
             break;

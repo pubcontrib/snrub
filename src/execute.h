@@ -42,7 +42,7 @@ typedef struct
     execute_error_t error;
 } execute_store_t;
 
-execute_store_t *execute_do_document(char *document);
+execute_passback_t *execute_do_document(char *document);
 void execute_destroy_store(execute_store_t *store);
 void execute_destroy_object(execute_object_t *object);
 void execute_destroy_passback(execute_passback_t *passback);
