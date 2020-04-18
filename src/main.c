@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "execute.h"
+#include "common.h"
 
 #define PROGRAM_NAME "snrub"
 #define PROGRAM_VERSION "v0.4.0"
@@ -14,6 +15,7 @@ static void print_error(execute_error_t error);
 static void print_value(execute_passback_t *passback);
 static int get_flag(int argc, char **argv, char *name);
 static char *get_option(int argc, char **argv, char *name);
+static char *unescape(char *value);
 
 int main(int argc, char **argv)
 {
@@ -215,19 +217,26 @@ static void print_error(execute_error_t error)
 
 static void print_value(execute_passback_t *passback)
 {
-    switch (passback->type)
+    if (passback->type == EXECUTE_TYPE_NULL)
     {
-        case EXECUTE_TYPE_NULL:
-            printf("(NULL)\n");
-            break;
-        case EXECUTE_TYPE_NUMBER:
-            printf("(NUMBER) %d\n", ((int *) passback->unsafe)[0]);
-            break;
-        case EXECUTE_TYPE_STRING:
-            printf("(STRING) %s\n", (char *) passback->unsafe);
-            break;
-        default:
-            break;
+        printf("?");
+    }
+    else if (passback->type == EXECUTE_TYPE_NUMBER)
+    {
+        int number;
+        number = ((int *) passback->unsafe)[0];
+        printf("#%d#", number);
+    }
+    else if (passback->type == EXECUTE_TYPE_STRING)
+    {
+        char *string;
+        string = unescape((char *) passback->unsafe);
+
+        if (string)
+        {
+            printf("\"%s\"", string);
+            free(string);
+        }
     }
 }
 
@@ -266,4 +275,60 @@ static char *get_option(int argc, char **argv, char *name)
     }
 
     return NULL;
+}
+
+static char *unescape(char *value)
+{
+    char *buffer;
+    size_t length, index;
+
+    length = strlen(value)
+        + characters_in_string(value, '\\')
+        + characters_in_string(value, '"')
+        + characters_in_string(value, '\t')
+        + characters_in_string(value, '\n')
+        + characters_in_string(value, '\r');
+
+    buffer = malloc(sizeof(char) * (length + 1));
+
+    for (index = 0; index < length; index++)
+    {
+        char symbol;
+
+        symbol = value[index];
+
+        if (symbol == '\\')
+        {
+            buffer[index++] = '\\';
+            buffer[index] = '\\';
+        }
+        else if (symbol == '"')
+        {
+            buffer[index++] = '\\';
+            buffer[index] = '"';
+        }
+        else if (symbol == '\t')
+        {
+            buffer[index++] = '\\';
+            buffer[index] = 't';
+        }
+        else if (symbol == '\n')
+        {
+            buffer[index++] = '\\';
+            buffer[index] = 'n';
+        }
+        else if (symbol == '\r')
+        {
+            buffer[index++] = '\\';
+            buffer[index] = 'r';
+        }
+        else
+        {
+            buffer[index] = symbol;
+        }
+    }
+
+    buffer[length] = '\0';
+
+    return buffer;
 }

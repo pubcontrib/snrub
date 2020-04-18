@@ -35,6 +35,23 @@ char *copy_string(char *string)
     return copy;
 }
 
+size_t characters_in_string(char *string, char character)
+{
+    size_t length, index;
+
+    length = 0;
+
+    for (index = 0; index < strlen(string); index++)
+    {
+        if (string[index] == character)
+        {
+            length += 1;
+        }
+    }
+
+    return length;
+}
+
 void *copy_memory(void *memory, size_t size)
 {
     void *copy;
