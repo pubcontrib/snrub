@@ -14,6 +14,28 @@ execute_text()
     exit_code=$?
 }
 
+equal()
+{
+    text=$1
+    expected=$2
+
+    execute_text "$text"
+
+    if [ $exit_code -ne 0 ]
+    then
+        echo "$text"
+        echo "Test failed! Expected equal."
+        exit 1
+    fi
+
+    if [ "$output" != "$expected" ]
+    then
+        echo "$text"
+        echo "Test failed! Expected equal."
+        exit 1
+    fi
+}
+
 pass()
 {
     text=$1
@@ -43,65 +65,62 @@ fail()
 }
 
 # Null
-pass '?'
+equal '?' '?'
 
 # Number
-pass '#0#'
-pass '#1#'
-pass '#10#'
-pass '#01#'
-pass '#-1#'
+equal '#0#' '#0#'
+equal '#1#' '#1#'
+equal '#10#' '#10#'
+equal '#01#' '#1#'
+equal '#-1#' '#-1#'
 
 # String
-pass '"word"'
-pass '"more than one word"'
+equal '""' '""'
+equal '" "' '" "'
+equal '"word"' '"word"'
+equal '"more than one word"' '"more than one word"'
 
 # Comment
-pass '~("comments")'
+equal '~("comments")' '?'
 fail '~'
 fail '~()'
 
 # Value
-pass '<("key")'
+equal '<("key")' '?'
 fail '<'
 fail '<()'
 
 # Assign
-pass '>("null" ?)'
-pass '>("number" #100#)'
-pass '>("string" "one hundred")'
+equal '>("null" ?)' '?'
+equal '>("number" #100#)' '?'
+equal '>("string" "one hundred")' '?'
 fail '>'
 fail '>()'
 fail '>("key")'
 
 # Add
-pass '+(#10# #5#)'
+equal '+(#10# #5#)' '#15#'
 fail '+'
 fail '+()'
 fail '+(#5#)'
 
 # Subtract
-pass '-(#10# #5#)'
+equal '-(#10# #5#)' '#5#'
 fail '-'
 fail '-()'
 fail '-(#5#)'
 
 # Multiply
-pass '*(#10# #5#)'
+equal '*(#10# #5#)' '#50#'
 fail '*'
 fail '*()'
 fail '*(#5#)'
 
 # Divide
-pass '/(#10# #5#)'
+equal '/(#10# #5#)' '#2#'
 fail '/'
 fail '/()'
 fail '/(#5#)'
-
-# Comments
-pass '~("comments")'
-fail '~'
-fail '~()'
 
 # Errors
 fail '/(#1# #0#)'
