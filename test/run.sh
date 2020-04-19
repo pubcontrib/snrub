@@ -77,6 +77,11 @@ equal '#-1#' '#-1#'
 # String
 equal '""' '""'
 equal '" "' '" "'
+equal '"\\\\"' '"\\\\"'
+equal '"\\""' '"\\""'
+equal '"\\t"' '"\\t"'
+equal '"\\n"' '"\\n"'
+equal '"\\r"' '"\\r"'
 equal '"word"' '"word"'
 equal '"more than one word"' '"more than one word"'
 
