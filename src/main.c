@@ -12,7 +12,7 @@ static char *read_file(char *path, size_t limit);
 static void print_version();
 static void print_usage();
 static void print_error(execute_error_t error);
-static void print_value(execute_passback_t *passback);
+static void print_value(execute_type_t type, void *unsafe);
 static int get_flag(int argc, char **argv, char *name);
 static char *get_option(int argc, char **argv, char *name);
 static char *unescape(char *value);
@@ -114,7 +114,7 @@ static int run_script(char *document)
         }
         else
         {
-            print_value(last);
+            print_value(last->type, last->unsafe);
             execute_destroy_passback(last);
             return 0;
         }
@@ -215,22 +215,22 @@ static void print_error(execute_error_t error)
     }
 }
 
-static void print_value(execute_passback_t *passback)
+static void print_value(execute_type_t type, void *unsafe)
 {
-    if (passback->type == EXECUTE_TYPE_NULL)
+    if (type == EXECUTE_TYPE_NULL)
     {
         printf("?");
     }
-    else if (passback->type == EXECUTE_TYPE_NUMBER)
+    else if (type == EXECUTE_TYPE_NUMBER)
     {
         int number;
-        number = ((int *) passback->unsafe)[0];
+        number = ((int *) unsafe)[0];
         printf("#%d#", number);
     }
-    else if (passback->type == EXECUTE_TYPE_STRING)
+    else if (type == EXECUTE_TYPE_STRING)
     {
         char *string;
-        string = unescape((char *) passback->unsafe);
+        string = unescape((char *) unsafe);
 
         if (string)
         {
