@@ -219,13 +219,13 @@ static void print_value(execute_type_t type, void *unsafe)
 {
     if (type == EXECUTE_TYPE_NULL)
     {
-        printf("?");
+        printf("?\n");
     }
     else if (type == EXECUTE_TYPE_NUMBER)
     {
         int number;
         number = ((int *) unsafe)[0];
-        printf("#%d#", number);
+        printf("#%d#\n", number);
     }
     else if (type == EXECUTE_TYPE_STRING)
     {
@@ -234,7 +234,7 @@ static void print_value(execute_type_t type, void *unsafe)
 
         if (string)
         {
-            printf("\"%s\"", string);
+            printf("\"%s\"\n", string);
             free(string);
         }
     }
