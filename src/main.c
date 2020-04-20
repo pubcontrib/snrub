@@ -288,47 +288,49 @@ static char *unescape(char *value)
         + characters_in_string(value, '\t')
         + characters_in_string(value, '\n')
         + characters_in_string(value, '\r');
-
     buffer = malloc(sizeof(char) * (length + 1));
 
-    for (index = 0; index < length; index++)
+    if (buffer)
     {
-        char symbol;
+        for (index = 0; index < length; index++)
+        {
+            char symbol;
 
-        symbol = value[index];
+            symbol = value[index];
 
-        if (symbol == '\\')
-        {
-            buffer[index++] = '\\';
-            buffer[index] = '\\';
+            if (symbol == '\\')
+            {
+                buffer[index++] = '\\';
+                buffer[index] = '\\';
+            }
+            else if (symbol == '"')
+            {
+                buffer[index++] = '\\';
+                buffer[index] = '"';
+            }
+            else if (symbol == '\t')
+            {
+                buffer[index++] = '\\';
+                buffer[index] = 't';
+            }
+            else if (symbol == '\n')
+            {
+                buffer[index++] = '\\';
+                buffer[index] = 'n';
+            }
+            else if (symbol == '\r')
+            {
+                buffer[index++] = '\\';
+                buffer[index] = 'r';
+            }
+            else
+            {
+                buffer[index] = symbol;
+            }
         }
-        else if (symbol == '"')
-        {
-            buffer[index++] = '\\';
-            buffer[index] = '"';
-        }
-        else if (symbol == '\t')
-        {
-            buffer[index++] = '\\';
-            buffer[index] = 't';
-        }
-        else if (symbol == '\n')
-        {
-            buffer[index++] = '\\';
-            buffer[index] = 'n';
-        }
-        else if (symbol == '\r')
-        {
-            buffer[index++] = '\\';
-            buffer[index] = 'r';
-        }
-        else
-        {
-            buffer[index] = symbol;
-        }
+
+        buffer[length] = '\0';
     }
-
-    buffer[length] = '\0';
 
     return buffer;
 }
