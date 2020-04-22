@@ -33,19 +33,18 @@ lex_token_t *lex_next_token(lex_cursor_t *cursor)
 
         symbol = cursor->document[cursor->position];
         cursor->position += 1;
+        end = cursor->position;
 
         if (cursor->status == LEX_STATUS_ROAMING)
         {
             if (symbol == lex_number_symbol())
             {
                 start = cursor->position - 1;
-                end = cursor->position;
                 cursor->status = LEX_STATUS_NUMBER;
             }
             else if (symbol == lex_string_symbol())
             {
                 start = cursor->position - 1;
-                end = cursor->position;
                 cursor->status = LEX_STATUS_STRING;
             }
             else
@@ -61,11 +60,7 @@ lex_token_t *lex_next_token(lex_cursor_t *cursor)
         {
             if (symbol == lex_number_symbol())
             {
-                return slice_token(cursor, start, end + 1, length, LEX_IDENTIFIER_NUMBER);
-            }
-            else
-            {
-                end = cursor->position;
+                return slice_token(cursor, start, end, length, LEX_IDENTIFIER_NUMBER);
             }
         }
         else if (cursor->status == LEX_STATUS_STRING)
@@ -78,7 +73,7 @@ lex_token_t *lex_next_token(lex_cursor_t *cursor)
                 }
                 else
                 {
-                    return slice_token(cursor, start, end + 1, length, LEX_IDENTIFIER_STRING);
+                    return slice_token(cursor, start, end, length, LEX_IDENTIFIER_STRING);
                 }
             }
             else if (symbol == lex_escape_symbol())
@@ -90,10 +85,6 @@ lex_token_t *lex_next_token(lex_cursor_t *cursor)
                 if (escaping)
                 {
                     escaping = 0;
-                }
-                else
-                {
-                    end = cursor->position;
                 }
             }
         }
