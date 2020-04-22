@@ -66,6 +66,8 @@ fail()
 
 # Null
 equal '?' '?'
+equal '' '?'
+equal ' ' '?'
 
 # Number
 equal '#0#' '#0#'
