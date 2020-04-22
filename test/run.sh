@@ -73,12 +73,18 @@ equal '#1#' '#1#'
 equal '#10#' '#10#'
 equal '#01#' '#1#'
 equal '#-1#' '#-1#'
+fail '#'
+fail '#1'
+fail '1#'
 
 # String
 equal '""' '""'
 equal '" "' '" "'
 equal '"word"' '"word"'
 equal '"more than one word"' '"more than one word"'
+fail '"'
+fail '"never closed'
+fail 'never opened"'
 
 # Comment
 equal '~("comments")' '?'
