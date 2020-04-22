@@ -70,6 +70,7 @@ equal '' '?'
 equal ' ' '?'
 
 # Number
+equal '##' '#0#'
 equal '#0#' '#0#'
 equal '#1#' '#1#'
 equal '#10#' '#10#'
