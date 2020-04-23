@@ -280,7 +280,7 @@ static char *get_option(int argc, char **argv, char *name)
 static char *unescape(char *value)
 {
     char *buffer;
-    size_t length, index;
+    size_t length;
 
     length = strlen(value)
         + characters_in_string(value, '\\')
@@ -292,40 +292,42 @@ static char *unescape(char *value)
 
     if (buffer)
     {
-        for (index = 0; index < length; index++)
+        size_t left, right;
+
+        for (left = 0, right = 0; right < length; right++)
         {
             char symbol;
 
-            symbol = value[index];
+            symbol = value[right];
 
             if (symbol == '\\')
             {
-                buffer[index++] = '\\';
-                buffer[index] = '\\';
+                buffer[left++] = '\\';
+                buffer[left++] = '\\';
             }
             else if (symbol == '"')
             {
-                buffer[index++] = '\\';
-                buffer[index] = '"';
+                buffer[left++] = '\\';
+                buffer[left++] = '"';
             }
             else if (symbol == '\t')
             {
-                buffer[index++] = '\\';
-                buffer[index] = 't';
+                buffer[left++] = '\\';
+                buffer[left++] = 't';
             }
             else if (symbol == '\n')
             {
-                buffer[index++] = '\\';
-                buffer[index] = 'n';
+                buffer[left++] = '\\';
+                buffer[left++] = 'n';
             }
             else if (symbol == '\r')
             {
-                buffer[index++] = '\\';
-                buffer[index] = 'r';
+                buffer[left++] = '\\';
+                buffer[left++] = 'r';
             }
             else
             {
-                buffer[index] = symbol;
+                buffer[left++] = symbol;
             }
         }
 
