@@ -92,10 +92,10 @@ equal '"\z"' '""'
 equal '"\\ \" \t \n \r"' '"\\ \" \t \n \r"'
 equal '"\t\"line\"\n"' '"\t\"line\"\n"'
 equal '"word"' '"word"'
-equal '"more than one word"' '"more than one word"'
+equal '"word word word"' '"word word word"'
 fail '"'
-fail '"never closed'
-fail 'never opened"'
+fail '"word'
+fail 'word"'
 
 # Comment
 equal '~("comments")' '?'
