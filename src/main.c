@@ -217,7 +217,7 @@ static void print_error(execute_error_t error)
 
 static void print_value(execute_type_t type, void *unsafe)
 {
-    if (type == EXECUTE_TYPE_NULL)
+    if (type == EXECUTE_TYPE_UNKNOWN || type == EXECUTE_TYPE_NULL)
     {
         printf("?\n");
     }

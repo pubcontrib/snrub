@@ -8,6 +8,7 @@ static execute_store_t *create_store(execute_object_t *objects, execute_error_t 
 static execute_object_t *create_object(execute_type_t type, void *unsafe, size_t size, char *key, execute_object_t *next);
 static execute_passback_t *create_passback(execute_type_t type, void *unsafe, size_t size, execute_error_t error);
 static execute_passback_t *create_error(execute_error_t error);
+static execute_passback_t *create_unknown();
 static execute_passback_t *create_null();
 static execute_passback_t *create_number(int number);
 static execute_passback_t *create_string(char *string);
@@ -42,20 +43,34 @@ execute_passback_t *execute_do_document(char *document)
     {
         execute_passback_t *passback;
 
-        if (last)
-        {
-            execute_destroy_passback(last);
-            last = NULL;
-        }
-
         passback = apply_expression(current->expression, store);
 
         if (!passback)
         {
+            if (last)
+            {
+                execute_destroy_passback(last);
+                last = NULL;
+            }
+
             break;
         }
 
-        last = passback;
+        if (last)
+        {
+            if (passback->type == EXECUTE_TYPE_UNKNOWN)
+            {
+                execute_destroy_passback(passback);
+            }
+            else
+            {
+                last = passback;
+            }
+        }
+        else
+        {
+            last = passback;
+        }
 
         if (last->error != EXECUTE_ERROR_UNKNOWN)
         {
@@ -162,6 +177,11 @@ static execute_passback_t *create_passback(execute_type_t type, void *unsafe, si
 static execute_passback_t *create_error(execute_error_t error)
 {
     return create_passback(EXECUTE_TYPE_NULL, NULL, 0, error);
+}
+
+static execute_passback_t *create_unknown()
+{
+    return create_passback(EXECUTE_TYPE_UNKNOWN, NULL, 0, EXECUTE_ERROR_UNKNOWN);
 }
 
 static execute_passback_t *create_null()
@@ -300,7 +320,7 @@ static execute_passback_t *apply_operator(parse_expression_t *expression, execut
             }
         }
 
-        return create_null();
+        return create_unknown();
     }
     else if (expression->operator == PARSE_OPERATOR_COMMENT)
     {
@@ -329,7 +349,6 @@ static execute_passback_t *apply_operator(parse_expression_t *expression, execut
         }
 
         return value_object(store, left->unsafe);
-
     }
     else if (expression->operator == PARSE_OPERATOR_ASSIGN)
     {
