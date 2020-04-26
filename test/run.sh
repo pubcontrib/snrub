@@ -104,6 +104,9 @@ fail '~()'
 
 # Value
 equal '<("key")' '?'
+equal '>("null" ?) <("null")' '?'
+equal '>("number" #1#) <("number")' '#1#'
+equal '>("string" "word") <("string")' '"word"'
 fail '<'
 fail '<()'
 
@@ -141,3 +144,10 @@ fail '/(#5#)'
 
 # Errors
 fail '/(#1# #0#)'
+
+# Whitespace
+equal '>("string""word")<("string")' '"word"'
+equal ' >("string" "word") <("string") ' '"word"'
+equal '\t>("string"\t"word")\t<("string")\t' '"word"'
+equal '\n>("string"\n"word")\n<("string")\n' '"word"'
+equal '\r>("string"\r"word")\r<("string")\r' '"word"'
