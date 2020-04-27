@@ -107,6 +107,8 @@ equal '<("key")' '?'
 equal '>("null" ?) <("null")' '?'
 equal '>("number" #1#) <("number")' '#1#'
 equal '>("string" "word") <("string")' '"word"'
+equal '>("key" "before") >("key" "after") <("key")' '"after"'
+equal '>("key" "before") >("key" ?) <("key")' '?'
 fail '<'
 fail '<()'
 
