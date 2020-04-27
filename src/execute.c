@@ -64,6 +64,7 @@ execute_passback_t *execute_do_document(char *document)
             }
             else
             {
+                execute_destroy_passback(last);
                 last = passback;
             }
         }
