@@ -42,13 +42,10 @@ int main(int argc, char **argv)
         char *document;
         int size;
 
-        printf("Checking %s for a script...\n", file);
-
         document = read_file(file, limit);
 
         if (!document)
         {
-            fprintf(stderr, "No script found.\n");
             return 1;
         }
 
@@ -57,7 +54,6 @@ int main(int argc, char **argv)
         if (size >= limit - 1)
         {
             free(document);
-            fprintf(stderr, "Script exceeds the size limit of %d bytes.\n", limit);
             return 1;
         }
 
@@ -77,7 +73,6 @@ int main(int argc, char **argv)
 
         if (strlen(text) >= limit - 1)
         {
-            fprintf(stderr, "Script exceeds the size limit of %d bytes.\n", limit);
             return 1;
         }
 
@@ -85,7 +80,6 @@ int main(int argc, char **argv)
 
         if (!document)
         {
-            fprintf(stderr, "No script found.\n");
             return 1;
         }
 
@@ -121,7 +115,6 @@ static int run_script(char *document)
     }
     else
     {
-        fprintf(stderr, "Ran out of memory.\n");
         return 1;
     }
 }
