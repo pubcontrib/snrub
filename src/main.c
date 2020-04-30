@@ -112,6 +112,7 @@ static int run_script(char *document)
     }
     else
     {
+        print_error(EXECUTE_ERROR_SHORTAGE);
         return 1;
     }
 }
@@ -180,29 +181,7 @@ static void print_usage()
 
 static void print_error(execute_error_t error)
 {
-    switch (error)
-    {
-        case EXECUTE_ERROR_SYNTAX:
-            printf("A language syntax error was found!\n");
-            break;
-        case EXECUTE_ERROR_DEPTH:
-            printf("An expression violated the depth limit!\n");
-            break;
-        case EXECUTE_ERROR_TYPE:
-            printf("An invalid literal value was found!\n");
-            break;
-        case EXECUTE_ERROR_ARGUMENT:
-            printf("An expression was found with the wrong arguments!\n");
-            break;
-        case EXECUTE_ERROR_ARITHMETIC:
-            printf("An expression found an arithmetic error!\n");
-            break;
-        case EXECUTE_ERROR_UNSUPPORTED:
-            printf("An expression found unsupported functionality!\n");
-            break;
-        default:
-            break;
-    }
+    printf("#%d#\n", error);
 }
 
 static void print_value(execute_type_t type, void *unsafe)
