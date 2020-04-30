@@ -40,7 +40,6 @@ int main(int argc, char **argv)
     if (file)
     {
         char *document;
-        int size;
 
         document = read_file(file, limit);
 
@@ -49,9 +48,7 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        size = strlen(document);
-
-        if (size >= limit - 1)
+        if (strlen(document) >= limit - 1)
         {
             free(document);
             return 1;
