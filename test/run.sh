@@ -7,55 +7,38 @@ then
     exit 1
 fi
 
-execute_text()
+run_test()
 {
     text=$1
-    output=`$program -t "$text"`
-    exit_code=$?
+    expected_output=$2
+    expected_code=$3
+
+    actual_output=`$program -t "$text"`
+    actual_code=$?
+
+    if [ $actual_code != $expected_code ]
+    then
+        echo "$text"
+        echo "Test failed!"
+        exit 1
+    fi
+
+    if [ "$actual_output" != "$expected_output" ]
+    then
+        echo "$text"
+        echo "Test failed!"
+        exit 1
+    fi
 }
 
 pass()
 {
-    text=$1
-    expected=$2
-
-    execute_text "$text"
-
-    if [ $exit_code -ne 0 ]
-    then
-        echo "$text"
-        echo "Test failed! Expected pass."
-        exit 1
-    fi
-
-    if [ "$output" != "$expected" ]
-    then
-        echo "$text"
-        echo "Test failed! Expected pass."
-        exit 1
-    fi
+    run_test "$1" "$2" 0
 }
 
 fail()
 {
-    text=$1
-    expected=$2
-
-    execute_text "$text"
-
-    if [ $exit_code -eq 0 ]
-    then
-        echo "$text"
-        echo "Test failed! Expected fail."
-        exit 1
-    fi
-
-    if [ "$output" != "$expected" ]
-    then
-        echo "$text"
-        echo "Test failed! Expected fail."
-        exit 1
-    fi
+    run_test "$1" "$2" 1
 }
 
 # Null
