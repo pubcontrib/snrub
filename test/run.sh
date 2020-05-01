@@ -14,7 +14,7 @@ execute_text()
     exit_code=$?
 }
 
-equal()
+pass()
 {
     text=$1
     expected=$2
@@ -24,25 +24,11 @@ equal()
     if [ $exit_code -ne 0 ]
     then
         echo "$text"
-        echo "Test failed! Expected equal."
+        echo "Test failed! Expected pass."
         exit 1
     fi
 
     if [ "$output" != "$expected" ]
-    then
-        echo "$text"
-        echo "Test failed! Expected equal."
-        exit 1
-    fi
-}
-
-pass()
-{
-    text=$1
-
-    execute_text "$text"
-
-    if [ $exit_code -ne 0 ]
     then
         echo "$text"
         echo "Test failed! Expected pass."
@@ -53,6 +39,7 @@ pass()
 fail()
 {
     text=$1
+    expected=$2
 
     execute_text "$text"
 
@@ -62,95 +49,102 @@ fail()
         echo "Test failed! Expected fail."
         exit 1
     fi
+
+    if [ "$output" != "$expected" ]
+    then
+        echo "$text"
+        echo "Test failed! Expected fail."
+        exit 1
+    fi
 }
 
 # Null
-equal '?' '?'
-equal '' '?'
-equal ' ' '?'
+pass '?' '?'
+pass '' '?'
+pass ' ' '?'
 
 # Number
-equal '##' '#0#'
-equal '#0#' '#0#'
-equal '#1#' '#1#'
-equal '#10#' '#10#'
-equal '#01#' '#1#'
-equal '#-1#' '#-1#'
-fail '#'
-fail '#1'
-fail '1#'
+pass '##' '#0#'
+pass '#0#' '#0#'
+pass '#1#' '#1#'
+pass '#10#' '#10#'
+pass '#01#' '#1#'
+pass '#-1#' '#-1#'
+fail '#' '#1#'
+fail '#1' '#1#'
+fail '1#' '#1#'
 
 # String
-equal '""' '""'
-equal '" "' '" "'
-equal '"\\"' '"\\"'
-equal '"\""' '"\""'
-equal '"\t"' '"\t"'
-equal '"\n"' '"\n"'
-equal '"\r"' '"\r"'
-equal '"\z"' '""'
-equal '"\\ \" \t \n \r"' '"\\ \" \t \n \r"'
-equal '"\t\"line\"\n"' '"\t\"line\"\n"'
-equal '"word"' '"word"'
-equal '"word word word"' '"word word word"'
-fail '"'
-fail '"word'
-fail 'word"'
+pass '""' '""'
+pass '" "' '" "'
+pass '"\\"' '"\\"'
+pass '"\""' '"\""'
+pass '"\t"' '"\t"'
+pass '"\n"' '"\n"'
+pass '"\r"' '"\r"'
+pass '"\z"' '""'
+pass '"\\ \" \t \n \r"' '"\\ \" \t \n \r"'
+pass '"\t\"line\"\n"' '"\t\"line\"\n"'
+pass '"word"' '"word"'
+pass '"word word word"' '"word word word"'
+fail '"' '#1#'
+fail '"word' '#1#'
+fail 'word"' '#1#'
 
 # Comment
-equal '~("comments")' '?'
-fail '~'
-fail '~()'
+pass '~("comments")' '?'
+fail '~' '#1#'
+fail '~()' '#4#'
 
 # Value
-equal '<("key")' '?'
-equal '>("null" ?) <("null")' '?'
-equal '>("number" #1#) <("number")' '#1#'
-equal '>("string" "word") <("string")' '"word"'
-equal '>("key" "before") >("key" "after") <("key")' '"after"'
-equal '>("key" "before") >("key" ?) <("key")' '?'
-fail '<'
-fail '<()'
+pass '<("key")' '?'
+pass '>("null" ?) <("null")' '?'
+pass '>("number" #1#) <("number")' '#1#'
+pass '>("string" "word") <("string")' '"word"'
+pass '>("key" "before") >("key" "after") <("key")' '"after"'
+pass '>("key" "before") >("key" ?) <("key")' '?'
+fail '<' '#1#'
+fail '<()' '#4#'
 
 # Assign
-equal '>("null" ?)' '?'
-equal '>("number" #100#)' '?'
-equal '>("string" "one hundred")' '?'
-fail '>'
-fail '>()'
-fail '>("key")'
+pass '>("null" ?)' '?'
+pass '>("number" #100#)' '?'
+pass '>("string" "one hundred")' '?'
+fail '>' '#1#'
+fail '>()' '#4#'
+fail '>("key")' '#4#'
 
 # Add
-equal '+(#10# #5#)' '#15#'
-fail '+'
-fail '+()'
-fail '+(#5#)'
+pass '+(#10# #5#)' '#15#'
+fail '+' '#1#'
+fail '+()' '#4#'
+fail '+(#5#)' '#4#'
 
 # Subtract
-equal '-(#10# #5#)' '#5#'
-fail '-'
-fail '-()'
-fail '-(#5#)'
+pass '-(#10# #5#)' '#5#'
+fail '-' '#1#'
+fail '-()' '#4#'
+fail '-(#5#)' '#4#'
 
 # Multiply
-equal '*(#10# #5#)' '#50#'
-fail '*'
-fail '*()'
-fail '*(#5#)'
+pass '*(#10# #5#)' '#50#'
+fail '*' '#1#'
+fail '*()' '#4#'
+fail '*(#5#)' '#4#'
 
 # Divide
-equal '/(#10# #5#)' '#2#'
-fail '/'
-fail '/()'
-fail '/(#5#)'
+pass '/(#10# #5#)' '#2#'
+fail '/' '#1#'
+fail '/()' '#4#'
+fail '/(#5#)' '#4#'
 
 # Errors
-fail '/(#1# #0#)'
+fail '/(#1# #0#)' '#5#'
 
 # Whitespace
-equal '>("string""word")<("string")' '"word"'
-equal ' >("string" "word") <("string") ' '"word"'
-equal '
+pass '>("string""word")<("string")' '"word"'
+pass ' >("string" "word") <("string") ' '"word"'
+pass '
 >("string"
 "word")
 <("string")
