@@ -70,6 +70,7 @@ pass '"\\ \" \t \n \r"' '"\\ \" \t \n \r"'
 pass '"\t\"line\"\n"' '"\t\"line\"\n"'
 pass '"word"' '"word"'
 pass '"word word word"' '"word word word"'
+pass '"word	word	word"' '"word\tword\tword"'
 pass '"line
 line
 line"' '"line\nline\nline"'
