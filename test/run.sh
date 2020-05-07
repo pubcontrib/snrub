@@ -77,6 +77,7 @@ line"' '"line\nline\nline"'
 fail '"' '#1#'
 fail '"word' '#1#'
 fail 'word"' '#1#'
+fail "`echo '\042\007\042'`" '#3#'
 
 # Comment
 pass '~("comments")' '?'
