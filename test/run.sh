@@ -56,6 +56,7 @@ pass '#-1#' '#-1#'
 fail '#' '#1#'
 fail '#1' '#1#'
 fail '1#' '#1#'
+fail '#word#' '#3#'
 
 # String
 pass '""' '""'
@@ -74,6 +75,7 @@ pass '"word	word	word"' '"word\tword\tword"'
 pass '"line
 line
 line"' '"line\nline\nline"'
+pass '"1"' '"1"'
 fail '"' '#1#'
 fail '"word' '#1#'
 fail 'word"' '#1#'
