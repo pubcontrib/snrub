@@ -143,6 +143,7 @@ fail '/(#1# #0#)' '#5#'
 # Whitespace
 pass '>("string""word")<("string")' '"word"'
 pass ' >("string" "word") <("string") ' '"word"'
+pass '	>("string"	"word")	<("string")	' '"word"'
 pass '
 >("string"
 "word")
