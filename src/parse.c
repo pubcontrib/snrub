@@ -17,6 +17,7 @@ static int is_whitespace(lex_identifier_t identifier);
 static int is_value(lex_identifier_t identifier);
 static parse_operator_t match_operator(lex_identifier_t identifier);
 static char *escape(char *value);
+static char is_printable(char *value);
 
 parse_link_t *parse_list_document(char *document)
 {
@@ -395,6 +396,11 @@ static parse_value_t *string_to_value(char *value)
     size_t length;
     char *trimmed, *unsafe;
 
+    if (!is_printable(value))
+    {
+        return create_value(PARSE_TYPE_UNKNOWN, NULL);
+    }
+
     length = strlen(value);
 
     if (length < 2)
@@ -539,4 +545,23 @@ static char *escape(char *value)
     free(loose);
 
     return tight;
+}
+
+static char is_printable(char *value)
+{
+    size_t index;
+
+    for (index = 0; index < strlen(value); index++)
+    {
+        char symbol;
+
+        symbol = value[index];
+
+        if (!isprint(symbol) && symbol != '\t' && symbol != '\n' && symbol != '\r')
+        {
+            return 0;
+        }
+    }
+
+    return 1;
 }
