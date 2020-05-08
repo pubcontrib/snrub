@@ -3,7 +3,7 @@ program=$1
 
 if [ -z $program ]
 then
-    echo "Script failed! No program path given."
+    printf "Script failed! No program path given.\n"
     exit 1
 fi
 
@@ -18,15 +18,15 @@ run_test()
 
     if [ $actual_code != $expected_code ]
     then
-        echo "$text"
-        echo "Test failed!"
+        printf "%s\n" "$text"
+        printf "Test failed!\n"
         exit 1
     fi
 
     if [ "$actual_output" != "$expected_output" ]
     then
-        echo "$text"
-        echo "Test failed!"
+        printf "%s\n" "$text"
+        printf "Test failed!\n"
         exit 1
     fi
 }
@@ -79,7 +79,7 @@ pass '"1"' '"1"'
 fail '"' '#1#'
 fail '"word' '#1#'
 fail 'word"' '#1#'
-fail "`echo '\042\007\042'`" '#3#'
+fail "$(printf '\042\007\042')" '#3#'
 
 # Comment
 pass '~("comments")' '?'
