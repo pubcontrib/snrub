@@ -269,11 +269,21 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
 
         if (!left)
         {
+            if (operator)
+            {
+                execute_destroy_passback(operator);
+            }
+
             return NULL;
         }
 
         if (left->error != EXECUTE_ERROR_UNKNOWN)
         {
+            if (operator)
+            {
+                execute_destroy_passback(operator);
+            }
+
             return left;
         }
     }
@@ -284,6 +294,11 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
 
         if (!right)
         {
+            if (operator)
+            {
+                execute_destroy_passback(operator);
+            }
+
             if (left)
             {
                 execute_destroy_passback(left);
@@ -294,6 +309,11 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
 
         if (right->error != EXECUTE_ERROR_UNKNOWN)
         {
+            if (operator)
+            {
+                execute_destroy_passback(operator);
+            }
+
             if (left)
             {
                 execute_destroy_passback(left);
@@ -304,6 +324,11 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
     }
 
     result = apply_operator(expression->value, operator, left, right, store);
+
+    if (operator)
+    {
+        execute_destroy_passback(operator);
+    }
 
     if (left)
     {
