@@ -328,7 +328,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
         }
     }
 
-    if (status != PARSE_STATUS_SUCCESS && status != PARSE_STATUS_OPERATOR)
+    if (status != PARSE_STATUS_SUCCESS && status != PARSE_STATUS_START)
     {
         if (expression->error == PARSE_ERROR_UNKNOWN)
         {
