@@ -87,11 +87,11 @@ fail '("~")' '#4#'
 
 # Value
 pass '("<" "key")' '?'
-pass '(">" "null" ?) <("null")' '?'
-pass '(">" "number" #1#) <("number")' '#1#'
-pass '(">" "string" "word") <("string")' '"word"'
-pass '(">" "key" "before") >("key" "after") <("key")' '"after"'
-pass '(">" "key" "before") >("key" ?) <("key")' '?'
+pass '(">" "null" ?) ("<" "null")' '?'
+pass '(">" "number" #1#) ("<" "number")' '#1#'
+pass '(">" "string" "word") ("<" "string")' '"word"'
+pass '(">" "key" "before") (">" "key" "after") ("<" "key")' '"after"'
+pass '(">" "key" "before") (">" "key" ?) ("<" "key")' '?'
 fail '("<")' '#4#'
 
 # Assign
