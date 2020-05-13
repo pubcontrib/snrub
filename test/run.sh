@@ -86,20 +86,20 @@ pass '("~" "comments")' '?'
 fail '("~")' '#4#'
 
 # Value
-pass '(">" "key")' '?'
+pass '("<" "key")' '?'
 pass '(">" "null" ?) <("null")' '?'
 pass '(">" "number" #1#) <("number")' '#1#'
 pass '(">" "string" "word") <("string")' '"word"'
 pass '(">" "key" "before") >("key" "after") <("key")' '"after"'
 pass '(">" "key" "before") >("key" ?) <("key")' '?'
-fail '(">")' '#4#'
+fail '("<")' '#4#'
 
 # Assign
-pass '("<" "null" ?)' '?'
-pass '("<" "number" #100#)' '?'
-pass '("<" "string" "one hundred")' '?'
-fail '("<")' '#4#'
-fail '("<" "key")' '#4#'
+pass '(">" "null" ?)' '?'
+pass '(">" "number" #100#)' '?'
+pass '(">" "string" "one hundred")' '?'
+fail '(">")' '#4#'
+fail '(">" "key")' '#4#'
 
 # Add
 pass '("+" #10# #5#)' '#15#'
