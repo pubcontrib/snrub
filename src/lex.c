@@ -187,20 +187,6 @@ static lex_identifier_t match_identifier(char symbol)
 {
     switch (symbol)
     {
-        case '~':
-            return LEX_IDENTIFIER_COMMENT;
-        case '<':
-            return LEX_IDENTIFIER_VALUE;
-        case '>':
-            return LEX_IDENTIFIER_ASSIGN;
-        case '+':
-            return LEX_IDENTIFIER_ADD;
-        case '-':
-            return LEX_IDENTIFIER_SUBTRACT;
-        case '*':
-            return LEX_IDENTIFIER_MULTIPLY;
-        case '/':
-            return LEX_IDENTIFIER_DIVIDE;
         case '(':
             return LEX_IDENTIFIER_START;
         case ')':

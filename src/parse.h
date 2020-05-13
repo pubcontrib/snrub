@@ -5,18 +5,6 @@
 
 typedef enum
 {
-    PARSE_OPERATOR_UNKNOWN,
-    PARSE_OPERATOR_COMMENT,
-    PARSE_OPERATOR_VALUE,
-    PARSE_OPERATOR_ASSIGN,
-    PARSE_OPERATOR_ADD,
-    PARSE_OPERATOR_SUBTRACT,
-    PARSE_OPERATOR_MULTIPLY,
-    PARSE_OPERATOR_DIVIDE
-} parse_operator_t;
-
-typedef enum
-{
     PARSE_TYPE_UNKNOWN,
     PARSE_TYPE_NULL,
     PARSE_TYPE_NUMBER,
@@ -35,8 +23,8 @@ typedef enum
 {
     PARSE_STATUS_SUCCESS,
     PARSE_STATUS_ERROR,
-    PARSE_STATUS_OPERATOR,
     PARSE_STATUS_START,
+    PARSE_STATUS_OPERATOR,
     PARSE_STATUS_LEFT,
     PARSE_STATUS_RIGHT,
     PARSE_STATUS_END
@@ -50,9 +38,9 @@ typedef struct
 
 typedef struct parse_expression_t
 {
-    parse_operator_t operator;
     parse_error_t error;
     parse_value_t *value;
+    struct parse_expression_t *operator;
     struct parse_expression_t *left;
     struct parse_expression_t *right;
 } parse_expression_t;

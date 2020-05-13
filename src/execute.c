@@ -13,7 +13,7 @@ static execute_passback_t *create_null();
 static execute_passback_t *create_number(int number);
 static execute_passback_t *create_string(char *string);
 static execute_passback_t *apply_expression(parse_expression_t *expression, execute_store_t *store);
-static execute_passback_t *apply_operator(parse_expression_t *expression, execute_store_t *store, execute_passback_t *left, execute_passback_t *right);
+static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t *operator, execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
 static execute_passback_t *value_object(execute_store_t *store, char *key);
 static void assign_object(execute_store_t *store, char *key, execute_type_t type, void *unsafe, size_t size);
 
@@ -226,8 +226,9 @@ static execute_passback_t *create_string(char *string)
 
 static execute_passback_t *apply_expression(parse_expression_t *expression, execute_store_t *store)
 {
-    execute_passback_t *left, *right, *result;
+    execute_passback_t *operator, *left, *right, *result;
 
+    operator = NULL;
     left = NULL;
     right = NULL;
     result = NULL;
@@ -244,6 +245,21 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
                 return create_error(EXECUTE_ERROR_TYPE);
             default:
                 break;
+        }
+    }
+
+    if (expression->operator)
+    {
+        operator = apply_expression(expression->operator, store);
+
+        if (!operator)
+        {
+            return NULL;
+        }
+
+        if (operator->error != EXECUTE_ERROR_UNKNOWN)
+        {
+            return operator;
         }
     }
 
@@ -287,7 +303,7 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
         }
     }
 
-    result = apply_operator(expression, store, left, right);
+    result = apply_operator(expression->value, operator, left, right, store);
 
     if (left)
     {
@@ -302,20 +318,20 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
     return result;
 }
 
-static execute_passback_t *apply_operator(parse_expression_t *expression, execute_store_t *store, execute_passback_t *left, execute_passback_t *right)
+static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t *operator, execute_passback_t *left, execute_passback_t *right, execute_store_t *store)
 {
-    if (expression->operator == PARSE_OPERATOR_UNKNOWN)
+    if (!operator)
     {
-        if (expression->value)
+        if (value)
         {
-            switch (expression->value->type)
+            switch (value->type)
             {
                 case PARSE_TYPE_NULL:
                     return create_null();
                 case PARSE_TYPE_NUMBER:
-                    return create_number(((int *) expression->value->unsafe)[0]);
+                    return create_number(((int *) value->unsafe)[0]);
                 case PARSE_TYPE_STRING:
-                    return create_string(expression->value->unsafe);
+                    return create_string(value->unsafe);
                 default:
                     break;
             }
@@ -323,7 +339,7 @@ static execute_passback_t *apply_operator(parse_expression_t *expression, execut
 
         return create_unknown();
     }
-    else if (expression->operator == PARSE_OPERATOR_COMMENT)
+    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "~") == 0)
     {
         if (!left)
         {
@@ -337,7 +353,7 @@ static execute_passback_t *apply_operator(parse_expression_t *expression, execut
 
         return create_null();
     }
-    else if (expression->operator == PARSE_OPERATOR_VALUE)
+    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "<") == 0)
     {
         if (!left)
         {
@@ -351,7 +367,7 @@ static execute_passback_t *apply_operator(parse_expression_t *expression, execut
 
         return value_object(store, left->unsafe);
     }
-    else if (expression->operator == PARSE_OPERATOR_ASSIGN)
+    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, ">") == 0)
     {
         if (!left || !right)
         {
@@ -369,7 +385,7 @@ static execute_passback_t *apply_operator(parse_expression_t *expression, execut
 
         return create_null();
     }
-    else if (expression->operator == PARSE_OPERATOR_ADD)
+    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "+") == 0)
     {
         int x, y;
 
@@ -388,7 +404,7 @@ static execute_passback_t *apply_operator(parse_expression_t *expression, execut
 
         return create_number(x + y);
     }
-    else if (expression->operator == PARSE_OPERATOR_SUBTRACT)
+    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "-") == 0)
     {
         int x, y;
 
@@ -407,7 +423,7 @@ static execute_passback_t *apply_operator(parse_expression_t *expression, execut
 
         return create_number(x - y);
     }
-    else if (expression->operator == PARSE_OPERATOR_MULTIPLY)
+    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "*") == 0)
     {
         int x, y;
 
@@ -426,7 +442,7 @@ static execute_passback_t *apply_operator(parse_expression_t *expression, execut
 
         return create_number(x * y);
     }
-    else if (expression->operator == PARSE_OPERATOR_DIVIDE)
+    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "/") == 0)
     {
         int x, y;
 

@@ -6,7 +6,7 @@
 #include "common.h"
 
 static parse_link_t *create_link(parse_expression_t *expression, parse_link_t *next);
-static parse_expression_t *create_expression(parse_operator_t operator, parse_error_t error, parse_value_t *value, parse_expression_t *left, parse_expression_t *right);
+static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t *operator, parse_expression_t *left, parse_expression_t *right);
 static parse_value_t *create_value(parse_type_t type, void *unsafe);
 static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *token, int depth);
 static parse_value_t *token_to_value(lex_token_t *token);
@@ -15,7 +15,6 @@ static parse_value_t *number_to_value(char *value);
 static parse_value_t *string_to_value(char *value);
 static int is_whitespace(lex_identifier_t identifier);
 static int is_value(lex_identifier_t identifier);
-static parse_operator_t match_operator(lex_identifier_t identifier);
 static char *escape(char *value);
 static char is_printable(char *value);
 
@@ -104,6 +103,11 @@ void parse_destroy_link(parse_link_t *link)
 
 void parse_destroy_expression(parse_expression_t *expression)
 {
+    if (expression->operator)
+    {
+        parse_destroy_expression(expression->operator);
+    }
+
     if (expression->left)
     {
         parse_destroy_expression(expression->left);
@@ -147,7 +151,7 @@ static parse_link_t *create_link(parse_expression_t *expression, parse_link_t *n
     return link;
 }
 
-static parse_expression_t *create_expression(parse_operator_t operator, parse_error_t error, parse_value_t *value, parse_expression_t *left, parse_expression_t *right)
+static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t *operator, parse_expression_t *left, parse_expression_t *right)
 {
     parse_expression_t *expression;
 
@@ -155,9 +159,9 @@ static parse_expression_t *create_expression(parse_operator_t operator, parse_er
 
     if (expression)
     {
-        expression->operator = operator;
         expression->error = error;
         expression->value = value;
+        expression->operator = operator;
         expression->left = left;
         expression->right = right;
     }
@@ -185,8 +189,8 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
     parse_status_t status;
     parse_expression_t *expression;
 
-    status = PARSE_STATUS_OPERATOR;
-    expression = create_expression(PARSE_OPERATOR_UNKNOWN, PARSE_ERROR_UNKNOWN, NULL, NULL, NULL);
+    status = PARSE_STATUS_START;
+    expression = create_expression(PARSE_ERROR_UNKNOWN, NULL, NULL, NULL, NULL);
 
     if (depth > 32)
     {
@@ -206,7 +210,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
             }
             else if (!is_whitespace(token->identifier))
             {
-                if (status == PARSE_STATUS_OPERATOR)
+                if (status == PARSE_STATUS_START)
                 {
                     if (is_value(token->identifier))
                     {
@@ -225,13 +229,31 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
                     }
                     else
                     {
-                        expression->operator = match_operator(token->identifier);
-                        status = expression->operator != PARSE_OPERATOR_UNKNOWN ? PARSE_STATUS_START : PARSE_STATUS_ERROR;
+                        status = token->identifier == LEX_IDENTIFIER_START ? PARSE_STATUS_OPERATOR : PARSE_STATUS_ERROR;
                     }
                 }
-                else if (status == PARSE_STATUS_START)
+                else if (status == PARSE_STATUS_OPERATOR)
                 {
-                    status = token->identifier == LEX_IDENTIFIER_START ? PARSE_STATUS_LEFT : PARSE_STATUS_ERROR;
+                    if (token->identifier == LEX_IDENTIFIER_END)
+                    {
+                        status = PARSE_STATUS_SUCCESS;
+                    }
+                    else
+                    {
+                        expression->operator = next_expression(cursor, token, depth + 1);
+                        token = NULL;
+
+                        if (expression->operator)
+                        {
+                            expression->error = expression->operator->error;
+                            status = expression->error == PARSE_ERROR_UNKNOWN ? PARSE_STATUS_LEFT : PARSE_STATUS_ERROR;
+                        }
+                        else
+                        {
+                            parse_destroy_expression(expression);
+                            return NULL;
+                        }
+                    }
                 }
                 else if (status == PARSE_STATUS_LEFT)
                 {
@@ -308,8 +330,6 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
 
     if (status != PARSE_STATUS_SUCCESS && status != PARSE_STATUS_OPERATOR)
     {
-        expression->operator = PARSE_OPERATOR_UNKNOWN;
-
         if (expression->error == PARSE_ERROR_UNKNOWN)
         {
             expression->error = PARSE_ERROR_SYNTAX;
@@ -454,29 +474,6 @@ static int is_value(lex_identifier_t identifier)
             return 1;
         default:
             return 0;
-    }
-}
-
-static parse_operator_t match_operator(lex_identifier_t identifier)
-{
-    switch (identifier)
-    {
-        case LEX_IDENTIFIER_COMMENT:
-            return PARSE_OPERATOR_COMMENT;
-        case LEX_IDENTIFIER_VALUE:
-            return PARSE_OPERATOR_VALUE;
-        case LEX_IDENTIFIER_ASSIGN:
-            return PARSE_OPERATOR_ASSIGN;
-        case LEX_IDENTIFIER_ADD:
-            return PARSE_OPERATOR_ADD;
-        case LEX_IDENTIFIER_SUBTRACT:
-            return PARSE_OPERATOR_SUBTRACT;
-        case LEX_IDENTIFIER_MULTIPLY:
-            return PARSE_OPERATOR_MULTIPLY;
-        case LEX_IDENTIFIER_DIVIDE:
-            return PARSE_OPERATOR_DIVIDE;
-        default:
-            return PARSE_OPERATOR_UNKNOWN;
     }
 }
 
