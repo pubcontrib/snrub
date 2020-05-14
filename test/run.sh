@@ -135,8 +135,6 @@ fail '("<"("<"("<"("<"("<"("<"("<"("<"
 fail '(">" #1# #word#)' '#3#'
 fail '(">" #1# #1#)' '#4#'
 fail '("/" #1# #0#)' '#5#'
-fail '(?)' '#6#'
-fail '(#1#)' '#6#'
 
 # Whitespace
 pass '(">""string""word")("<""string")' '"word"'
@@ -153,3 +151,8 @@ pass '
 "string"
 )
 ' '"word"'
+
+# Expressions
+pass '()' '?'
+fail '(?)' '#6#'
+fail '(#1#)' '#6#'
