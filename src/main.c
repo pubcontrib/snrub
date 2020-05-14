@@ -263,7 +263,7 @@ static char *unescape(char *value)
     {
         size_t left, right;
 
-        for (left = 0, right = 0; right < length; right++)
+        for (left = 0, right = 0; right < strlen(value); right++)
         {
             char symbol;
 
