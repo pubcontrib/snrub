@@ -3,10 +3,10 @@
 language.
 
 ```
-~("set numbers a and b then put their sum into c")
->("a" #1#)
->("b" #2#)
->("c" +(<("a") <("b")))
+("~" "set numbers a and b then put their sum into c")
+(">" "a" #1#)
+(">" "b" #2#)
+(">" "c" ("+" ("<" "a") ("<" "b")))
 ```
 
 ## License
