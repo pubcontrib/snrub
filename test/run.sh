@@ -153,6 +153,6 @@ pass '
 ' '"word"'
 
 # Expressions
-pass '()' '?'
+fail '()' '#1#'
 fail '(?)' '#6#'
 fail '(#1#)' '#6#'
