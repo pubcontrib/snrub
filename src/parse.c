@@ -236,6 +236,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
                 {
                     if (token->identifier == LEX_IDENTIFIER_END)
                     {
+                        expression->error = PARSE_ERROR_ARGUMENT;
                         status = PARSE_STATUS_ERROR;
                     }
                     else
@@ -309,6 +310,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
                     }
                     else
                     {
+                        expression->error = PARSE_ERROR_ARGUMENT;
                         status = PARSE_STATUS_ERROR;
                     }
                 }

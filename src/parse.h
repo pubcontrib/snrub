@@ -16,7 +16,8 @@ typedef enum
     PARSE_ERROR_UNKNOWN,
     PARSE_ERROR_SYNTAX,
     PARSE_ERROR_DEPTH,
-    PARSE_ERROR_TYPE
+    PARSE_ERROR_TYPE,
+    PARSE_ERROR_ARGUMENT
 } parse_error_t;
 
 typedef enum

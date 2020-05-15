@@ -243,6 +243,8 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
                 return create_error(EXECUTE_ERROR_DEPTH);
             case PARSE_ERROR_TYPE:
                 return create_error(EXECUTE_ERROR_TYPE);
+            case PARSE_ERROR_ARGUMENT:
+                return create_error(EXECUTE_ERROR_ARGUMENT);
             default:
                 break;
         }
