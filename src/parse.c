@@ -309,7 +309,6 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
                     }
                     else
                     {
-                        expression->error = PARSE_ERROR_SYNTAX;
                         status = PARSE_STATUS_ERROR;
                     }
                 }
