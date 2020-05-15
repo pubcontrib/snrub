@@ -16,6 +16,13 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
 static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t *operator, execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
 static execute_passback_t *value_object(execute_store_t *store, char *key);
 static void assign_object(execute_store_t *store, char *key, execute_type_t type, void *unsafe, size_t size);
+static execute_passback_t *operator_comment(execute_passback_t *left, execute_passback_t *right);
+static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
+static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
+static execute_passback_t *operator_add(execute_passback_t *left, execute_passback_t *right);
+static execute_passback_t *operator_subtract(execute_passback_t *left, execute_passback_t *right);
+static execute_passback_t *operator_multiply(execute_passback_t *left, execute_passback_t *right);
+static execute_passback_t *operator_divide(execute_passback_t *left, execute_passback_t *right);
 
 execute_passback_t *execute_do_document(char *document)
 {
@@ -368,130 +375,31 @@ static execute_passback_t *apply_operator(parse_value_t *value, execute_passback
     }
     else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "~") == 0)
     {
-        if (!left)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        if (left->type != EXECUTE_TYPE_STRING)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        return create_null();
+        return operator_comment(left, right);
     }
     else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "<") == 0)
     {
-        if (!left)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        if (left->type != EXECUTE_TYPE_STRING)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        return value_object(store, left->unsafe);
+        return operator_value(left, right, store);
     }
     else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, ">") == 0)
     {
-        if (!left || !right)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        if (left->type != EXECUTE_TYPE_STRING)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        assign_object(store, left->unsafe, right->type, right->unsafe, right->size);
-
-        right->unsafe = NULL;
-
-        return create_null();
+        return operator_assign(left, right, store);
     }
     else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "+") == 0)
     {
-        int x, y;
-
-        if (!left || !right)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        x = ((int *) left->unsafe)[0];
-        y = ((int *) right->unsafe)[0];
-
-        return create_number(x + y);
+        return operator_add(left, right);
     }
     else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "-") == 0)
     {
-        int x, y;
-
-        if (!left || !right)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        x = ((int *) left->unsafe)[0];
-        y = ((int *) right->unsafe)[0];
-
-        return create_number(x - y);
+        return operator_subtract(left, right);
     }
     else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "*") == 0)
     {
-        int x, y;
-
-        if (!left || !right)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        x = ((int *) left->unsafe)[0];
-        y = ((int *) right->unsafe)[0];
-
-        return create_number(x * y);
+        return operator_multiply(left, right);
     }
     else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "/") == 0)
     {
-        int x, y;
-
-        if (!left || !right)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
-        {
-            return create_error(EXECUTE_ERROR_ARGUMENT);
-        }
-
-        x = ((int *) left->unsafe)[0];
-        y = ((int *) right->unsafe)[0];
-
-        if (y == 0)
-        {
-            return create_error(EXECUTE_ERROR_ARITHMETIC);
-        }
-
-        return create_number(x / y);
+        return operator_divide(left, right);
     }
 
     return create_error(EXECUTE_ERROR_UNSUPPORTED);
@@ -585,4 +493,138 @@ static void assign_object(execute_store_t *store, char *key, execute_type_t type
             store->objects = create_object(type, unsafe, size, copy_string(key), NULL);
         }
     }
+}
+
+static execute_passback_t *operator_comment(execute_passback_t *left, execute_passback_t *right)
+{
+    if (!left)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (left->type != EXECUTE_TYPE_STRING)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    return create_null();
+}
+
+static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_store_t *store)
+{
+    if (!left)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (left->type != EXECUTE_TYPE_STRING)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    return value_object(store, left->unsafe);
+}
+
+static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_store_t *store)
+{
+    if (!left || !right)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (left->type != EXECUTE_TYPE_STRING)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    assign_object(store, left->unsafe, right->type, right->unsafe, right->size);
+
+    right->unsafe = NULL;
+
+    return create_null();
+}
+
+static execute_passback_t *operator_add(execute_passback_t *left, execute_passback_t *right)
+{
+    int x, y;
+
+    if (!left || !right)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    x = ((int *) left->unsafe)[0];
+    y = ((int *) right->unsafe)[0];
+
+    return create_number(x + y);
+}
+
+static execute_passback_t *operator_subtract(execute_passback_t *left, execute_passback_t *right)
+{
+    int x, y;
+
+    if (!left || !right)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    x = ((int *) left->unsafe)[0];
+    y = ((int *) right->unsafe)[0];
+
+    return create_number(x - y);
+}
+
+static execute_passback_t *operator_multiply(execute_passback_t *left, execute_passback_t *right)
+{
+    int x, y;
+
+    if (!left || !right)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    x = ((int *) left->unsafe)[0];
+    y = ((int *) right->unsafe)[0];
+
+    return create_number(x * y);
+}
+
+static execute_passback_t *operator_divide(execute_passback_t *left, execute_passback_t *right)
+{
+    int x, y;
+
+    if (!left || !right)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    x = ((int *) left->unsafe)[0];
+    y = ((int *) right->unsafe)[0];
+
+    if (y == 0)
+    {
+        return create_error(EXECUTE_ERROR_ARITHMETIC);
+    }
+
+    return create_number(x / y);
 }
