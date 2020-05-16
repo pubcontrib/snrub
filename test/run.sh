@@ -100,27 +100,37 @@ pass '(">" "number" #100#)' '?'
 pass '(">" "string" "one hundred")' '?'
 fail '(">")' '#4#'
 fail '(">" "key")' '#4#'
+fail '(">" ? "value")' '#4#'
+fail '(">" #1# "value")' '#4#'
 
 # Add
 pass '("+" #10# #5#)' '#15#'
 fail '("+")' '#4#'
 fail '("+" #5#)' '#4#'
+fail '("+" ? ?)' '#4#'
+fail '("+" "word" "word")' '#4#'
 
 # Subtract
 pass '("-" #10# #5#)' '#5#'
 fail '("-")' '#4#'
 fail '("-" #5#)' '#4#'
+fail '("-" ? ?)' '#4#'
+fail '("-" "word" "word")' '#4#'
 
 # Multiply
 pass '("*" #10# #5#)' '#50#'
 fail '("*")' '#4#'
 fail '("*" #5#)' '#4#'
+fail '("*" ? ?)' '#4#'
+fail '("*" "word" "word")' '#4#'
 
 # Divide
 pass '("/" #10# #5#)' '#2#'
 fail '("/")' '#4#'
 fail '("/" #5#)' '#4#'
 fail '("/" #1# #0#)' '#5#'
+fail '("/" ? ?)' '#4#'
+fail '("/" "word" "word")' '#4#'
 
 # Whitespace
 pass '(">""string""word")("<""string")' '"word"'
