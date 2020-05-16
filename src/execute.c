@@ -404,7 +404,7 @@ static execute_passback_t *apply_operator(parse_value_t *value, execute_passback
         }
     }
 
-    return create_error(EXECUTE_ERROR_UNSUPPORTED);
+    return create_error(EXECUTE_ERROR_ARGUMENT);
 }
 
 static execute_passback_t *operator_comment(execute_passback_t *left, execute_passback_t *right)
