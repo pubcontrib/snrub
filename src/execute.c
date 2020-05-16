@@ -519,6 +519,7 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
         if (right->type != EXECUTE_TYPE_NULL)
         {
             last->next = create_object(right->type, right->unsafe, right->size, copy_string(left->unsafe), NULL);
+            right->unsafe = NULL;
         }
     }
     else
@@ -526,6 +527,7 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
         if (right->type != EXECUTE_TYPE_NULL)
         {
             store->objects = create_object(right->type, right->unsafe, right->size, copy_string(left->unsafe), NULL);
+            right->unsafe = NULL;
         }
     }
 
