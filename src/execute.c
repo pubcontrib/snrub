@@ -14,8 +14,6 @@ static execute_passback_t *create_number(int number);
 static execute_passback_t *create_string(char *string);
 static execute_passback_t *apply_expression(parse_expression_t *expression, execute_store_t *store);
 static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t *operator, execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
-static execute_passback_t *value_object(execute_store_t *store, char *key);
-static void assign_object(execute_store_t *store, char *key, execute_type_t type, void *unsafe, size_t size);
 static execute_passback_t *operator_comment(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
 static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
@@ -405,96 +403,6 @@ static execute_passback_t *apply_operator(parse_value_t *value, execute_passback
     return create_error(EXECUTE_ERROR_UNSUPPORTED);
 }
 
-static execute_passback_t *value_object(execute_store_t *store, char *key)
-{
-    if (store->objects)
-    {
-        execute_object_t *current;
-
-        for (current = store->objects; current != NULL; current = current->next)
-        {
-            if (strcmp(current->key, key) == 0)
-            {
-                if (current->unsafe)
-                {
-                    void *unsafe;
-                    size_t size;
-
-                    size = current->size;
-                    unsafe = copy_memory(current->unsafe, size);
-
-                    if (!unsafe)
-                    {
-                        return NULL;
-                    }
-
-                    return create_passback(current->type, unsafe, size, EXECUTE_ERROR_UNKNOWN);
-                }
-            }
-        }
-    }
-
-    return create_null();
-}
-
-static void assign_object(execute_store_t *store, char *key, execute_type_t type, void *unsafe, size_t size)
-{
-    if (store->objects)
-    {
-        execute_object_t *current, *last;
-
-        last = NULL;
-
-        for (current = store->objects; current != NULL; current = current->next)
-        {
-            if (strcmp(current->key, key) == 0)
-            {
-                if (type != EXECUTE_TYPE_NULL)
-                {
-                    if (current->unsafe)
-                    {
-                        free(current->unsafe);
-                    }
-
-                    current->type = type;
-                    current->unsafe = unsafe;
-                    current->size = size;
-                }
-                else
-                {
-                    if (last)
-                    {
-                        last->next = current->next;
-                    }
-                    else
-                    {
-                        store->objects = current->next;
-                    }
-
-                    current->next = NULL;
-                    execute_destroy_object(current);
-                }
-
-                return;
-            }
-
-            last = current;
-        }
-
-        if (type != EXECUTE_TYPE_NULL)
-        {
-            last->next = create_object(type, unsafe, size, copy_string(key), NULL);
-        }
-    }
-    else
-    {
-        if (type != EXECUTE_TYPE_NULL)
-        {
-            store->objects = create_object(type, unsafe, size, copy_string(key), NULL);
-        }
-    }
-}
-
 static execute_passback_t *operator_comment(execute_passback_t *left, execute_passback_t *right)
 {
     if (!left)
@@ -522,7 +430,34 @@ static execute_passback_t *operator_value(execute_passback_t *left, execute_pass
         return create_error(EXECUTE_ERROR_ARGUMENT);
     }
 
-    return value_object(store, left->unsafe);
+    if (store->objects)
+    {
+        execute_object_t *current;
+
+        for (current = store->objects; current != NULL; current = current->next)
+        {
+            if (strcmp(current->key, left->unsafe) == 0)
+            {
+                if (current->unsafe)
+                {
+                    void *unsafe;
+                    size_t size;
+
+                    size = current->size;
+                    unsafe = copy_memory(current->unsafe, size);
+
+                    if (!unsafe)
+                    {
+                        return NULL;
+                    }
+
+                    return create_passback(current->type, unsafe, size, EXECUTE_ERROR_UNKNOWN);
+                }
+            }
+        }
+    }
+
+    return create_null();
 }
 
 static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_store_t *store)
@@ -537,9 +472,62 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
         return create_error(EXECUTE_ERROR_ARGUMENT);
     }
 
-    assign_object(store, left->unsafe, right->type, right->unsafe, right->size);
+    if (store->objects)
+    {
+        execute_object_t *current, *last;
 
-    right->unsafe = NULL;
+        last = NULL;
+
+        for (current = store->objects; current != NULL; current = current->next)
+        {
+            if (strcmp(current->key, left->unsafe) == 0)
+            {
+                if (right->type != EXECUTE_TYPE_NULL)
+                {
+                    if (current->unsafe)
+                    {
+                        free(current->unsafe);
+                    }
+
+                    current->type = right->type;
+                    current->unsafe = right->unsafe;
+                    current->size = right->size;
+
+                    right->unsafe = NULL;
+                }
+                else
+                {
+                    if (last)
+                    {
+                        last->next = current->next;
+                    }
+                    else
+                    {
+                        store->objects = current->next;
+                    }
+
+                    current->next = NULL;
+                    execute_destroy_object(current);
+                }
+
+                return create_null();
+            }
+
+            last = current;
+        }
+
+        if (right->type != EXECUTE_TYPE_NULL)
+        {
+            last->next = create_object(right->type, right->unsafe, right->size, copy_string(left->unsafe), NULL);
+        }
+    }
+    else
+    {
+        if (right->type != EXECUTE_TYPE_NULL)
+        {
+            store->objects = create_object(right->type, right->unsafe, right->size, copy_string(left->unsafe), NULL);
+        }
+    }
 
     return create_null();
 }
