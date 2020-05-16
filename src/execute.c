@@ -371,33 +371,37 @@ static execute_passback_t *apply_operator(parse_value_t *value, execute_passback
 
         return create_unknown();
     }
-    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "~") == 0)
+
+    if (operator->type == EXECUTE_TYPE_STRING)
     {
-        return operator_comment(left, right);
-    }
-    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "<") == 0)
-    {
-        return operator_value(left, right, store);
-    }
-    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, ">") == 0)
-    {
-        return operator_assign(left, right, store);
-    }
-    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "+") == 0)
-    {
-        return operator_add(left, right);
-    }
-    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "-") == 0)
-    {
-        return operator_subtract(left, right);
-    }
-    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "*") == 0)
-    {
-        return operator_multiply(left, right);
-    }
-    else if (operator->type == EXECUTE_TYPE_STRING && strcmp(operator->unsafe, "/") == 0)
-    {
-        return operator_divide(left, right);
+        if (strcmp(operator->unsafe, "~") == 0)
+        {
+            return operator_comment(left, right);
+        }
+        else if (strcmp(operator->unsafe, "<") == 0)
+        {
+            return operator_value(left, right, store);
+        }
+        else if (strcmp(operator->unsafe, ">") == 0)
+        {
+            return operator_assign(left, right, store);
+        }
+        else if (strcmp(operator->unsafe, "+") == 0)
+        {
+            return operator_add(left, right);
+        }
+        else if (strcmp(operator->unsafe, "-") == 0)
+        {
+            return operator_subtract(left, right);
+        }
+        else if (strcmp(operator->unsafe, "*") == 0)
+        {
+            return operator_multiply(left, right);
+        }
+        else if (strcmp(operator->unsafe, "/") == 0)
+        {
+            return operator_divide(left, right);
+        }
     }
 
     return create_error(EXECUTE_ERROR_UNSUPPORTED);
