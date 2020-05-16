@@ -522,22 +522,14 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
 
         if (right->type != EXECUTE_TYPE_NULL)
         {
-            char *key;
-
-            key = copy_string(left->unsafe);
-
-            if (!key)
-            {
-                return NULL;
-            }
-
-            last->next = create_object(right->type, right->unsafe, right->size, key, NULL);
+            last->next = create_object(right->type, right->unsafe, right->size, left->unsafe, NULL);
 
             if (!last->next)
             {
                 return NULL;
             }
 
+            left->unsafe = NULL;
             right->unsafe = NULL;
         }
     }
@@ -545,22 +537,14 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
     {
         if (right->type != EXECUTE_TYPE_NULL)
         {
-            char *key;
-
-            key = copy_string(left->unsafe);
-
-            if (!key)
-            {
-                return NULL;
-            }
-
-            store->objects = create_object(right->type, right->unsafe, right->size, key, NULL);
+            store->objects = create_object(right->type, right->unsafe, right->size, left->unsafe, NULL);
 
             if (!store->objects)
             {
                 return NULL;
             }
 
+            left->unsafe = NULL;
             right->unsafe = NULL;
         }
     }
