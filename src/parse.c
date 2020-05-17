@@ -223,6 +223,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
                         }
                         else
                         {
+                            lex_destroy_token(token);
                             parse_destroy_expression(expression);
                             return NULL;
                         }
