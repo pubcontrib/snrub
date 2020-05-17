@@ -155,6 +155,13 @@ pass '(">" "number" #1#)
 ("<" "number")' '#2#'
 pass '(">" "operator" "+")
 (("<" "operator") #10# #5#)' '#15#'
+pass '("~" "comments")
+"word"' '"word"'
+pass '"word"
+("~" "comments")' '"word"'
+pass '"before"
+("~" "comments")
+"after"' '"after"'
 fail '()' '#4#'
 fail '("+" #1# #2# #3#)' '#4#'
 fail '"+" #10# #5#)' '#1#'

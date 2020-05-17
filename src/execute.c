@@ -419,7 +419,7 @@ static execute_passback_t *operator_comment(execute_passback_t *left, execute_pa
         return create_error(EXECUTE_ERROR_ARGUMENT);
     }
 
-    return create_null();
+    return create_unknown();
 }
 
 static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_store_t *store)
