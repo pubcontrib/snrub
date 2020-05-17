@@ -83,6 +83,9 @@ fail "$(printf '\042\007\042')" '#3#'
 
 # Comment
 pass '("~" "comments")' '?'
+pass '(">" "key" ("~" "comments")) ("<" "key")' '?'
+pass '(">" "key" "word") (">" "key" ("~" "comments")) ("<" "key")' '?'
+pass '(">" "key" ("~" "comments")) (">" "key" "word") ("<" "key")' '"word"'
 fail '("~")' '#4#'
 
 # Value

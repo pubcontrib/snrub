@@ -486,7 +486,7 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
         {
             if (strcmp(current->key, left->unsafe) == 0)
             {
-                if (right->type != EXECUTE_TYPE_NULL)
+                if (right->type != EXECUTE_TYPE_UNKNOWN && right->type != EXECUTE_TYPE_NULL)
                 {
                     if (current->unsafe)
                     {
@@ -520,7 +520,7 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
             last = current;
         }
 
-        if (right->type != EXECUTE_TYPE_NULL)
+        if (right->type != EXECUTE_TYPE_UNKNOWN && right->type != EXECUTE_TYPE_NULL)
         {
             last->next = create_object(right->type, right->unsafe, right->size, left->unsafe, NULL);
 
@@ -535,7 +535,7 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
     }
     else
     {
-        if (right->type != EXECUTE_TYPE_NULL)
+        if (right->type != EXECUTE_TYPE_UNKNOWN && right->type != EXECUTE_TYPE_NULL)
         {
             store->objects = create_object(right->type, right->unsafe, right->size, left->unsafe, NULL);
 
