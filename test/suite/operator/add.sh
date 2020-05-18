@@ -1,6 +1,8 @@
 #!/bin/sh
 source test/assert.sh
 
+hint 'operator/add'
+
 pass '("+" #10# #5#)' '#15#'
 fail '("+")' '#4#'
 fail '("+" #5#)' '#4#'

@@ -1,6 +1,8 @@
 #!/bin/sh
 source test/assert.sh
 
+hint 'type/string'
+
 pass '""' '""'
 pass '" "' '" "'
 pass '"\\"' '"\\"'

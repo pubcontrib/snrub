@@ -1,6 +1,8 @@
 #!/bin/sh
 source test/assert.sh
 
+hint 'expression'
+
 pass '(">" "number" #1#)
 (">" "number" ("+" ("<" "number") ("<" "number")))
 ("<" "number")' '#2#'

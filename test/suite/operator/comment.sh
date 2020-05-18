@@ -1,6 +1,8 @@
 #!/bin/sh
 source test/assert.sh
 
+hint 'operator/comment'
+
 pass '("~" "comments")' '?'
 pass '(">" "key" ("~" "comments")) ("<" "key")' '?'
 pass '(">" "key" "word") (">" "key" ("~" "comments")) ("<" "key")' '?'

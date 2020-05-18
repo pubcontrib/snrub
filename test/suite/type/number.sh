@@ -1,6 +1,8 @@
 #!/bin/sh
 source test/assert.sh
 
+hint 'type/number'
+
 pass '##' '#0#'
 pass '#0#' '#0#'
 pass '#1#' '#1#'

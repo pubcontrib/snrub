@@ -1,6 +1,8 @@
 #!/bin/sh
 source test/assert.sh
 
+hint 'operator/assign'
+
 pass '(">" "null" ?)' '?'
 pass '(">" "number" #100#)' '?'
 pass '(">" "string" "one hundred")' '?'

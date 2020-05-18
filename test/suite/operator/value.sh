@@ -1,6 +1,8 @@
 #!/bin/sh
 source test/assert.sh
 
+hint 'operator/value'
+
 pass '("<" "key")' '?'
 pass '(">" "null" ?) ("<" "null")' '?'
 pass '(">" "number" #1#) ("<" "number")' '#1#'

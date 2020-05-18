@@ -1,6 +1,8 @@
 #!/bin/sh
 source test/assert.sh
 
+hint 'operator/multiply'
+
 pass '("*" #10# #5#)' '#50#'
 fail '("*")' '#4#'
 fail '("*" #5#)' '#4#'
