@@ -7,21 +7,21 @@ then
     exit 1
 fi
 
-source test/assert.sh
+. test/assert.sh
 
-source test/suite/type/null.sh
-source test/suite/type/number.sh
-source test/suite/type/string.sh
+. test/suite/type/null.sh
+. test/suite/type/number.sh
+. test/suite/type/string.sh
 
-source test/suite/operator/comment.sh
-source test/suite/operator/value.sh
-source test/suite/operator/assign.sh
-source test/suite/operator/add.sh
-source test/suite/operator/subtract.sh
-source test/suite/operator/multiply.sh
-source test/suite/operator/divide.sh
+. test/suite/operator/comment.sh
+. test/suite/operator/value.sh
+. test/suite/operator/assign.sh
+. test/suite/operator/add.sh
+. test/suite/operator/subtract.sh
+. test/suite/operator/multiply.sh
+. test/suite/operator/divide.sh
 
-source test/suite/whitespace.sh
-source test/suite/expression.sh
+. test/suite/whitespace.sh
+. test/suite/expression.sh
 
 print_results

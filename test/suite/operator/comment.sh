@@ -1,5 +1,5 @@
 #!/bin/sh
-source test/assert.sh
+. test/assert.sh
 
 hint 'operator/comment'
 
