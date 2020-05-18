@@ -1,7 +1,7 @@
 #!/bin/sh
-program=$1
+PROGRAM=$1
 
-if [ -z "$program" ]
+if [ -z "$PROGRAM" ]
 then
     printf "Script failed! No program path given.\n"
     exit 1

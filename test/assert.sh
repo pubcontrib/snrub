@@ -5,7 +5,7 @@ run_test()
     expected_output=$2
     expected_code=$3
 
-    actual_output=`$program -t "$text"`
+    actual_output=`$PROGRAM -t "$text"`
     actual_code=$?
 
     if [ $actual_code != $expected_code ]
