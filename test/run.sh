@@ -1,6 +1,4 @@
 #!/bin/sh
-source test/assert.sh
-
 program=$1
 
 if [ -z "$program" ]
@@ -9,143 +7,17 @@ then
     exit 1
 fi
 
-# Null
-pass '?' '?'
-pass '' '?'
-pass ' ' '?'
+source test/suite/type/null.sh
+source test/suite/type/number.sh
+source test/suite/type/string.sh
 
-# Number
-pass '##' '#0#'
-pass '#0#' '#0#'
-pass '#1#' '#1#'
-pass '#10#' '#10#'
-pass '#01#' '#1#'
-pass '#-1#' '#-1#'
-fail '#' '#1#'
-fail '#1' '#1#'
-fail '1#' '#1#'
-fail '#word#' '#3#'
+source test/suite/operator/comment.sh
+source test/suite/operator/value.sh
+source test/suite/operator/assign.sh
+source test/suite/operator/add.sh
+source test/suite/operator/subtract.sh
+source test/suite/operator/multiply.sh
+source test/suite/operator/divide.sh
 
-# String
-pass '""' '""'
-pass '" "' '" "'
-pass '"\\"' '"\\"'
-pass '"\""' '"\""'
-pass '"\t"' '"\t"'
-pass '"\n"' '"\n"'
-pass '"\r"' '"\r"'
-pass '"\z"' '""'
-pass '"\\ \" \t \n \r"' '"\\ \" \t \n \r"'
-pass '"\t\"line\"\n"' '"\t\"line\"\n"'
-pass '"word"' '"word"'
-pass '"word word word"' '"word word word"'
-pass '"word	word	word"' '"word\tword\tword"'
-pass '"line
-line
-line"' '"line\nline\nline"'
-pass '"1"' '"1"'
-fail '"' '#1#'
-fail '"word' '#1#'
-fail 'word"' '#1#'
-fail "$(printf '\042\007\042')" '#3#'
-
-# Comment
-pass '("~" "comments")' '?'
-pass '(">" "key" ("~" "comments")) ("<" "key")' '?'
-pass '(">" "key" "word") (">" "key" ("~" "comments")) ("<" "key")' '?'
-pass '(">" "key" ("~" "comments")) (">" "key" "word") ("<" "key")' '"word"'
-fail '("~")' '#4#'
-
-# Value
-pass '("<" "key")' '?'
-pass '(">" "null" ?) ("<" "null")' '?'
-pass '(">" "number" #1#) ("<" "number")' '#1#'
-pass '(">" "string" "word") ("<" "string")' '"word"'
-pass '(">" "key" "before") (">" "key" "after") ("<" "key")' '"after"'
-pass '(">" "key" "before") (">" "key" ?) ("<" "key")' '?'
-pass '(">" "key" "before") (">" "key" #1#) ("<" "key")' '#1#'
-fail '("<")' '#4#'
-
-# Assign
-pass '(">" "null" ?)' '?'
-pass '(">" "number" #100#)' '?'
-pass '(">" "string" "one hundred")' '?'
-fail '(">")' '#4#'
-fail '(">" "key")' '#4#'
-fail '(">" ? "value")' '#4#'
-fail '(">" #1# "value")' '#4#'
-
-# Add
-pass '("+" #10# #5#)' '#15#'
-fail '("+")' '#4#'
-fail '("+" #5#)' '#4#'
-fail '("+" ? ?)' '#4#'
-fail '("+" "word" "word")' '#4#'
-
-# Subtract
-pass '("-" #10# #5#)' '#5#'
-fail '("-")' '#4#'
-fail '("-" #5#)' '#4#'
-fail '("-" ? ?)' '#4#'
-fail '("-" "word" "word")' '#4#'
-
-# Multiply
-pass '("*" #10# #5#)' '#50#'
-fail '("*")' '#4#'
-fail '("*" #5#)' '#4#'
-fail '("*" ? ?)' '#4#'
-fail '("*" "word" "word")' '#4#'
-
-# Divide
-pass '("/" #10# #5#)' '#2#'
-fail '("/")' '#4#'
-fail '("/" #5#)' '#4#'
-fail '("/" #1# #0#)' '#5#'
-fail '("/" ? ?)' '#4#'
-fail '("/" "word" "word")' '#4#'
-
-# Whitespace
-pass '(">""string""word")("<""string")' '"word"'
-pass ' ( ">" "string" "word" ) ( "<" "string" ) ' '"word"'
-pass '	(	">"	"string"	"word"	)	(	"<"	"string"	)	' '"word"'
-pass '
-(
-">"
-"string"
-"word"
-)
-(
-"<"
-"string"
-)
-' '"word"'
-
-# Expressions
-pass '(">" "number" #1#)
-(">" "number" ("+" ("<" "number") ("<" "number")))
-("<" "number")' '#2#'
-pass '(">" "operator" "+")
-(("<" "operator") #10# #5#)' '#15#'
-pass '("~" "comments")
-"word"' '"word"'
-pass '"word"
-("~" "comments")' '"word"'
-pass '"before"
-("~" "comments")
-"after"' '"after"'
-fail '()' '#4#'
-fail '("+" #1# #2# #3#)' '#4#'
-fail '"+" #10# #5#)' '#1#'
-fail '("+" #10# #5#' '#1#'
-fail '(?)' '#4#'
-fail '(#1#)' '#4#'
-fail '("unknown")' '#4#'
-fail '("<"("<"("<"("<"("<"("<"("<"("<"
-("<"("<"("<"("<"("<"("<"("<"("<"
-("<"("<"("<"("<"("<"("<"("<"("<"
-("<"("<"("<"("<"("<"("<"("<"("<"
-"k"
-))))))))
-))))))))
-))))))))
-))))))))' '#2#'
+source test/suite/whitespace.sh
+source test/suite/expression.sh
