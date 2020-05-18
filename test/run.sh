@@ -7,6 +7,8 @@ then
     exit 1
 fi
 
+source test/assert.sh
+
 source test/suite/type/null.sh
 source test/suite/type/number.sh
 source test/suite/type/string.sh
@@ -21,3 +23,5 @@ source test/suite/operator/divide.sh
 
 source test/suite/whitespace.sh
 source test/suite/expression.sh
+
+print_results

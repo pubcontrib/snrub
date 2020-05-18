@@ -21,6 +21,8 @@ run_test()
         printf "Test failed!\n"
         exit 1
     fi
+
+    count=$((count + 1))
 }
 
 pass()
@@ -31,4 +33,9 @@ pass()
 fail()
 {
     run_test "$1" "$2" 1
+}
+
+print_results()
+{
+    printf "%d tests run.\n" $count
 }
