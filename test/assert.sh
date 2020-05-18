@@ -1,0 +1,34 @@
+#!/bin/sh
+run_test()
+{
+    text=$1
+    expected_output=$2
+    expected_code=$3
+
+    actual_output=`$program -t "$text"`
+    actual_code=$?
+
+    if [ $actual_code != $expected_code ]
+    then
+        printf "%s\n" "$text"
+        printf "Test failed!\n"
+        exit 1
+    fi
+
+    if [ "$actual_output" != "$expected_output" ]
+    then
+        printf "%s\n" "$text"
+        printf "Test failed!\n"
+        exit 1
+    fi
+}
+
+pass()
+{
+    run_test "$1" "$2" 0
+}
+
+fail()
+{
+    run_test "$1" "$2" 1
+}
