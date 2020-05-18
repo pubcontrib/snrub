@@ -3,7 +3,7 @@ source test/assert.sh
 
 program=$1
 
-if [ -z $program ]
+if [ -z "$program" ]
 then
     printf "Script failed! No program path given.\n"
     exit 1
