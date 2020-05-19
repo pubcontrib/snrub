@@ -1,4 +1,19 @@
 #!/bin/sh
+hint()
+{
+    hint=$1
+}
+
+pass()
+{
+    run_test "$1" "$2" 0
+}
+
+fail()
+{
+    run_test "$1" "$2" 1
+}
+
 run_test()
 {
     text=$1
@@ -27,22 +42,7 @@ run_test()
     count=$((count + 1))
 }
 
-pass()
-{
-    run_test "$1" "$2" 0
-}
-
-fail()
-{
-    run_test "$1" "$2" 1
-}
-
 print_results()
 {
     printf "%d tests run.\n" $count
-}
-
-hint()
-{
-    hint=$1
 }
