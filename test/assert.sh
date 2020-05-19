@@ -1,4 +1,6 @@
 #!/bin/sh
+hint="unset"
+
 hint()
 {
     hint=$1
