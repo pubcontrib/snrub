@@ -4,8 +4,8 @@ language.
 
 ```
 ("~" "set numbers a and b then put their sum into c")
-(">" "a" #1#)
-(">" "b" #2#)
+(">" "a" #300#)
+(">" "b" #200#)
 (">" "c" ("+" ("<" "a") ("<" "b")))
 ```
 
