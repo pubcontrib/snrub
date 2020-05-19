@@ -36,7 +36,7 @@ snrub --file script.txt
 
 Run code without a file:
 ```shell
-snrub --text "+(#1# #2#)"
+snrub --text '("+" #1# #2#)'
 ```
 
 ## Support
