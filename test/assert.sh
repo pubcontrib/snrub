@@ -31,17 +31,21 @@ run_test()
 
     if [ $actual_code != $expected_code ]
     then
-        printf "%s\n" "$text"
-        printf "%s\n" "$hint"
-        printf "Test failed!\n"
+        printf "[ERROR] Test case returned an unexpected exit code.\n"
+        printf "Hint: %s\n" "$hint"
+        printf "Source: %s\n" "$text"
+        printf "Expected: %d\n" $expected_code
+        printf "Actual: %d\n" $actual_code
         exit 1
     fi
 
     if [ "$actual_output" != "$expected_output" ]
     then
-        printf "%s\n" "$text"
-        printf "%s\n" "$hint"
-        printf "Test failed!\n"
+        printf "[ERROR] Test case returned an unexpected stdout.\n"
+        printf "Hint: %s\n" "$hint"
+        printf "Source: %s\n" "$text"
+        printf "Expected: %s\n" "$expected_output"
+        printf "Actual: %s\n" "$actual_output"
         exit 1
     fi
 
