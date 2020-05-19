@@ -3,7 +3,7 @@ PROGRAM=$1
 
 if [ -z "$PROGRAM" ]
 then
-    printf "Script failed! No program path given.\n"
+    printf "[ERROR] No program path given.\n" 1>&2
     exit 1
 fi
 
