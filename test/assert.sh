@@ -14,6 +14,12 @@ fail()
     run_test "$1" "$2" 1
 }
 
+conclude()
+{
+    printf "%d tests run.\n" $count
+    count=0
+}
+
 run_test()
 {
     text=$1
@@ -40,9 +46,4 @@ run_test()
     fi
 
     count=$((count + 1))
-}
-
-print_results()
-{
-    printf "%d tests run.\n" $count
 }

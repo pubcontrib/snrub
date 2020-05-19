@@ -24,4 +24,4 @@ fi
 . test/suite/whitespace.sh
 . test/suite/expression.sh
 
-print_results
+conclude
