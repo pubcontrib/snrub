@@ -547,7 +547,7 @@ static char is_printable(char *value)
 
         symbol = value[index];
 
-        if (!isprint(symbol) && symbol != '\t' && symbol != '\n' && symbol != '\r')
+        if (!isprint(symbol))
         {
             return 0;
         }
