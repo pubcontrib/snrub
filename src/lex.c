@@ -192,13 +192,10 @@ static lex_identifier_t match_identifier(char symbol)
         case ')':
             return LEX_IDENTIFIER_END;
         case ' ':
-            return LEX_IDENTIFIER_SPACE;
         case '\t':
-            return LEX_IDENTIFIER_TAB;
         case '\n':
-            return LEX_IDENTIFIER_NEWLINE;
         case '\r':
-            return LEX_IDENTIFIER_NEWLINE;
+            return LEX_IDENTIFIER_WHITESPACE;
         case '?':
             return LEX_IDENTIFIER_NULL;
         default:

@@ -13,7 +13,6 @@ static parse_value_t *token_to_value(lex_token_t *token);
 static parse_value_t *null_to_value(char *value);
 static parse_value_t *number_to_value(char *value);
 static parse_value_t *string_to_value(char *value);
-static int is_whitespace(lex_identifier_t identifier);
 static int is_value(lex_identifier_t identifier);
 static char *escape(char *value);
 static char is_printable(char *value);
@@ -208,7 +207,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
             {
                 status = PARSE_STATUS_ERROR;
             }
-            else if (!is_whitespace(token->identifier))
+            else if (token->identifier != LEX_IDENTIFIER_WHITESPACE)
             {
                 if (status == PARSE_STATUS_START)
                 {
@@ -456,19 +455,6 @@ static parse_value_t *string_to_value(char *value)
     }
 
     return create_value(PARSE_TYPE_STRING, unsafe);
-}
-
-static int is_whitespace(lex_identifier_t identifier)
-{
-    switch (identifier)
-    {
-        case LEX_IDENTIFIER_SPACE:
-        case LEX_IDENTIFIER_TAB:
-        case LEX_IDENTIFIER_NEWLINE:
-            return 1;
-        default:
-            return 0;
-    }
 }
 
 static int is_value(lex_identifier_t identifier)
