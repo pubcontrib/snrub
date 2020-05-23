@@ -13,7 +13,7 @@ static execute_passback_t *create_null();
 static execute_passback_t *create_number(int number);
 static execute_passback_t *create_string(char *string);
 static execute_passback_t *apply_expression(parse_expression_t *expression, execute_store_t *store);
-static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t *operator, execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
+static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t **arguments, size_t length, execute_store_t *store);
 static execute_passback_t *operator_comment(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
 static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
@@ -21,7 +21,8 @@ static execute_passback_t *operator_add(execute_passback_t *left, execute_passba
 static execute_passback_t *operator_subtract(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_multiply(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_divide(execute_passback_t *left, execute_passback_t *right);
-static parse_expression_t *argument_at_index(parse_expression_t *expression, size_t index);
+static execute_passback_t *arguments_get(execute_passback_t **arguments, size_t length, size_t index);
+static void arguments_free(execute_passback_t **arguments, size_t length);
 
 execute_passback_t *execute_do_document(char *document)
 {
@@ -232,12 +233,9 @@ static execute_passback_t *create_string(char *string)
 
 static execute_passback_t *apply_expression(parse_expression_t *expression, execute_store_t *store)
 {
-    execute_passback_t *operator, *left, *right, *result;
-
-    operator = NULL;
-    left = NULL;
-    right = NULL;
-    result = NULL;
+    execute_passback_t **arguments;
+    execute_passback_t *result;
+    size_t length, index;
 
     if (expression->error != PARSE_ERROR_UNKNOWN)
     {
@@ -256,103 +254,45 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
         }
     }
 
-    if (argument_at_index(expression, 0))
-    {
-        operator = apply_expression(argument_at_index(expression, 0), store);
+    length = expression->length;
+    arguments = malloc(sizeof(execute_passback_t) * length);
 
-        if (!operator)
+    for (index = 0; index < length; index++)
+    {
+        execute_passback_t *argument;
+
+        argument = apply_expression(expression->arguments[index], store);
+
+        if (!argument)
         {
+            arguments_free(arguments, length);
             return NULL;
         }
 
-        if (operator->error != EXECUTE_ERROR_UNKNOWN)
+        if (argument->error != EXECUTE_ERROR_UNKNOWN)
         {
-            return operator;
-        }
-    }
-
-    if (argument_at_index(expression, 1))
-    {
-        left = apply_expression(argument_at_index(expression, 1), store);
-
-        if (!left)
-        {
-            if (operator)
-            {
-                execute_destroy_passback(operator);
-            }
-
-            return NULL;
+            arguments_free(arguments, index - 1);
+            return argument;
         }
 
-        if (left->error != EXECUTE_ERROR_UNKNOWN)
-        {
-            if (operator)
-            {
-                execute_destroy_passback(operator);
-            }
-
-            return left;
-        }
+        arguments[index] = argument;
     }
 
-    if (argument_at_index(expression, 2))
-    {
-        right = apply_expression(argument_at_index(expression, 2), store);
+    result = apply_operator(expression->value, arguments, length, store);
 
-        if (!right)
-        {
-            if (operator)
-            {
-                execute_destroy_passback(operator);
-            }
-
-            if (left)
-            {
-                execute_destroy_passback(left);
-            }
-
-            return NULL;
-        }
-
-        if (right->error != EXECUTE_ERROR_UNKNOWN)
-        {
-            if (operator)
-            {
-                execute_destroy_passback(operator);
-            }
-
-            if (left)
-            {
-                execute_destroy_passback(left);
-            }
-
-            return right;
-        }
-    }
-
-    result = apply_operator(expression->value, operator, left, right, store);
-
-    if (operator)
-    {
-        execute_destroy_passback(operator);
-    }
-
-    if (left)
-    {
-        execute_destroy_passback(left);
-    }
-
-    if (right)
-    {
-        execute_destroy_passback(right);
-    }
+    arguments_free(arguments, length);
 
     return result;
 }
 
-static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t *operator, execute_passback_t *left, execute_passback_t *right, execute_store_t *store)
+static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t **arguments, size_t length, execute_store_t *store)
 {
+    execute_passback_t *operator, *left, *right;
+
+    operator = arguments_get(arguments, length, 0);
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
+
     if (!operator)
     {
         if (value)
@@ -638,12 +578,31 @@ static execute_passback_t *operator_divide(execute_passback_t *left, execute_pas
     return create_number(x / y);
 }
 
-static parse_expression_t *argument_at_index(parse_expression_t *expression, size_t index)
+static execute_passback_t *arguments_get(execute_passback_t **arguments, size_t length, size_t index)
 {
-    if (index >= 0 && index < expression->length)
+    if (index >= 0 && index < length)
     {
-        return expression->arguments[index];
+        return arguments[index];
     }
 
     return NULL;
+}
+
+static void arguments_free(execute_passback_t **arguments, size_t length)
+{
+    size_t index;
+
+    for (index = 0; index < length; index++)
+    {
+        execute_passback_t *argument;
+
+        argument = arguments[index];
+
+        if (argument)
+        {
+            execute_destroy_passback(argument);
+        }
+    }
+
+    free(arguments);
 }
