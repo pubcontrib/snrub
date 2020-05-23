@@ -6,7 +6,7 @@
 #include "common.h"
 
 static parse_link_t *create_link(parse_expression_t *expression, parse_link_t *next);
-static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t *operator, parse_expression_t *left, parse_expression_t *right);
+static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t **arguments, size_t length);
 static parse_value_t *create_value(parse_type_t type, void *unsafe);
 static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *token, int depth);
 static parse_value_t *token_to_value(lex_token_t *token);
@@ -102,24 +102,21 @@ void parse_destroy_link(parse_link_t *link)
 
 void parse_destroy_expression(parse_expression_t *expression)
 {
-    if (expression->operator)
-    {
-        parse_destroy_expression(expression->operator);
-    }
-
-    if (expression->left)
-    {
-        parse_destroy_expression(expression->left);
-    }
-
-    if (expression->right)
-    {
-        parse_destroy_expression(expression->right);
-    }
-
     if (expression->value)
     {
         parse_destroy_value(expression->value);
+    }
+
+    if (expression->length > 0)
+    {
+        size_t index;
+
+        for (index = 0; index < expression->length; index++)
+        {
+            parse_destroy_expression(expression->arguments[index]);
+        }
+
+        free(expression->arguments);
     }
 
     free(expression);
@@ -150,7 +147,7 @@ static parse_link_t *create_link(parse_expression_t *expression, parse_link_t *n
     return link;
 }
 
-static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t *operator, parse_expression_t *left, parse_expression_t *right)
+static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t **arguments, size_t length)
 {
     parse_expression_t *expression;
 
@@ -160,9 +157,8 @@ static parse_expression_t *create_expression(parse_error_t error, parse_value_t 
     {
         expression->error = error;
         expression->value = value;
-        expression->operator = operator;
-        expression->left = left;
-        expression->right = right;
+        expression->arguments = arguments;
+        expression->length = length;
     }
 
     return expression;
@@ -189,7 +185,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
     parse_expression_t *expression;
 
     status = PARSE_STATUS_START;
-    expression = create_expression(PARSE_ERROR_UNKNOWN, NULL, NULL, NULL, NULL);
+    expression = create_expression(PARSE_ERROR_UNKNOWN, NULL, NULL, 0);
 
     if (depth > 32)
     {
@@ -229,89 +225,60 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
                     }
                     else
                     {
-                        status = token->identifier == LEX_IDENTIFIER_START ? PARSE_STATUS_OPERATOR : PARSE_STATUS_ERROR;
+                        status = token->identifier == LEX_IDENTIFIER_START ? PARSE_STATUS_ARGUMENTS : PARSE_STATUS_ERROR;
                     }
                 }
-                else if (status == PARSE_STATUS_OPERATOR)
+                else if (status == PARSE_STATUS_ARGUMENTS)
                 {
                     if (token->identifier == LEX_IDENTIFIER_END)
                     {
-                        expression->error = PARSE_ERROR_ARGUMENT;
-                        status = PARSE_STATUS_ERROR;
+                        if (expression->length > 0)
+                        {
+                            status = PARSE_STATUS_SUCCESS;
+                        }
+                        else
+                        {
+                            expression->error = PARSE_ERROR_ARGUMENT;
+                            status = PARSE_STATUS_ERROR;
+                        }
                     }
                     else
                     {
-                        expression->operator = next_expression(cursor, token, depth + 1);
+                        parse_expression_t *argument;
+
+                        argument = next_expression(cursor, token, depth + 1);
                         token = NULL;
 
-                        if (expression->operator)
+                        if (argument)
                         {
-                            expression->error = expression->operator->error;
-                            status = expression->error == PARSE_ERROR_UNKNOWN ? PARSE_STATUS_LEFT : PARSE_STATUS_ERROR;
+                            parse_expression_t **existing;
+
+                            expression->error = argument->error;
+                            status = expression->error == PARSE_ERROR_UNKNOWN ? PARSE_STATUS_ARGUMENTS : PARSE_STATUS_ERROR;
+
+                            existing = expression->arguments;
+                            expression->length += 1;
+                            expression->arguments = malloc(sizeof(parse_expression_t) * expression->length);
+
+                            if (expression->length > 1)
+                            {
+                                size_t index;
+
+                                for (index = 0; index < expression->length - 1; index++)
+                                {
+                                    expression->arguments[index] = existing[index];
+                                }
+
+                                free(existing);
+                            }
+
+                            expression->arguments[expression->length - 1] = argument;
                         }
                         else
                         {
                             parse_destroy_expression(expression);
                             return NULL;
                         }
-                    }
-                }
-                else if (status == PARSE_STATUS_LEFT)
-                {
-                    if (token->identifier == LEX_IDENTIFIER_END)
-                    {
-                        status = PARSE_STATUS_SUCCESS;
-                    }
-                    else
-                    {
-                        expression->left = next_expression(cursor, token, depth + 1);
-                        token = NULL;
-
-                        if (expression->left)
-                        {
-                            expression->error = expression->left->error;
-                            status = expression->error == PARSE_ERROR_UNKNOWN ? PARSE_STATUS_RIGHT : PARSE_STATUS_ERROR;
-                        }
-                        else
-                        {
-                            parse_destroy_expression(expression);
-                            return NULL;
-                        }
-                    }
-                }
-                else if (status == PARSE_STATUS_RIGHT)
-                {
-                    if (token->identifier == LEX_IDENTIFIER_END)
-                    {
-                        status = PARSE_STATUS_SUCCESS;
-                    }
-                    else
-                    {
-                        expression->right = next_expression(cursor, token, depth + 1);
-                        token = NULL;
-
-                        if (expression->right)
-                        {
-                            expression->error = expression->right->error;
-                            status = expression->error == PARSE_ERROR_UNKNOWN ? PARSE_STATUS_END : PARSE_STATUS_ERROR;
-                        }
-                        else
-                        {
-                            parse_destroy_expression(expression);
-                            return NULL;
-                        }
-                    }
-                }
-                else if (status == PARSE_STATUS_END)
-                {
-                    if (token->identifier == LEX_IDENTIFIER_END)
-                    {
-                        status = PARSE_STATUS_SUCCESS;
-                    }
-                    else
-                    {
-                        expression->error = PARSE_ERROR_ARGUMENT;
-                        status = PARSE_STATUS_ERROR;
                     }
                 }
             }

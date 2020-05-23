@@ -21,6 +21,7 @@ static execute_passback_t *operator_add(execute_passback_t *left, execute_passba
 static execute_passback_t *operator_subtract(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_multiply(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_divide(execute_passback_t *left, execute_passback_t *right);
+static parse_expression_t *argument_at_index(parse_expression_t *expression, size_t index);
 
 execute_passback_t *execute_do_document(char *document)
 {
@@ -255,9 +256,9 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
         }
     }
 
-    if (expression->operator)
+    if (argument_at_index(expression, 0))
     {
-        operator = apply_expression(expression->operator, store);
+        operator = apply_expression(argument_at_index(expression, 0), store);
 
         if (!operator)
         {
@@ -270,9 +271,9 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
         }
     }
 
-    if (expression->left)
+    if (argument_at_index(expression, 1))
     {
-        left = apply_expression(expression->left, store);
+        left = apply_expression(argument_at_index(expression, 1), store);
 
         if (!left)
         {
@@ -295,9 +296,9 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
         }
     }
 
-    if (expression->right)
+    if (argument_at_index(expression, 2))
     {
-        right = apply_expression(expression->right, store);
+        right = apply_expression(argument_at_index(expression, 2), store);
 
         if (!right)
         {
@@ -635,4 +636,14 @@ static execute_passback_t *operator_divide(execute_passback_t *left, execute_pas
     }
 
     return create_number(x / y);
+}
+
+static parse_expression_t *argument_at_index(parse_expression_t *expression, size_t index)
+{
+    if (index >= 0 && index < expression->length)
+    {
+        return expression->arguments[index];
+    }
+
+    return NULL;
 }

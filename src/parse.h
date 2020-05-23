@@ -25,9 +25,7 @@ typedef enum
     PARSE_STATUS_SUCCESS,
     PARSE_STATUS_ERROR,
     PARSE_STATUS_START,
-    PARSE_STATUS_OPERATOR,
-    PARSE_STATUS_LEFT,
-    PARSE_STATUS_RIGHT,
+    PARSE_STATUS_ARGUMENTS,
     PARSE_STATUS_END
 } parse_status_t;
 
@@ -41,9 +39,8 @@ typedef struct parse_expression_t
 {
     parse_error_t error;
     parse_value_t *value;
-    struct parse_expression_t *operator;
-    struct parse_expression_t *left;
-    struct parse_expression_t *right;
+    struct parse_expression_t **arguments;
+    size_t length;
 } parse_expression_t;
 
 typedef struct parse_link_t
