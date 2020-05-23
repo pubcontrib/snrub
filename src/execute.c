@@ -263,13 +263,7 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
 
         argument = apply_expression(expression->arguments[index], store);
 
-        if (!argument)
-        {
-            arguments_free(arguments, index - 1);
-            return NULL;
-        }
-
-        if (argument->error != EXECUTE_ERROR_UNKNOWN)
+        if (!argument || argument->error != EXECUTE_ERROR_UNKNOWN)
         {
             arguments_free(arguments, index - 1);
             return argument;
