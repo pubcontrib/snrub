@@ -195,6 +195,13 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
 
     while (cursor->status != LEX_STATUS_CLOSED && status != PARSE_STATUS_ERROR && status != PARSE_STATUS_SUCCESS)
     {
+        if (expression->length > 32)
+        {
+            status = PARSE_STATUS_ERROR;
+            expression->error = PARSE_ERROR_DEPTH;
+            break;
+        }
+
         token = token ? token : lex_next_token(cursor);
 
         if (token)
