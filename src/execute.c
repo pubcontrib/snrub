@@ -588,14 +588,7 @@ static void arguments_free(execute_passback_t **arguments, size_t length)
 
     for (index = 0; index < length; index++)
     {
-        execute_passback_t *argument;
-
-        argument = arguments[index];
-
-        if (argument)
-        {
-            execute_destroy_passback(argument);
-        }
+        execute_destroy_passback(arguments[index]);
     }
 
     free(arguments);
