@@ -265,7 +265,7 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
 
         if (!argument)
         {
-            arguments_free(arguments, length);
+            arguments_free(arguments, index - 1);
             return NULL;
         }
 
