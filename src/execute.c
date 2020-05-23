@@ -255,7 +255,7 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
     }
 
     length = expression->length;
-    arguments = malloc(sizeof(execute_passback_t) * length);
+    arguments = malloc(sizeof(execute_passback_t *) * length);
 
     for (index = 0; index < length; index++)
     {

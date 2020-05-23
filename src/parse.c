@@ -258,7 +258,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
 
                             existing = expression->arguments;
                             expression->length += 1;
-                            expression->arguments = malloc(sizeof(parse_expression_t) * expression->length);
+                            expression->arguments = malloc(sizeof(parse_expression_t *) * expression->length);
 
                             if (expression->length > 1)
                             {
