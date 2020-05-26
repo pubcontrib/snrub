@@ -79,3 +79,61 @@ int *integer_to_array(int integer)
 
     return array;
 }
+
+char *integer_to_string(int integer)
+{
+    char *string;
+    size_t length;
+
+    length = integer_digits(integer) + (integer < 0 ? 1 : 0);
+    string = malloc(sizeof(char) * (length + 1));
+
+    if (string)
+    {
+        size_t index;
+
+        index = length - 1;
+
+        if (integer < 0)
+        {
+            string[0] = '-';
+            integer *= -1;
+        }
+
+        if (integer == 0)
+        {
+            string[0] = '0';
+        }
+
+        while (integer > 0)
+        {
+            int next, digit;
+
+            next = integer / 10;
+            digit = integer - (next * 10);
+            string[index--] = '0' + digit;
+            integer = next;
+        }
+
+        string[length] = '\0';
+    }
+
+    return string;
+}
+
+int integer_digits(int integer)
+{
+    int digits;
+
+    if (integer < 0)
+    {
+        integer *= -1;
+    }
+
+    for (digits = 0; integer > 0 || digits == 0; digits++)
+    {
+        integer /= 10;
+    }
+
+    return digits;
+}
