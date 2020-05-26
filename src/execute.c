@@ -21,6 +21,7 @@ static execute_passback_t *operator_add(execute_passback_t *left, execute_passba
 static execute_passback_t *operator_subtract(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_multiply(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_divide(execute_passback_t *left, execute_passback_t *right);
+static execute_passback_t *operator_number(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_string(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *arguments_get(execute_passback_t **arguments, size_t length, size_t index);
 static void arguments_free(execute_passback_t **arguments, size_t length);
@@ -338,6 +339,10 @@ static execute_passback_t *apply_operator(parse_value_t *value, execute_passback
         {
             return operator_divide(left, right);
         }
+        else if (strcmp(operator->unsafe, "#") == 0)
+        {
+            return operator_number(left, right);
+        }
         else if (strcmp(operator->unsafe, "\"") == 0)
         {
             return operator_string(left, right);
@@ -575,6 +580,38 @@ static execute_passback_t *operator_divide(execute_passback_t *left, execute_pas
     }
 
     return create_number(x / y);
+}
+
+static execute_passback_t *operator_number(execute_passback_t *left, execute_passback_t *right)
+{
+    if (!left)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (left->type == EXECUTE_TYPE_NULL)
+    {
+        return create_null();
+    }
+
+    if (left->type == EXECUTE_TYPE_NUMBER)
+    {
+        return create_number(((int *) left->unsafe)[0]);
+    }
+
+    if (left->type == EXECUTE_TYPE_STRING)
+    {
+        if (is_integer(left->unsafe))
+        {
+            return create_number(atoi(left->unsafe));
+        }
+        else
+        {
+            return create_error(EXECUTE_ERROR_TYPE);
+        }
+    }
+
+    return create_error(EXECUTE_ERROR_TYPE);
 }
 
 static execute_passback_t *operator_string(execute_passback_t *left, execute_passback_t *right)

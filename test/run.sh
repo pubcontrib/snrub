@@ -20,6 +20,7 @@ fi
 . test/suite/operator/subtract.sh
 . test/suite/operator/multiply.sh
 . test/suite/operator/divide.sh
+. test/suite/operator/number.sh
 . test/suite/operator/string.sh
 
 . test/suite/whitespace.sh

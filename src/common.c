@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "common.h"
 
 char *slice_string(char *string, size_t start, size_t end)
@@ -136,4 +137,23 @@ int integer_digits(int integer)
     }
 
     return digits;
+}
+
+char is_integer(char *string)
+{
+    size_t index;
+
+    for (index = 0; index < strlen(string); index++)
+    {
+        char symbol;
+
+        symbol = string[index];
+
+        if (!isdigit(symbol) || !(index == 0 && symbol == '-'))
+        {
+            return 0;
+        }
+    }
+
+    return 1;
 }
