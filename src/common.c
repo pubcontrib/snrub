@@ -141,15 +141,34 @@ int integer_digits(int integer)
 
 char is_integer(char *string)
 {
-    size_t index;
+    size_t length, index;
 
-    for (index = 0; index < strlen(string); index++)
+    length = strlen(string);
+
+    if (length == 0)
+    {
+        return 0;
+    }
+
+    index = 0;
+
+    if (string[0] == '-')
+    {
+        if (length == 1)
+        {
+            return 0;
+        }
+
+        index = 1;
+    }
+
+    for (; index < length; index++)
     {
         char symbol;
 
         symbol = string[index];
 
-        if (!isdigit(symbol) || !(index == 0 && symbol == '-'))
+        if (!isdigit(symbol))
         {
             return 0;
         }
