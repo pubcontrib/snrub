@@ -633,7 +633,19 @@ static execute_passback_t *operator_string(execute_passback_t *left, execute_pas
 
     if (left->type == EXECUTE_TYPE_NUMBER)
     {
-        return create_string(integer_to_string(((int *) left->unsafe)[0]));
+        void *unsafe;
+        size_t size;
+
+        unsafe = integer_to_string(((int *) left->unsafe)[0]);
+
+        if (!unsafe)
+        {
+            return NULL;
+        }
+
+        size = sizeof(char) * (strlen(unsafe) + 1);
+
+        return create_passback(EXECUTE_TYPE_STRING, unsafe, size, EXECUTE_ERROR_UNKNOWN);
     }
 
     return create_error(EXECUTE_ERROR_TYPE);
