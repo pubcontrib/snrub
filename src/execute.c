@@ -12,6 +12,7 @@ static execute_passback_t *create_unknown();
 static execute_passback_t *create_null();
 static execute_passback_t *create_number(int number);
 static execute_passback_t *create_string(char *string);
+static execute_passback_t *create_copy(execute_passback_t *this);
 static execute_passback_t *apply_expression(parse_expression_t *expression, execute_store_t *store);
 static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t **arguments, size_t length, execute_store_t *store);
 static execute_passback_t *operator_comment(execute_passback_t *left, execute_passback_t *right);
@@ -24,6 +25,7 @@ static execute_passback_t *operator_divide(execute_passback_t *left, execute_pas
 static execute_passback_t *operator_and(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_or(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_not(execute_passback_t *left, execute_passback_t *right);
+static execute_passback_t *operator_conditional(execute_passback_t *condition, execute_passback_t *pass, execute_passback_t *fail);
 static execute_passback_t *operator_number(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_string(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *arguments_get(execute_passback_t **arguments, size_t length, size_t index);
@@ -236,6 +238,21 @@ static execute_passback_t *create_string(char *string)
     return create_passback(EXECUTE_TYPE_STRING, unsafe, size, EXECUTE_ERROR_UNKNOWN);
 }
 
+static execute_passback_t *create_copy(execute_passback_t *this)
+{
+    switch (this->type)
+    {
+        case EXECUTE_TYPE_NULL:
+            return create_null();
+        case EXECUTE_TYPE_NUMBER:
+            return create_number(((int *) this->unsafe)[0]);
+        case EXECUTE_TYPE_STRING:
+            return create_string(this->unsafe);
+        default:
+            return create_error(EXECUTE_ERROR_TYPE);
+    }
+}
+
 static execute_passback_t *apply_expression(parse_expression_t *expression, execute_store_t *store)
 {
     execute_passback_t **arguments;
@@ -353,6 +370,16 @@ static execute_passback_t *apply_operator(parse_value_t *value, execute_passback
         else if (strcmp(operator->unsafe, "!") == 0)
         {
             return operator_not(left, right);
+        }
+        else if (strcmp(operator->unsafe, "?") == 0)
+        {
+            execute_passback_t *conditional, *pass, *fail;
+
+            conditional = arguments_get(arguments, length, 1);
+            pass = arguments_get(arguments, length, 2);
+            fail = arguments_get(arguments, length, 3);
+
+            return operator_conditional(conditional, pass, fail);
         }
         else if (strcmp(operator->unsafe, "#") == 0)
         {
@@ -654,6 +681,32 @@ static execute_passback_t *operator_not(execute_passback_t *left, execute_passba
     x = ((int *) left->unsafe)[0];
 
     return create_number(!x);
+}
+
+static execute_passback_t *operator_conditional(execute_passback_t *condition, execute_passback_t *pass, execute_passback_t *fail)
+{
+    int x;
+
+    if (!condition || !pass || !fail)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (condition->type != EXECUTE_TYPE_NUMBER)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    x = ((int *) condition->unsafe)[0];
+
+    if (x)
+    {
+        return create_copy(pass);
+    }
+    else
+    {
+        return create_copy(fail);
+    }
 }
 
 static execute_passback_t *operator_number(execute_passback_t *left, execute_passback_t *right)

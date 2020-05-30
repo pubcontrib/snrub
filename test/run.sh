@@ -22,6 +22,7 @@ fi
 . test/suite/operator/and.sh
 . test/suite/operator/or.sh
 . test/suite/operator/not.sh
+. test/suite/operator/conditional.sh
 . test/suite/operator/divide.sh
 . test/suite/operator/number.sh
 . test/suite/operator/string.sh
