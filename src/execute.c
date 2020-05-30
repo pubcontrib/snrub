@@ -21,6 +21,9 @@ static execute_passback_t *operator_add(execute_passback_t *left, execute_passba
 static execute_passback_t *operator_subtract(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_multiply(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_divide(execute_passback_t *left, execute_passback_t *right);
+static execute_passback_t *operator_and(execute_passback_t *left, execute_passback_t *right);
+static execute_passback_t *operator_or(execute_passback_t *left, execute_passback_t *right);
+static execute_passback_t *operator_not(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_number(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_string(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *arguments_get(execute_passback_t **arguments, size_t length, size_t index);
@@ -339,6 +342,18 @@ static execute_passback_t *apply_operator(parse_value_t *value, execute_passback
         {
             return operator_divide(left, right);
         }
+        else if (strcmp(operator->unsafe, "&") == 0)
+        {
+            return operator_and(left, right);
+        }
+        else if (strcmp(operator->unsafe, "|") == 0)
+        {
+            return operator_or(left, right);
+        }
+        else if (strcmp(operator->unsafe, "!") == 0)
+        {
+            return operator_not(left, right);
+        }
         else if (strcmp(operator->unsafe, "#") == 0)
         {
             return operator_number(left, right);
@@ -580,6 +595,65 @@ static execute_passback_t *operator_divide(execute_passback_t *left, execute_pas
     }
 
     return create_number(x / y);
+}
+
+static execute_passback_t *operator_and(execute_passback_t *left, execute_passback_t *right)
+{
+    int x, y;
+
+    if (!left || !right)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    x = ((int *) left->unsafe)[0];
+    y = ((int *) right->unsafe)[0];
+
+    return create_number(x && y);
+}
+
+static execute_passback_t *operator_or(execute_passback_t *left, execute_passback_t *right)
+{
+    int x, y;
+
+    if (!left || !right)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    x = ((int *) left->unsafe)[0];
+    y = ((int *) right->unsafe)[0];
+
+    return create_number(x || y);
+}
+
+static execute_passback_t *operator_not(execute_passback_t *left, execute_passback_t *right)
+{
+    int x;
+
+    if (!left)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    if (left->type != EXECUTE_TYPE_NUMBER)
+    {
+        return create_error(EXECUTE_ERROR_ARGUMENT);
+    }
+
+    x = ((int *) left->unsafe)[0];
+
+    return create_number(!x);
 }
 
 static execute_passback_t *operator_number(execute_passback_t *left, execute_passback_t *right)
