@@ -23,6 +23,9 @@ fi
 . test/suite/operator/or.sh
 . test/suite/operator/not.sh
 . test/suite/operator/conditional.sh
+. test/suite/operator/less.sh
+. test/suite/operator/greater.sh
+. test/suite/operator/equal.sh
 . test/suite/operator/divide.sh
 . test/suite/operator/number.sh
 . test/suite/operator/string.sh
