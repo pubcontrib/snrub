@@ -335,11 +335,11 @@ static execute_passback_t *apply_operator(parse_value_t *value, execute_passback
         {
             return operator_comment(left, right);
         }
-        else if (strcmp(operator->unsafe, "<") == 0)
+        else if (strcmp(operator->unsafe, "<--") == 0)
         {
             return operator_value(left, right, store);
         }
-        else if (strcmp(operator->unsafe, ">") == 0)
+        else if (strcmp(operator->unsafe, "-->") == 0)
         {
             return operator_assign(left, right, store);
         }
