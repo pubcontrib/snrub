@@ -42,6 +42,7 @@ int main(int argc, char **argv)
 
         if (!document)
         {
+            print_error(EXECUTE_ERROR_SHORTAGE);
             return 1;
         }
 
@@ -63,6 +64,7 @@ int main(int argc, char **argv)
 
         if (!document)
         {
+            print_error(EXECUTE_ERROR_SHORTAGE);
             return 1;
         }
 
