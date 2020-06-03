@@ -20,9 +20,6 @@ static char *unescape(char *value);
 int main(int argc, char **argv)
 {
     char *file, *text;
-    int limit;
-
-    limit = 1024 * 4;
 
     if (get_flag(argc, argv, "--version") || get_flag(argc, argv, "-v"))
     {
@@ -48,12 +45,6 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        if (strlen(document) >= limit - 1)
-        {
-            free(document);
-            return 1;
-        }
-
         return run_script(document);
     }
 
@@ -68,19 +59,12 @@ int main(int argc, char **argv)
     {
         char *document;
 
-        if (strlen(text) >= limit - 1)
-        {
-            return 1;
-        }
-
-        document = malloc(sizeof(char) * limit);
+        document = copy_string(text);
 
         if (!document)
         {
             return 1;
         }
-
-        strcpy(document, text);
 
         return run_script(document);
     }
