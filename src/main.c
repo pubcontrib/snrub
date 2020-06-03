@@ -8,7 +8,7 @@
 #define PROGRAM_VERSION "v0.16.0"
 
 static int run_script(char *document);
-static char *read_file(char *path, size_t limit);
+static char *read_file(char *path);
 static void print_version();
 static void print_usage();
 static void print_error(execute_error_t error);
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     {
         char *document;
 
-        document = read_file(file, limit);
+        document = read_file(file);
 
         if (!document)
         {
@@ -117,42 +117,27 @@ static int run_script(char *document)
     }
 }
 
-static char *read_file(char *path, size_t limit)
+static char *read_file(char *path)
 {
     FILE *file;
 
-    file = fopen(path, "r");
+    file = fopen(path, "rb");
 
     if (file)
     {
         char *buffer;
+        long int length;
 
-        buffer = malloc(sizeof(char) * limit);
+        fseek(file, 0, SEEK_END);
+        length = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        buffer = malloc(sizeof(char) * (length + 1));
 
         if (buffer)
         {
-            size_t index;
-
-            index = 0;
-
-            while (1)
-            {
-                int current;
-
-                current = fgetc(file);
-
-                if (current == EOF || index >= limit - 1)
-                {
-                    buffer[index] = '\0';
-                    break;
-                }
-                else
-                {
-                    buffer[index] = (char) current;
-                }
-
-                index += 1;
-            }
+            fread(buffer, 1, length, file);
+            buffer[length] = '\0';
         }
 
         fclose(file);
