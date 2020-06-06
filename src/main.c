@@ -92,6 +92,7 @@ static int run_script(char *document)
     }
 
     head = parse_list_document(cursor);
+    lex_destroy_cursor(cursor);
 
     if (!head)
     {
@@ -100,26 +101,25 @@ static int run_script(char *document)
     }
 
     last = execute_do_document(head);
+    parse_destroy_link(head);
 
-    if (last)
-    {
-        if (last->error != EXECUTE_ERROR_UNKNOWN)
-        {
-            print_error(last->error);
-            execute_destroy_passback(last);
-            return 1;
-        }
-        else
-        {
-            print_value(last->type, last->unsafe);
-            execute_destroy_passback(last);
-            return 0;
-        }
-    }
-    else
+    if (!last)
     {
         print_error(EXECUTE_ERROR_SHORTAGE);
         return 1;
+    }
+
+    if (last->error != EXECUTE_ERROR_UNKNOWN)
+    {
+        print_error(last->error);
+        execute_destroy_passback(last);
+        return 1;
+    }
+    else
+    {
+        print_value(last->type, last->unsafe);
+        execute_destroy_passback(last);
+        return 0;
     }
 }
 
