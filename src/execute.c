@@ -403,21 +403,16 @@ static execute_passback_t *operator_value(execute_passback_t *left, execute_pass
     {
         if (object->key && strcmp(object->key, left->unsafe) == 0)
         {
-            if (object->unsafe)
+            void *unsafe;
+
+            unsafe = copy_memory(object->unsafe, object->size);
+
+            if (!unsafe)
             {
-                void *unsafe;
-                size_t size;
-
-                size = object->size;
-                unsafe = copy_memory(object->unsafe, size);
-
-                if (!unsafe)
-                {
-                    return NULL;
-                }
-
-                return create_passback(object->type, unsafe, size, EXECUTE_ERROR_UNKNOWN);
+                return NULL;
             }
+
+            return create_passback(object->type, unsafe, object->size, EXECUTE_ERROR_UNKNOWN);
         }
     }
 
