@@ -81,7 +81,7 @@ static int run_script(char *document)
 {
     lex_cursor_t *cursor;
     parse_expression_t *expressions;
-    execute_store_t *store;
+    execute_object_t *objects;
     execute_passback_t *last;
 
     cursor = lex_start_cursor(document);
@@ -101,18 +101,18 @@ static int run_script(char *document)
         return 1;
     }
 
-    store = execute_empty_store();
+    objects = execute_empty_objects();
 
-    if (!store)
+    if (!objects)
     {
         parse_destroy_expression(expressions);
         print_error(EXECUTE_ERROR_SHORTAGE);
         return 1;
     }
 
-    last = execute_do_document(expressions, store);
+    last = execute_do_document(expressions, objects);
     parse_destroy_expression(expressions);
-    execute_destroy_store(store);
+    execute_destroy_object(objects);
 
     if (!last)
     {

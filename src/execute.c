@@ -4,7 +4,6 @@
 #include "parse.h"
 #include "common.h"
 
-static execute_store_t *create_store(execute_object_t *objects, execute_error_t error);
 static execute_object_t *create_object(execute_type_t type, void *unsafe, size_t size, char *key, execute_object_t *next);
 static execute_passback_t *create_passback(execute_type_t type, void *unsafe, size_t size, execute_error_t error);
 static execute_passback_t *create_error(execute_error_t error);
@@ -13,11 +12,11 @@ static execute_passback_t *create_null();
 static execute_passback_t *create_number(int number);
 static execute_passback_t *create_string(char *string);
 static execute_passback_t *create_copy(execute_passback_t *this);
-static execute_passback_t *apply_expression(parse_expression_t *expression, execute_store_t *store);
-static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t **arguments, size_t length, execute_store_t *store);
+static execute_passback_t *apply_expression(parse_expression_t *expression, execute_object_t *objects);
+static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t **arguments, size_t length, execute_object_t *objects);
 static execute_passback_t *operator_comment(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
-static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_store_t *store);
+static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_object_t *objects);
+static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_object_t *objects);
 static execute_passback_t *operator_add(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_subtract(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_multiply(execute_passback_t *left, execute_passback_t *right);
@@ -34,12 +33,12 @@ static execute_passback_t *operator_string(execute_passback_t *left, execute_pas
 static execute_passback_t *arguments_get(execute_passback_t **arguments, size_t length, size_t index);
 static void arguments_free(execute_passback_t **arguments, size_t length);
 
-execute_store_t *execute_empty_store()
+execute_object_t *execute_empty_objects()
 {
-    return create_store(NULL, EXECUTE_ERROR_UNKNOWN);
+    return create_object(EXECUTE_TYPE_UNKNOWN, NULL, 0, NULL, NULL);
 }
 
-execute_passback_t *execute_do_document(parse_expression_t *expressions, execute_store_t *store)
+execute_passback_t *execute_do_document(parse_expression_t *expressions, execute_object_t *objects)
 {
     parse_expression_t *expression;
     execute_passback_t *last;
@@ -50,7 +49,7 @@ execute_passback_t *execute_do_document(parse_expression_t *expressions, execute
     {
         execute_passback_t *passback;
 
-        passback = apply_expression(expression, store);
+        passback = apply_expression(expression, objects);
 
         if (!passback)
         {
@@ -89,16 +88,6 @@ execute_passback_t *execute_do_document(parse_expression_t *expressions, execute
     return last;
 }
 
-void execute_destroy_store(execute_store_t *store)
-{
-    if (store->objects)
-    {
-        execute_destroy_object(store->objects);
-    }
-
-    free(store);
-}
-
 void execute_destroy_object(execute_object_t *object)
 {
     if (object->next)
@@ -127,21 +116,6 @@ void execute_destroy_passback(execute_passback_t *passback)
     }
 
     free(passback);
-}
-
-static execute_store_t *create_store(execute_object_t *objects, execute_error_t error)
-{
-    execute_store_t *store;
-
-    store = malloc(sizeof(execute_store_t));
-
-    if (store)
-    {
-        store->objects = objects;
-        store->error = error;
-    }
-
-    return store;
 }
 
 static execute_object_t *create_object(execute_type_t type, void *unsafe, size_t size, char *key, execute_object_t *next)
@@ -243,7 +217,7 @@ static execute_passback_t *create_copy(execute_passback_t *this)
     }
 }
 
-static execute_passback_t *apply_expression(parse_expression_t *expression, execute_store_t *store)
+static execute_passback_t *apply_expression(parse_expression_t *expression, execute_object_t *objects)
 {
     execute_passback_t **arguments;
     execute_passback_t *result;
@@ -273,7 +247,7 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
     {
         execute_passback_t *argument;
 
-        argument = apply_expression(expression->arguments[index], store);
+        argument = apply_expression(expression->arguments[index], objects);
 
         if (!argument || argument->error != EXECUTE_ERROR_UNKNOWN)
         {
@@ -284,14 +258,14 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
         arguments[index] = argument;
     }
 
-    result = apply_operator(expression->value, arguments, length, store);
+    result = apply_operator(expression->value, arguments, length, objects);
 
     arguments_free(arguments, length);
 
     return result;
 }
 
-static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t **arguments, size_t length, execute_store_t *store)
+static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t **arguments, size_t length, execute_object_t *objects)
 {
     execute_passback_t *operator, *left, *right;
 
@@ -327,11 +301,11 @@ static execute_passback_t *apply_operator(parse_value_t *value, execute_passback
         }
         else if (strcmp(operator->unsafe, "<--") == 0)
         {
-            return operator_value(left, right, store);
+            return operator_value(left, right, objects);
         }
         else if (strcmp(operator->unsafe, "-->") == 0)
         {
-            return operator_assign(left, right, store);
+            return operator_assign(left, right, objects);
         }
         else if (strcmp(operator->unsafe, "+") == 0)
         {
@@ -411,8 +385,10 @@ static execute_passback_t *operator_comment(execute_passback_t *left, execute_pa
     return create_unknown();
 }
 
-static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_store_t *store)
+static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_object_t *objects)
 {
+    execute_object_t *object;
+
     if (!left)
     {
         return create_error(EXECUTE_ERROR_ARGUMENT);
@@ -423,29 +399,24 @@ static execute_passback_t *operator_value(execute_passback_t *left, execute_pass
         return create_error(EXECUTE_ERROR_ARGUMENT);
     }
 
-    if (store->objects)
+    for (object = objects; object != NULL; object = object->next)
     {
-        execute_object_t *current;
-
-        for (current = store->objects; current != NULL; current = current->next)
+        if (object->key && strcmp(object->key, left->unsafe) == 0)
         {
-            if (strcmp(current->key, left->unsafe) == 0)
+            if (object->unsafe)
             {
-                if (current->unsafe)
+                void *unsafe;
+                size_t size;
+
+                size = object->size;
+                unsafe = copy_memory(object->unsafe, size);
+
+                if (!unsafe)
                 {
-                    void *unsafe;
-                    size_t size;
-
-                    size = current->size;
-                    unsafe = copy_memory(current->unsafe, size);
-
-                    if (!unsafe)
-                    {
-                        return NULL;
-                    }
-
-                    return create_passback(current->type, unsafe, size, EXECUTE_ERROR_UNKNOWN);
+                    return NULL;
                 }
+
+                return create_passback(object->type, unsafe, size, EXECUTE_ERROR_UNKNOWN);
             }
         }
     }
@@ -453,8 +424,10 @@ static execute_passback_t *operator_value(execute_passback_t *left, execute_pass
     return create_null();
 }
 
-static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_store_t *store)
+static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_object_t *objects)
 {
+    execute_object_t *object, *last;
+
     if (!left || !right)
     {
         return create_error(EXECUTE_ERROR_ARGUMENT);
@@ -465,77 +438,58 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
         return create_error(EXECUTE_ERROR_ARGUMENT);
     }
 
-    if (store->objects)
+    last = NULL;
+
+    for (object = objects; object != NULL; object = object->next)
     {
-        execute_object_t *current, *last;
-
-        last = NULL;
-
-        for (current = store->objects; current != NULL; current = current->next)
+        if (object->key && strcmp(object->key, left->unsafe) == 0)
         {
-            if (strcmp(current->key, left->unsafe) == 0)
+            if (right->type != EXECUTE_TYPE_UNKNOWN && right->type != EXECUTE_TYPE_NULL)
             {
-                if (right->type != EXECUTE_TYPE_UNKNOWN && right->type != EXECUTE_TYPE_NULL)
+                if (object->unsafe)
                 {
-                    if (current->unsafe)
-                    {
-                        free(current->unsafe);
-                    }
+                    free(object->unsafe);
+                }
 
-                    current->type = right->type;
-                    current->unsafe = right->unsafe;
-                    current->size = right->size;
+                object->type = right->type;
+                object->unsafe = right->unsafe;
+                object->size = right->size;
 
-                    right->unsafe = NULL;
+                right->unsafe = NULL;
+            }
+            else
+            {
+                if (last)
+                {
+                    last->next = object->next;
                 }
                 else
                 {
-                    if (last)
-                    {
-                        last->next = current->next;
-                    }
-                    else
-                    {
-                        store->objects = current->next;
-                    }
-
-                    current->next = NULL;
-                    execute_destroy_object(current);
+                    objects = object->next;
+                    /*store->objects = object->next;*/
                 }
 
-                return create_null();
+                object->next = NULL;
+                execute_destroy_object(object);
             }
 
-            last = current;
+            return create_null();
         }
 
-        if (right->type != EXECUTE_TYPE_UNKNOWN && right->type != EXECUTE_TYPE_NULL)
-        {
-            last->next = create_object(right->type, right->unsafe, right->size, left->unsafe, NULL);
-
-            if (!last->next)
-            {
-                return NULL;
-            }
-
-            left->unsafe = NULL;
-            right->unsafe = NULL;
-        }
+        last = object;
     }
-    else
+
+    if (right->type != EXECUTE_TYPE_UNKNOWN && right->type != EXECUTE_TYPE_NULL)
     {
-        if (right->type != EXECUTE_TYPE_UNKNOWN && right->type != EXECUTE_TYPE_NULL)
+        last->next = create_object(right->type, right->unsafe, right->size, left->unsafe, NULL);
+
+        if (!last->next)
         {
-            store->objects = create_object(right->type, right->unsafe, right->size, left->unsafe, NULL);
-
-            if (!store->objects)
-            {
-                return NULL;
-            }
-
-            left->unsafe = NULL;
-            right->unsafe = NULL;
+            return NULL;
         }
+
+        left->unsafe = NULL;
+        right->unsafe = NULL;
     }
 
     return create_null();

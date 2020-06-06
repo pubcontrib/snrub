@@ -39,15 +39,8 @@ typedef struct execute_object_t
     struct execute_object_t *next;
 } execute_object_t;
 
-typedef struct
-{
-    execute_object_t *objects;
-    execute_error_t error;
-} execute_store_t;
-
-execute_store_t *execute_empty_store();
-execute_passback_t *execute_do_document(parse_expression_t *expressions, execute_store_t *store);
-void execute_destroy_store(execute_store_t *store);
+execute_object_t *execute_empty_objects();
+execute_passback_t *execute_do_document(parse_expression_t *expressions, execute_object_t *objects);
 void execute_destroy_object(execute_object_t *object);
 void execute_destroy_passback(execute_passback_t *passback);
 
