@@ -7,7 +7,7 @@
 #include "common.h"
 
 #define PROGRAM_NAME "snrub"
-#define PROGRAM_VERSION "v0.17.0"
+#define PROGRAM_VERSION "v0.17.1"
 
 static int run_script(char *document);
 static char *read_file(char *path);
