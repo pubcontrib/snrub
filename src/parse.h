@@ -49,7 +49,7 @@ typedef struct parse_link_t
     struct parse_link_t *next;
 } parse_link_t;
 
-parse_link_t *parse_list_document(char *document);
+parse_link_t *parse_list_document(lex_cursor_t *cursor);
 void parse_destroy_link(parse_link_t *link);
 void parse_destroy_expression(parse_expression_t *expression);
 void parse_destroy_value(parse_value_t *value);

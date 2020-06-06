@@ -17,17 +17,9 @@ static int is_value(lex_identifier_t identifier);
 static char *escape(char *value);
 static char is_printable(char *value);
 
-parse_link_t *parse_list_document(char *document)
+parse_link_t *parse_list_document(lex_cursor_t *cursor)
 {
-    lex_cursor_t *cursor;
     parse_link_t *head, *tail;
-
-    cursor = lex_iterate_document(document);
-
-    if (!cursor)
-    {
-        return NULL;
-    }
 
     head = NULL;
     tail = NULL;
@@ -47,7 +39,6 @@ parse_link_t *parse_list_document(char *document)
                 if (!tail->next)
                 {
                     parse_destroy_link(head);
-                    lex_destroy_cursor(cursor);
                     return NULL;
                 }
 
@@ -59,7 +50,6 @@ parse_link_t *parse_list_document(char *document)
 
                 if (!head)
                 {
-                    lex_destroy_cursor(cursor);
                     return NULL;
                 }
 
@@ -68,19 +58,15 @@ parse_link_t *parse_list_document(char *document)
 
             if (tail->expression->error != PARSE_ERROR_UNKNOWN)
             {
-                lex_destroy_cursor(cursor);
                 return head;
             }
         }
         else
         {
             parse_destroy_link(head);
-            lex_destroy_cursor(cursor);
             return NULL;
         }
     } while (cursor->status != LEX_STATUS_CLOSED);
-
-    lex_destroy_cursor(cursor);
 
     return head;
 }

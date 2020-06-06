@@ -77,9 +77,27 @@ int main(int argc, char **argv)
 
 static int run_script(char *document)
 {
+    lex_cursor_t *cursor;
+    parse_link_t *head;
     execute_passback_t *last;
 
-    last = execute_do_document(document);
+    cursor = lex_iterate_document(document);
+
+    if (!cursor)
+    {
+        print_error(EXECUTE_ERROR_SHORTAGE);
+        return 1;
+    }
+
+    head = parse_list_document(cursor);
+
+    if (!head)
+    {
+        print_error(EXECUTE_ERROR_SHORTAGE);
+        return 1;
+    }
+
+    last = execute_do_document(head);
 
     if (last)
     {
