@@ -458,11 +458,6 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
                 {
                     last->next = object->next;
                 }
-                else
-                {
-                    objects = object->next;
-                    /*store->objects = object->next;*/
-                }
 
                 object->next = NULL;
                 execute_destroy_object(object);
