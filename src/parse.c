@@ -5,8 +5,7 @@
 #include "lex.h"
 #include "common.h"
 
-static parse_link_t *create_link(parse_expression_t *expression, parse_link_t *next);
-static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t **arguments, size_t length);
+static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t **arguments, size_t length, parse_expression_t *next);
 static parse_value_t *create_value(parse_type_t type, void *unsafe);
 static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *token, int depth);
 static parse_value_t *token_to_value(lex_token_t *token);
@@ -17,9 +16,9 @@ static int is_value(lex_identifier_t identifier);
 static char *escape(char *value);
 static char is_printable(char *value);
 
-parse_link_t *parse_list_document(lex_cursor_t *cursor)
+parse_expression_t *parse_list_expressions(lex_cursor_t *cursor)
 {
-    parse_link_t *head, *tail;
+    parse_expression_t *head, *tail;
 
     head = NULL;
     tail = NULL;
@@ -34,56 +33,28 @@ parse_link_t *parse_list_document(lex_cursor_t *cursor)
         {
             if (head)
             {
-                tail->next = create_link(expression, NULL);
-
-                if (!tail->next)
-                {
-                    parse_destroy_link(head);
-                    return NULL;
-                }
-
+                tail->next = expression;
                 tail = tail->next;
             }
             else
             {
-                head = create_link(expression, NULL);
-
-                if (!head)
-                {
-                    return NULL;
-                }
-
+                head = expression;
                 tail = head;
             }
 
-            if (tail->expression->error != PARSE_ERROR_UNKNOWN)
+            if (expression->error != PARSE_ERROR_UNKNOWN)
             {
                 return head;
             }
         }
         else
         {
-            parse_destroy_link(head);
+            parse_destroy_expression(head);
             return NULL;
         }
     } while (cursor->status != LEX_STATUS_CLOSED);
 
     return head;
-}
-
-void parse_destroy_link(parse_link_t *link)
-{
-    if (link->next)
-    {
-        parse_destroy_link(link->next);
-    }
-
-    if (link->expression)
-    {
-        parse_destroy_expression(link->expression);
-    }
-
-    free(link);
 }
 
 void parse_destroy_expression(parse_expression_t *expression)
@@ -105,6 +76,11 @@ void parse_destroy_expression(parse_expression_t *expression)
         free(expression->arguments);
     }
 
+    if (expression->next)
+    {
+        parse_destroy_expression(expression->next);
+    }
+
     free(expression);
 }
 
@@ -118,22 +94,7 @@ void parse_destroy_value(parse_value_t *value)
     free(value);
 }
 
-static parse_link_t *create_link(parse_expression_t *expression, parse_link_t *next)
-{
-    parse_link_t *link;
-
-    link = malloc(sizeof(parse_link_t));
-
-    if (link)
-    {
-        link->expression = expression;
-        link->next = next;
-    }
-
-    return link;
-}
-
-static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t **arguments, size_t length)
+static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t **arguments, size_t length, parse_expression_t *next)
 {
     parse_expression_t *expression;
 
@@ -145,6 +106,7 @@ static parse_expression_t *create_expression(parse_error_t error, parse_value_t 
         expression->value = value;
         expression->arguments = arguments;
         expression->length = length;
+        expression->next = next;
     }
 
     return expression;
@@ -171,7 +133,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
     parse_expression_t *expression;
 
     status = PARSE_STATUS_START;
-    expression = create_expression(PARSE_ERROR_UNKNOWN, NULL, NULL, 0);
+    expression = create_expression(PARSE_ERROR_UNKNOWN, NULL, NULL, 0, NULL);
 
     if (depth > 32)
     {

@@ -39,18 +39,18 @@ execute_store_t *execute_empty_store()
     return create_store(NULL, EXECUTE_ERROR_UNKNOWN);
 }
 
-execute_passback_t *execute_do_document(parse_link_t *head, execute_store_t *store)
+execute_passback_t *execute_do_document(parse_expression_t *expressions, execute_store_t *store)
 {
-    parse_link_t *current;
+    parse_expression_t *expression;
     execute_passback_t *last;
 
     last = NULL;
 
-    for (current = head; current != NULL; current = current->next)
+    for (expression = expressions; expression != NULL; expression = expression->next)
     {
         execute_passback_t *passback;
 
-        passback = apply_expression(current->expression, store);
+        passback = apply_expression(expression, store);
 
         if (!passback)
         {

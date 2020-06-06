@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 static int run_script(char *document)
 {
     lex_cursor_t *cursor;
-    parse_link_t *head;
+    parse_expression_t *expressions;
     execute_store_t *store;
     execute_passback_t *last;
 
@@ -92,10 +92,10 @@ static int run_script(char *document)
         return 1;
     }
 
-    head = parse_list_document(cursor);
+    expressions = parse_list_expressions(cursor);
     lex_destroy_cursor(cursor);
 
-    if (!head)
+    if (!expressions)
     {
         print_error(EXECUTE_ERROR_SHORTAGE);
         return 1;
@@ -105,13 +105,13 @@ static int run_script(char *document)
 
     if (!store)
     {
-        parse_destroy_link(head);
+        parse_destroy_expression(expressions);
         print_error(EXECUTE_ERROR_SHORTAGE);
         return 1;
     }
 
-    last = execute_do_document(head, store);
-    parse_destroy_link(head);
+    last = execute_do_document(expressions, store);
+    parse_destroy_expression(expressions);
     execute_destroy_store(store);
 
     if (!last)

@@ -41,16 +41,10 @@ typedef struct parse_expression_t
     parse_value_t *value;
     struct parse_expression_t **arguments;
     size_t length;
+    struct parse_expression_t *next;
 } parse_expression_t;
 
-typedef struct parse_link_t
-{
-    parse_expression_t *expression;
-    struct parse_link_t *next;
-} parse_link_t;
-
-parse_link_t *parse_list_document(lex_cursor_t *cursor);
-void parse_destroy_link(parse_link_t *link);
+parse_expression_t *parse_list_expressions(lex_cursor_t *cursor);
 void parse_destroy_expression(parse_expression_t *expression);
 void parse_destroy_value(parse_value_t *value);
 
