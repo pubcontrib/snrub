@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "execute.h"
+#include "parse.h"
+#include "lex.h"
 #include "common.h"
 
 #define PROGRAM_NAME "snrub"
