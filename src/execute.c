@@ -34,20 +34,17 @@ static execute_passback_t *operator_string(execute_passback_t *left, execute_pas
 static execute_passback_t *arguments_get(execute_passback_t **arguments, size_t length, size_t index);
 static void arguments_free(execute_passback_t **arguments, size_t length);
 
-execute_passback_t *execute_do_document(parse_link_t *head)
+execute_store_t *execute_empty_store()
+{
+    return create_store(NULL, EXECUTE_ERROR_UNKNOWN);
+}
+
+execute_passback_t *execute_do_document(parse_link_t *head, execute_store_t *store)
 {
     parse_link_t *current;
-    execute_store_t *store;
     execute_passback_t *last;
 
     last = NULL;
-
-    store = create_store(NULL, EXECUTE_ERROR_UNKNOWN);
-
-    if (!store)
-    {
-        return NULL;
-    }
 
     for (current = head; current != NULL; current = current->next)
     {
@@ -88,8 +85,6 @@ execute_passback_t *execute_do_document(parse_link_t *head)
             break;
         }
     }
-
-    execute_destroy_store(store);
 
     return last;
 }

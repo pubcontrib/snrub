@@ -81,6 +81,7 @@ static int run_script(char *document)
 {
     lex_cursor_t *cursor;
     parse_link_t *head;
+    execute_store_t *store;
     execute_passback_t *last;
 
     cursor = lex_iterate_document(document);
@@ -100,8 +101,18 @@ static int run_script(char *document)
         return 1;
     }
 
-    last = execute_do_document(head);
+    store = execute_empty_store();
+
+    if (!store)
+    {
+        parse_destroy_link(head);
+        print_error(EXECUTE_ERROR_SHORTAGE);
+        return 1;
+    }
+
+    last = execute_do_document(head, store);
     parse_destroy_link(head);
+    execute_destroy_store(store);
 
     if (!last)
     {
