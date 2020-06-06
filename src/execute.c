@@ -38,7 +38,7 @@ execute_object_t *execute_empty_objects()
     return create_object(EXECUTE_TYPE_UNKNOWN, NULL, 0, NULL, NULL);
 }
 
-execute_passback_t *execute_do_document(parse_expression_t *expressions, execute_object_t *objects)
+execute_passback_t *execute_evaluate_expression(parse_expression_t *expressions, execute_object_t *objects)
 {
     parse_expression_t *expression;
     execute_passback_t *last;

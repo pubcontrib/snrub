@@ -110,7 +110,7 @@ static int run_script(char *document)
         return 1;
     }
 
-    last = execute_do_document(expressions, objects);
+    last = execute_evaluate_expression(expressions, objects);
     parse_destroy_expression(expressions);
     execute_destroy_object(objects);
 
