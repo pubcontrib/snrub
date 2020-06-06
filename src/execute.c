@@ -46,7 +46,6 @@ execute_passback_t *execute_do_document(parse_link_t *head)
 
     if (!store)
     {
-        parse_destroy_link(head);
         return NULL;
     }
 
