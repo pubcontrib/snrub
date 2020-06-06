@@ -84,7 +84,7 @@ static int run_script(char *document)
     execute_store_t *store;
     execute_passback_t *last;
 
-    cursor = lex_iterate_document(document);
+    cursor = lex_start_cursor(document);
 
     if (!cursor)
     {

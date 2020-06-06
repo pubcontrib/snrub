@@ -35,7 +35,7 @@ typedef struct
     lex_status_t status;
 } lex_cursor_t;
 
-lex_cursor_t *lex_iterate_document(char *document);
+lex_cursor_t *lex_start_cursor(char *document);
 lex_token_t *lex_next_token(lex_cursor_t *cursor);
 char lex_number_symbol();
 char lex_string_symbol();

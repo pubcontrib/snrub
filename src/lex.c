@@ -8,7 +8,7 @@ static lex_token_t *create_token(lex_identifier_t identifier, char *value);
 static lex_token_t *slice_token(lex_cursor_t *cursor, size_t start, size_t end, size_t length, lex_identifier_t identifier);
 static lex_identifier_t match_identifier(char symbol);
 
-lex_cursor_t *lex_iterate_document(char *document)
+lex_cursor_t *lex_start_cursor(char *document)
 {
     lex_status_t status;
 
