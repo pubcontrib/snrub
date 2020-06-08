@@ -7,16 +7,16 @@
 
 static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t **arguments, size_t length, parse_expression_t *next);
 static parse_value_t *create_value(parse_type_t type, void *unsafe);
-static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *token, int depth);
-static parse_value_t *token_to_value(lex_token_t *token);
+static parse_expression_t *next_expression(scanner_t *scanner, token_t *token, int depth);
+static parse_value_t *token_to_value(token_t *token);
 static parse_value_t *null_to_value(char *value);
 static parse_value_t *number_to_value(char *value);
 static parse_value_t *string_to_value(char *value);
-static int is_value(lex_identifier_t identifier);
+static int is_value(token_name_t name);
 static char *escape(char *value);
 static char is_printable(char *value);
 
-parse_expression_t *parse_list_expressions(lex_cursor_t *cursor)
+parse_expression_t *parse_list_expressions(scanner_t *scanner)
 {
     parse_expression_t *head, *tail;
 
@@ -27,7 +27,7 @@ parse_expression_t *parse_list_expressions(lex_cursor_t *cursor)
     {
         parse_expression_t *expression;
 
-        expression = next_expression(cursor, NULL, 1);
+        expression = next_expression(scanner, NULL, 1);
 
         if (expression)
         {
@@ -52,7 +52,7 @@ parse_expression_t *parse_list_expressions(lex_cursor_t *cursor)
             parse_destroy_expression(head);
             return NULL;
         }
-    } while (cursor->status != LEX_STATUS_CLOSED);
+    } while (scanner->state != SCANNER_STATE_CLOSED);
 
     return head;
 }
@@ -127,7 +127,7 @@ static parse_value_t *create_value(parse_type_t type, void *unsafe)
     return value;
 }
 
-static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *token, int depth)
+static parse_expression_t *next_expression(scanner_t *scanner, token_t *token, int depth)
 {
     parse_status_t status;
     parse_expression_t *expression;
@@ -141,7 +141,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
         expression->error = PARSE_ERROR_DEPTH;
     }
 
-    while (cursor->status != LEX_STATUS_CLOSED && status != PARSE_STATUS_ERROR && status != PARSE_STATUS_SUCCESS)
+    while (scanner->state != SCANNER_STATE_CLOSED && status != PARSE_STATUS_ERROR && status != PARSE_STATUS_SUCCESS)
     {
         if (expression->length > 32)
         {
@@ -150,19 +150,19 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
             break;
         }
 
-        token = token ? token : lex_next_token(cursor);
+        token = token ? token : next_token(scanner);
 
         if (token)
         {
-            if (token->identifier == LEX_IDENTIFIER_UNKNOWN)
+            if (token->name == TOKEN_NAME_UNKNOWN)
             {
                 status = PARSE_STATUS_ERROR;
             }
-            else if (token->identifier != LEX_IDENTIFIER_WHITESPACE)
+            else if (token->name != TOKEN_NAME_WHITESPACE)
             {
                 if (status == PARSE_STATUS_START)
                 {
-                    if (is_value(token->identifier))
+                    if (is_value(token->name))
                     {
                         expression->value = token_to_value(token);
 
@@ -173,19 +173,19 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
                         }
                         else
                         {
-                            lex_destroy_token(token);
+                            destroy_token(token);
                             parse_destroy_expression(expression);
                             return NULL;
                         }
                     }
                     else
                     {
-                        status = token->identifier == LEX_IDENTIFIER_START ? PARSE_STATUS_ARGUMENTS : PARSE_STATUS_ERROR;
+                        status = token->name == TOKEN_NAME_START ? PARSE_STATUS_ARGUMENTS : PARSE_STATUS_ERROR;
                     }
                 }
                 else if (status == PARSE_STATUS_ARGUMENTS)
                 {
-                    if (token->identifier == LEX_IDENTIFIER_END)
+                    if (token->name == TOKEN_NAME_END)
                     {
                         if (expression->length > 0)
                         {
@@ -201,7 +201,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
                     {
                         parse_expression_t *argument;
 
-                        argument = next_expression(cursor, token, depth + 1);
+                        argument = next_expression(scanner, token, depth + 1);
                         token = NULL;
 
                         if (argument)
@@ -240,7 +240,7 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
 
             if (token)
             {
-                lex_destroy_token(token);
+                destroy_token(token);
                 token = NULL;
             }
         }
@@ -261,21 +261,21 @@ static parse_expression_t *next_expression(lex_cursor_t *cursor, lex_token_t *to
 
     if (token)
     {
-        lex_destroy_token(token);
+        destroy_token(token);
     }
 
     return expression;
 }
 
-static parse_value_t *token_to_value(lex_token_t *token)
+static parse_value_t *token_to_value(token_t *token)
 {
-    switch (token->identifier)
+    switch (token->name)
     {
-        case LEX_IDENTIFIER_NULL:
+        case TOKEN_NAME_NULL:
             return null_to_value(token->value);
-        case LEX_IDENTIFIER_NUMBER:
+        case TOKEN_NAME_NUMBER:
             return number_to_value(token->value);
-        case LEX_IDENTIFIER_STRING:
+        case TOKEN_NAME_STRING:
             return string_to_value(token->value);
         default:
             return NULL;
@@ -300,7 +300,7 @@ static parse_value_t *number_to_value(char *value)
         return create_value(PARSE_TYPE_UNKNOWN, NULL);
     }
 
-    if (value[0] != lex_number_symbol() || value[length - 1] != lex_number_symbol())
+    if (value[0] != number_symbol() || value[length - 1] != number_symbol())
     {
         return create_value(PARSE_TYPE_UNKNOWN, NULL);
     }
@@ -356,7 +356,7 @@ static parse_value_t *string_to_value(char *value)
         return create_value(PARSE_TYPE_UNKNOWN, NULL);
     }
 
-    if (value[0] != lex_string_symbol() || value[length - 1] != lex_string_symbol())
+    if (value[0] != string_symbol() || value[length - 1] != string_symbol())
     {
         return create_value(PARSE_TYPE_UNKNOWN, NULL);
     }
@@ -379,13 +379,13 @@ static parse_value_t *string_to_value(char *value)
     return create_value(PARSE_TYPE_STRING, unsafe);
 }
 
-static int is_value(lex_identifier_t identifier)
+static int is_value(token_name_t name)
 {
-    switch (identifier)
+    switch (name)
     {
-        case LEX_IDENTIFIER_NULL:
-        case LEX_IDENTIFIER_NUMBER:
-        case LEX_IDENTIFIER_STRING:
+        case TOKEN_NAME_NULL:
+        case TOKEN_NAME_NUMBER:
+        case TOKEN_NAME_STRING:
             return 1;
         default:
             return 0;

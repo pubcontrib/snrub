@@ -3,69 +3,69 @@
 #include "lex.h"
 #include "common.h"
 
-static lex_cursor_t *create_cursor(char *document, size_t position, lex_status_t status);
-static lex_token_t *create_token(lex_identifier_t identifier, char *value);
-static lex_token_t *slice_token(lex_cursor_t *cursor, size_t start, size_t end, size_t length, lex_identifier_t identifier);
-static lex_identifier_t match_identifier(char symbol);
+static scanner_t *create_scanner(char *document, size_t position, scanner_state_t state);
+static token_t *create_token(token_name_t name, char *value);
+static token_t *slice_token(scanner_t *scanner, size_t start, size_t end, size_t length, token_name_t name);
+static token_name_t match_name(char symbol);
 
-lex_cursor_t *lex_start_cursor(char *document)
+scanner_t *start_scanner(char *document)
 {
-    lex_status_t status;
+    scanner_state_t state;
 
-    status = strlen(document) == 0 ? LEX_STATUS_CLOSED : LEX_STATUS_ROAMING;
+    state = strlen(document) == 0 ? SCANNER_STATE_CLOSED : SCANNER_STATE_ROAMING;
 
-    return create_cursor(document, 0, status);
+    return create_scanner(document, 0, state);
 }
 
-lex_token_t *lex_next_token(lex_cursor_t *cursor)
+token_t *next_token(scanner_t *scanner)
 {
     size_t length, start, end;
     int escaping;
 
-    length = strlen(cursor->document);
+    length = strlen(scanner->document);
     start = 0;
     end = 0;
     escaping = 0;
 
-    while (cursor->position < length)
+    while (scanner->position < length)
     {
         char symbol;
 
-        symbol = cursor->document[cursor->position];
-        cursor->position += 1;
-        end = cursor->position;
+        symbol = scanner->document[scanner->position];
+        scanner->position += 1;
+        end = scanner->position;
 
-        if (cursor->status == LEX_STATUS_ROAMING)
+        if (scanner->state == SCANNER_STATE_ROAMING)
         {
-            if (symbol == lex_number_symbol())
+            if (symbol == number_symbol())
             {
-                start = cursor->position - 1;
-                cursor->status = LEX_STATUS_NUMBER;
+                start = scanner->position - 1;
+                scanner->state = SCANNER_STATE_NUMBER;
             }
-            else if (symbol == lex_string_symbol())
+            else if (symbol == string_symbol())
             {
-                start = cursor->position - 1;
-                cursor->status = LEX_STATUS_STRING;
+                start = scanner->position - 1;
+                scanner->state = SCANNER_STATE_STRING;
             }
             else
             {
-                lex_identifier_t identifier;
+                token_name_t name;
 
-                identifier = match_identifier(symbol);
+                name = match_name(symbol);
 
-                return slice_token(cursor, cursor->position - 1, cursor->position, length, identifier);
+                return slice_token(scanner, scanner->position - 1, scanner->position, length, name);
             }
         }
-        else if (cursor->status == LEX_STATUS_NUMBER)
+        else if (scanner->state == SCANNER_STATE_NUMBER)
         {
-            if (symbol == lex_number_symbol())
+            if (symbol == number_symbol())
             {
-                return slice_token(cursor, start, end, length, LEX_IDENTIFIER_NUMBER);
+                return slice_token(scanner, start, end, length, TOKEN_NAME_NUMBER);
             }
         }
-        else if (cursor->status == LEX_STATUS_STRING)
+        else if (scanner->state == SCANNER_STATE_STRING)
         {
-            if (symbol == lex_string_symbol())
+            if (symbol == string_symbol())
             {
                 if (escaping)
                 {
@@ -73,10 +73,10 @@ lex_token_t *lex_next_token(lex_cursor_t *cursor)
                 }
                 else
                 {
-                    return slice_token(cursor, start, end, length, LEX_IDENTIFIER_STRING);
+                    return slice_token(scanner, start, end, length, TOKEN_NAME_STRING);
                 }
             }
-            else if (symbol == lex_escape_symbol())
+            else if (symbol == escape_symbol())
             {
                 escaping = escaping ? 0 : 1;
             }
@@ -90,44 +90,44 @@ lex_token_t *lex_next_token(lex_cursor_t *cursor)
         }
     }
 
-    if (cursor->status == LEX_STATUS_NUMBER || cursor->status == LEX_STATUS_STRING)
+    if (scanner->state == SCANNER_STATE_NUMBER || scanner->state == SCANNER_STATE_STRING)
     {
-        return slice_token(cursor, start, end, length, LEX_IDENTIFIER_UNKNOWN);
+        return slice_token(scanner, start, end, length, TOKEN_NAME_UNKNOWN);
     }
     else
     {
-        cursor->status = LEX_STATUS_CLOSED;
+        scanner->state = SCANNER_STATE_CLOSED;
 
         return NULL;
     }
 }
 
-char lex_number_symbol()
+char number_symbol()
 {
     return '#';
 }
 
-char lex_string_symbol()
+char string_symbol()
 {
     return '"';
 }
 
-char lex_escape_symbol()
+char escape_symbol()
 {
     return '\\';
 }
 
-void lex_destroy_cursor(lex_cursor_t *cursor)
+void destroy_scanner(scanner_t *scanner)
 {
-    if (cursor->document)
+    if (scanner->document)
     {
-        free(cursor->document);
+        free(scanner->document);
     }
 
-    free(cursor);
+    free(scanner);
 }
 
-void lex_destroy_token(lex_token_t *token)
+void destroy_token(token_t *token)
 {
     if (token->value)
     {
@@ -137,35 +137,35 @@ void lex_destroy_token(lex_token_t *token)
     free(token);
 }
 
-static lex_cursor_t *create_cursor(char *document, size_t position, lex_status_t status)
+static scanner_t *create_scanner(char *document, size_t position, scanner_state_t state)
 {
-    lex_cursor_t *cursor;
+    scanner_t *scanner;
 
-    cursor = malloc(sizeof(lex_cursor_t));
+    scanner = malloc(sizeof(scanner_t));
 
-    if (cursor)
+    if (scanner)
     {
-        cursor->document = document;
-        cursor->position = position;
-        cursor->status = status;
+        scanner->document = document;
+        scanner->position = position;
+        scanner->state = state;
     }
 
-    return cursor;
+    return scanner;
 }
 
-static lex_token_t *create_token(lex_identifier_t identifier, char *value)
+static token_t *create_token(token_name_t name, char *value)
 {
-    lex_token_t *token;
+    token_t *token;
 
     token = NULL;
 
     if (value)
     {
-        token = malloc(sizeof(lex_token_t));
+        token = malloc(sizeof(token_t));
 
         if (token)
         {
-            token->identifier = identifier;
+            token->name = name;
             token->value = value;
         }
     }
@@ -173,32 +173,32 @@ static lex_token_t *create_token(lex_identifier_t identifier, char *value)
     return token;
 }
 
-static lex_token_t *slice_token(lex_cursor_t *cursor, size_t start, size_t end, size_t length, lex_identifier_t identifier)
+static token_t *slice_token(scanner_t *scanner, size_t start, size_t end, size_t length, token_name_t name)
 {
     char *value;
 
-    cursor->status = cursor->position < length ? LEX_STATUS_ROAMING : LEX_STATUS_CLOSED;
-    value = slice_string(cursor->document, start, end);
+    scanner->state = scanner->position < length ? SCANNER_STATE_ROAMING : SCANNER_STATE_CLOSED;
+    value = slice_string(scanner->document, start, end);
 
-    return create_token(identifier, value);
+    return create_token(name, value);
 }
 
-static lex_identifier_t match_identifier(char symbol)
+static token_name_t match_name(char symbol)
 {
     switch (symbol)
     {
         case '(':
-            return LEX_IDENTIFIER_START;
+            return TOKEN_NAME_START;
         case ')':
-            return LEX_IDENTIFIER_END;
+            return TOKEN_NAME_END;
         case ' ':
         case '\t':
         case '\n':
         case '\r':
-            return LEX_IDENTIFIER_WHITESPACE;
+            return TOKEN_NAME_WHITESPACE;
         case '?':
-            return LEX_IDENTIFIER_NULL;
+            return TOKEN_NAME_NULL;
         default:
-            return LEX_IDENTIFIER_UNKNOWN;
+            return TOKEN_NAME_UNKNOWN;
     }
 }

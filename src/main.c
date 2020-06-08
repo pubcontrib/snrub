@@ -79,21 +79,21 @@ int main(int argc, char **argv)
 
 static int run_script(char *document)
 {
-    lex_cursor_t *cursor;
+    scanner_t *scanner;
     parse_expression_t *expressions;
     execute_object_t *objects;
     execute_passback_t *last;
 
-    cursor = lex_start_cursor(document);
+    scanner = start_scanner(document);
 
-    if (!cursor)
+    if (!scanner)
     {
         print_error(EXECUTE_ERROR_SHORTAGE);
         return 1;
     }
 
-    expressions = parse_list_expressions(cursor);
-    lex_destroy_cursor(cursor);
+    expressions = parse_list_expressions(scanner);
+    destroy_scanner(scanner);
 
     if (!expressions)
     {

@@ -44,7 +44,7 @@ typedef struct parse_expression_t
     struct parse_expression_t *next;
 } parse_expression_t;
 
-parse_expression_t *parse_list_expressions(lex_cursor_t *cursor);
+parse_expression_t *parse_list_expressions(scanner_t *scanner);
 void parse_destroy_expression(parse_expression_t *expression);
 void parse_destroy_value(parse_value_t *value);
 
