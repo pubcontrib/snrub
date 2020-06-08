@@ -4,58 +4,58 @@
 #include "parse.h"
 #include "common.h"
 
-static execute_object_t *create_object(execute_type_t type, void *unsafe, size_t size, char *key, execute_object_t *next);
-static execute_passback_t *create_passback(execute_type_t type, void *unsafe, size_t size, execute_error_t error);
-static execute_passback_t *create_error(execute_error_t error);
-static execute_passback_t *create_unknown();
-static execute_passback_t *create_null();
-static execute_passback_t *create_number(int number);
-static execute_passback_t *create_string(char *string);
-static execute_passback_t *create_copy(execute_passback_t *this);
-static execute_passback_t *apply_expression(expression_t *expression, execute_object_t *objects);
-static execute_passback_t *apply_operator(literal_t *literal, execute_passback_t **arguments, size_t length, execute_object_t *objects);
-static execute_passback_t *operator_comment(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_object_t *objects);
-static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_object_t *objects);
-static execute_passback_t *operator_add(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_subtract(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_multiply(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_divide(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_and(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_or(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_not(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_conditional(execute_passback_t *condition, execute_passback_t *pass, execute_passback_t *fail);
-static execute_passback_t *operator_less(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_greater(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_equal(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_number(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *operator_string(execute_passback_t *left, execute_passback_t *right);
-static execute_passback_t *arguments_get(execute_passback_t **arguments, size_t length, size_t index);
-static void arguments_free(execute_passback_t **arguments, size_t length);
+static object_t *create_object(type_t type, void *unsafe, size_t size, char *key, object_t *next);
+static handoff_t *create_handoff(type_t type, void *unsafe, size_t size, error_t error);
+static handoff_t *create_error(error_t error);
+static handoff_t *create_unknown();
+static handoff_t *create_null();
+static handoff_t *create_number(int number);
+static handoff_t *create_string(char *string);
+static handoff_t *create_copy(handoff_t *this);
+static handoff_t *apply_expression(expression_t *expression, object_t *objects);
+static handoff_t *apply_operator(literal_t *literal, handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_comment(handoff_t *left, handoff_t *right);
+static handoff_t *operator_value(handoff_t *left, handoff_t *right, object_t *objects);
+static handoff_t *operator_assign(handoff_t *left, handoff_t *right, object_t *objects);
+static handoff_t *operator_add(handoff_t *left, handoff_t *right);
+static handoff_t *operator_subtract(handoff_t *left, handoff_t *right);
+static handoff_t *operator_multiply(handoff_t *left, handoff_t *right);
+static handoff_t *operator_divide(handoff_t *left, handoff_t *right);
+static handoff_t *operator_and(handoff_t *left, handoff_t *right);
+static handoff_t *operator_or(handoff_t *left, handoff_t *right);
+static handoff_t *operator_not(handoff_t *left, handoff_t *right);
+static handoff_t *operator_conditional(handoff_t *condition, handoff_t *pass, handoff_t *fail);
+static handoff_t *operator_less(handoff_t *left, handoff_t *right);
+static handoff_t *operator_greater(handoff_t *left, handoff_t *right);
+static handoff_t *operator_equal(handoff_t *left, handoff_t *right);
+static handoff_t *operator_number(handoff_t *left, handoff_t *right);
+static handoff_t *operator_string(handoff_t *left, handoff_t *right);
+static handoff_t *arguments_get(handoff_t **arguments, size_t length, size_t index);
+static void arguments_free(handoff_t **arguments, size_t length);
 
-execute_object_t *execute_empty_objects()
+object_t *empty_object()
 {
-    return create_object(EXECUTE_TYPE_UNKNOWN, NULL, 0, NULL, NULL);
+    return create_object(TYPE_UNKNOWN, NULL, 0, NULL, NULL);
 }
 
-execute_passback_t *execute_evaluate_expression(expression_t *expressions, execute_object_t *objects)
+handoff_t *execute_expression(expression_t *expressions, object_t *objects)
 {
     expression_t *expression;
-    execute_passback_t *last;
+    handoff_t *last;
 
     last = NULL;
 
     for (expression = expressions; expression != NULL; expression = expression->next)
     {
-        execute_passback_t *passback;
+        handoff_t *handoff;
 
-        passback = apply_expression(expression, objects);
+        handoff = apply_expression(expression, objects);
 
-        if (!passback)
+        if (!handoff)
         {
             if (last)
             {
-                execute_destroy_passback(last);
+                destroy_handoff(last);
                 last = NULL;
             }
 
@@ -64,22 +64,22 @@ execute_passback_t *execute_evaluate_expression(expression_t *expressions, execu
 
         if (last)
         {
-            if (passback->type == EXECUTE_TYPE_UNKNOWN)
+            if (handoff->type == TYPE_UNKNOWN)
             {
-                execute_destroy_passback(passback);
+                destroy_handoff(handoff);
             }
             else
             {
-                execute_destroy_passback(last);
-                last = passback;
+                destroy_handoff(last);
+                last = handoff;
             }
         }
         else
         {
-            last = passback;
+            last = handoff;
         }
 
-        if (last->error != EXECUTE_ERROR_UNKNOWN)
+        if (last->error != ERROR_UNKNOWN)
         {
             break;
         }
@@ -88,11 +88,11 @@ execute_passback_t *execute_evaluate_expression(expression_t *expressions, execu
     return last;
 }
 
-void execute_destroy_object(execute_object_t *object)
+void destroy_object(object_t *object)
 {
     if (object->next)
     {
-        execute_destroy_object(object->next);
+        destroy_object(object->next);
     }
 
     if (object->unsafe)
@@ -108,21 +108,21 @@ void execute_destroy_object(execute_object_t *object)
     free(object);
 }
 
-void execute_destroy_passback(execute_passback_t *passback)
+void destroy_handoff(handoff_t *handoff)
 {
-    if (passback->unsafe)
+    if (handoff->unsafe)
     {
-        free(passback->unsafe);
+        free(handoff->unsafe);
     }
 
-    free(passback);
+    free(handoff);
 }
 
-static execute_object_t *create_object(execute_type_t type, void *unsafe, size_t size, char *key, execute_object_t *next)
+static object_t *create_object(type_t type, void *unsafe, size_t size, char *key, object_t *next)
 {
-    execute_object_t *object;
+    object_t *object;
 
-    object = malloc(sizeof(execute_object_t));
+    object = malloc(sizeof(object_t));
 
     if (object)
     {
@@ -136,39 +136,39 @@ static execute_object_t *create_object(execute_type_t type, void *unsafe, size_t
     return object;
 }
 
-static execute_passback_t *create_passback(execute_type_t type, void *unsafe, size_t size, execute_error_t error)
+static handoff_t *create_handoff(type_t type, void *unsafe, size_t size, error_t error)
 {
-    execute_passback_t *passback;
+    handoff_t *handoff;
 
-    passback = malloc(sizeof(execute_passback_t));
+    handoff = malloc(sizeof(handoff_t));
 
-    if (passback)
+    if (handoff)
     {
-        passback->type = type;
-        passback->unsafe = unsafe;
-        passback->size = size;
-        passback->error = error;
+        handoff->type = type;
+        handoff->unsafe = unsafe;
+        handoff->size = size;
+        handoff->error = error;
     }
 
-    return passback;
+    return handoff;
 }
 
-static execute_passback_t *create_error(execute_error_t error)
+static handoff_t *create_error(error_t error)
 {
-    return create_passback(EXECUTE_TYPE_NULL, NULL, 0, error);
+    return create_handoff(TYPE_NULL, NULL, 0, error);
 }
 
-static execute_passback_t *create_unknown()
+static handoff_t *create_unknown()
 {
-    return create_passback(EXECUTE_TYPE_UNKNOWN, NULL, 0, EXECUTE_ERROR_UNKNOWN);
+    return create_handoff(TYPE_UNKNOWN, NULL, 0, ERROR_UNKNOWN);
 }
 
-static execute_passback_t *create_null()
+static handoff_t *create_null()
 {
-    return create_passback(EXECUTE_TYPE_NULL, NULL, 0, EXECUTE_ERROR_UNKNOWN);
+    return create_handoff(TYPE_NULL, NULL, 0, ERROR_UNKNOWN);
 }
 
-static execute_passback_t *create_number(int number)
+static handoff_t *create_number(int number)
 {
     int *unsafe;
     size_t size;
@@ -182,10 +182,10 @@ static execute_passback_t *create_number(int number)
 
     size = sizeof(int);
 
-    return create_passback(EXECUTE_TYPE_NUMBER, unsafe, size, EXECUTE_ERROR_UNKNOWN);
+    return create_handoff(TYPE_NUMBER, unsafe, size, ERROR_UNKNOWN);
 }
 
-static execute_passback_t *create_string(char *string)
+static handoff_t *create_string(char *string)
 {
     char *unsafe;
     size_t size;
@@ -199,57 +199,45 @@ static execute_passback_t *create_string(char *string)
 
     size = sizeof(char) * (strlen(unsafe) + 1);
 
-    return create_passback(EXECUTE_TYPE_STRING, unsafe, size, EXECUTE_ERROR_UNKNOWN);
+    return create_handoff(TYPE_STRING, unsafe, size, ERROR_UNKNOWN);
 }
 
-static execute_passback_t *create_copy(execute_passback_t *this)
+static handoff_t *create_copy(handoff_t *this)
 {
     switch (this->type)
     {
-        case EXECUTE_TYPE_NULL:
+        case TYPE_NULL:
             return create_null();
-        case EXECUTE_TYPE_NUMBER:
+        case TYPE_NUMBER:
             return create_number(((int *) this->unsafe)[0]);
-        case EXECUTE_TYPE_STRING:
+        case TYPE_STRING:
             return create_string(this->unsafe);
         default:
-            return create_error(EXECUTE_ERROR_TYPE);
+            return create_error(ERROR_TYPE);
     }
 }
 
-static execute_passback_t *apply_expression(expression_t *expression, execute_object_t *objects)
+static handoff_t *apply_expression(expression_t *expression, object_t *objects)
 {
-    execute_passback_t **arguments;
-    execute_passback_t *result;
+    handoff_t **arguments;
+    handoff_t *result;
     size_t length, index;
 
     if (expression->error != ERROR_UNKNOWN)
     {
-        switch (expression->error)
-        {
-            case ERROR_SYNTAX:
-                return create_error(EXECUTE_ERROR_SYNTAX);
-            case ERROR_DEPTH:
-                return create_error(EXECUTE_ERROR_DEPTH);
-            case ERROR_TYPE:
-                return create_error(EXECUTE_ERROR_TYPE);
-            case ERROR_ARGUMENT:
-                return create_error(EXECUTE_ERROR_ARGUMENT);
-            default:
-                break;
-        }
+        return create_error(expression->error);
     }
 
     length = expression->length;
-    arguments = malloc(sizeof(execute_passback_t *) * length);
+    arguments = malloc(sizeof(handoff_t *) * length);
 
     for (index = 0; index < length; index++)
     {
-        execute_passback_t *argument;
+        handoff_t *argument;
 
         argument = apply_expression(expression->arguments[index], objects);
 
-        if (!argument || argument->error != EXECUTE_ERROR_UNKNOWN)
+        if (!argument || argument->error != ERROR_UNKNOWN)
         {
             arguments_free(arguments, index - 1);
             return argument;
@@ -265,9 +253,9 @@ static execute_passback_t *apply_expression(expression_t *expression, execute_ob
     return result;
 }
 
-static execute_passback_t *apply_operator(literal_t *literal, execute_passback_t **arguments, size_t length, execute_object_t *objects)
+static handoff_t *apply_operator(literal_t *literal, handoff_t **arguments, size_t length, object_t *objects)
 {
-    execute_passback_t *operator, *left, *right;
+    handoff_t *operator, *left, *right;
 
     operator = arguments_get(arguments, length, 0);
     left = arguments_get(arguments, length, 1);
@@ -293,7 +281,7 @@ static execute_passback_t *apply_operator(literal_t *literal, execute_passback_t
         return create_unknown();
     }
 
-    if (operator->type == EXECUTE_TYPE_STRING)
+    if (operator->type == TYPE_STRING)
     {
         if (strcmp(operator->unsafe, "~") == 0)
         {
@@ -337,7 +325,7 @@ static execute_passback_t *apply_operator(literal_t *literal, execute_passback_t
         }
         else if (strcmp(operator->unsafe, "?") == 0)
         {
-            execute_passback_t *conditional, *pass, *fail;
+            handoff_t *conditional, *pass, *fail;
 
             conditional = arguments_get(arguments, length, 1);
             pass = arguments_get(arguments, length, 2);
@@ -367,36 +355,36 @@ static execute_passback_t *apply_operator(literal_t *literal, execute_passback_t
         }
     }
 
-    return create_error(EXECUTE_ERROR_ARGUMENT);
+    return create_error(ERROR_ARGUMENT);
 }
 
-static execute_passback_t *operator_comment(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_comment(handoff_t *left, handoff_t *right)
 {
     if (!left)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_STRING)
+    if (left->type != TYPE_STRING)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     return create_unknown();
 }
 
-static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_object_t *objects)
+static handoff_t *operator_value(handoff_t *left, handoff_t *right, object_t *objects)
 {
-    execute_object_t *object;
+    object_t *object;
 
     if (!left)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_STRING)
+    if (left->type != TYPE_STRING)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     for (object = objects; object != NULL; object = object->next)
@@ -412,25 +400,25 @@ static execute_passback_t *operator_value(execute_passback_t *left, execute_pass
                 return NULL;
             }
 
-            return create_passback(object->type, unsafe, object->size, EXECUTE_ERROR_UNKNOWN);
+            return create_handoff(object->type, unsafe, object->size, ERROR_UNKNOWN);
         }
     }
 
     return create_null();
 }
 
-static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_object_t *objects)
+static handoff_t *operator_assign(handoff_t *left, handoff_t *right, object_t *objects)
 {
-    execute_object_t *object, *last;
+    object_t *object, *last;
 
     if (!left || !right)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_STRING)
+    if (left->type != TYPE_STRING)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     last = NULL;
@@ -439,7 +427,7 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
     {
         if (object->key && strcmp(object->key, left->unsafe) == 0)
         {
-            if (right->type != EXECUTE_TYPE_UNKNOWN && right->type != EXECUTE_TYPE_NULL)
+            if (right->type != TYPE_UNKNOWN && right->type != TYPE_NULL)
             {
                 if (object->unsafe)
                 {
@@ -460,7 +448,7 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
                 }
 
                 object->next = NULL;
-                execute_destroy_object(object);
+                destroy_object(object);
             }
 
             return create_null();
@@ -469,7 +457,7 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
         last = object;
     }
 
-    if (right->type != EXECUTE_TYPE_UNKNOWN && right->type != EXECUTE_TYPE_NULL)
+    if (right->type != TYPE_UNKNOWN && right->type != TYPE_NULL)
     {
         last->next = create_object(right->type, right->unsafe, right->size, left->unsafe, NULL);
 
@@ -485,18 +473,18 @@ static execute_passback_t *operator_assign(execute_passback_t *left, execute_pas
     return create_null();
 }
 
-static execute_passback_t *operator_add(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_add(handoff_t *left, handoff_t *right)
 {
     int x, y;
 
     if (!left || !right)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     x = ((int *) left->unsafe)[0];
@@ -505,18 +493,18 @@ static execute_passback_t *operator_add(execute_passback_t *left, execute_passba
     return create_number(x + y);
 }
 
-static execute_passback_t *operator_subtract(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_subtract(handoff_t *left, handoff_t *right)
 {
     int x, y;
 
     if (!left || !right)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     x = ((int *) left->unsafe)[0];
@@ -525,18 +513,18 @@ static execute_passback_t *operator_subtract(execute_passback_t *left, execute_p
     return create_number(x - y);
 }
 
-static execute_passback_t *operator_multiply(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_multiply(handoff_t *left, handoff_t *right)
 {
     int x, y;
 
     if (!left || !right)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     x = ((int *) left->unsafe)[0];
@@ -545,18 +533,18 @@ static execute_passback_t *operator_multiply(execute_passback_t *left, execute_p
     return create_number(x * y);
 }
 
-static execute_passback_t *operator_divide(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_divide(handoff_t *left, handoff_t *right)
 {
     int x, y;
 
     if (!left || !right)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     x = ((int *) left->unsafe)[0];
@@ -564,24 +552,24 @@ static execute_passback_t *operator_divide(execute_passback_t *left, execute_pas
 
     if (y == 0)
     {
-        return create_error(EXECUTE_ERROR_ARITHMETIC);
+        return create_error(ERROR_ARITHMETIC);
     }
 
     return create_number(x / y);
 }
 
-static execute_passback_t *operator_and(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_and(handoff_t *left, handoff_t *right)
 {
     int x, y;
 
     if (!left || !right)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     x = ((int *) left->unsafe)[0];
@@ -590,18 +578,18 @@ static execute_passback_t *operator_and(execute_passback_t *left, execute_passba
     return create_number(x && y);
 }
 
-static execute_passback_t *operator_or(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_or(handoff_t *left, handoff_t *right)
 {
     int x, y;
 
     if (!left || !right)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     x = ((int *) left->unsafe)[0];
@@ -610,18 +598,18 @@ static execute_passback_t *operator_or(execute_passback_t *left, execute_passbac
     return create_number(x || y);
 }
 
-static execute_passback_t *operator_not(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_not(handoff_t *left, handoff_t *right)
 {
     int x;
 
     if (!left)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_NUMBER)
+    if (left->type != TYPE_NUMBER)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     x = ((int *) left->unsafe)[0];
@@ -629,18 +617,18 @@ static execute_passback_t *operator_not(execute_passback_t *left, execute_passba
     return create_number(!x);
 }
 
-static execute_passback_t *operator_conditional(execute_passback_t *condition, execute_passback_t *pass, execute_passback_t *fail)
+static handoff_t *operator_conditional(handoff_t *condition, handoff_t *pass, handoff_t *fail)
 {
     int x;
 
     if (!condition || !pass || !fail)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (condition->type != EXECUTE_TYPE_NUMBER)
+    if (condition->type != TYPE_NUMBER)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     x = ((int *) condition->unsafe)[0];
@@ -655,18 +643,18 @@ static execute_passback_t *operator_conditional(execute_passback_t *condition, e
     }
 }
 
-static execute_passback_t *operator_less(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_less(handoff_t *left, handoff_t *right)
 {
     int x, y;
 
     if (!left || !right)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     x = ((int *) left->unsafe)[0];
@@ -675,18 +663,18 @@ static execute_passback_t *operator_less(execute_passback_t *left, execute_passb
     return create_number(x < y);
 }
 
-static execute_passback_t *operator_greater(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_greater(handoff_t *left, handoff_t *right)
 {
     int x, y;
 
     if (!left || !right)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     x = ((int *) left->unsafe)[0];
@@ -695,18 +683,18 @@ static execute_passback_t *operator_greater(execute_passback_t *left, execute_pa
     return create_number(x > y);
 }
 
-static execute_passback_t *operator_equal(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_equal(handoff_t *left, handoff_t *right)
 {
     int x, y;
 
     if (!left || !right)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != EXECUTE_TYPE_NUMBER || right->type != EXECUTE_TYPE_NUMBER)
+    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
     x = ((int *) left->unsafe)[0];
@@ -715,24 +703,24 @@ static execute_passback_t *operator_equal(execute_passback_t *left, execute_pass
     return create_number(x == y);
 }
 
-static execute_passback_t *operator_number(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_number(handoff_t *left, handoff_t *right)
 {
     if (!left)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type == EXECUTE_TYPE_NULL)
+    if (left->type == TYPE_NULL)
     {
         return create_null();
     }
 
-    if (left->type == EXECUTE_TYPE_NUMBER)
+    if (left->type == TYPE_NUMBER)
     {
         return create_number(((int *) left->unsafe)[0]);
     }
 
-    if (left->type == EXECUTE_TYPE_STRING)
+    if (left->type == TYPE_STRING)
     {
         if (is_integer(left->unsafe))
         {
@@ -740,31 +728,31 @@ static execute_passback_t *operator_number(execute_passback_t *left, execute_pas
         }
         else
         {
-            return create_error(EXECUTE_ERROR_TYPE);
+            return create_error(ERROR_TYPE);
         }
     }
 
-    return create_error(EXECUTE_ERROR_TYPE);
+    return create_error(ERROR_TYPE);
 }
 
-static execute_passback_t *operator_string(execute_passback_t *left, execute_passback_t *right)
+static handoff_t *operator_string(handoff_t *left, handoff_t *right)
 {
     if (!left)
     {
-        return create_error(EXECUTE_ERROR_ARGUMENT);
+        return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type == EXECUTE_TYPE_NULL)
+    if (left->type == TYPE_NULL)
     {
         return create_null();
     }
 
-    if (left->type == EXECUTE_TYPE_STRING)
+    if (left->type == TYPE_STRING)
     {
         return create_string(left->unsafe);
     }
 
-    if (left->type == EXECUTE_TYPE_NUMBER)
+    if (left->type == TYPE_NUMBER)
     {
         void *unsafe;
         size_t size;
@@ -778,13 +766,13 @@ static execute_passback_t *operator_string(execute_passback_t *left, execute_pas
 
         size = sizeof(char) * (strlen(unsafe) + 1);
 
-        return create_passback(EXECUTE_TYPE_STRING, unsafe, size, EXECUTE_ERROR_UNKNOWN);
+        return create_handoff(TYPE_STRING, unsafe, size, ERROR_UNKNOWN);
     }
 
-    return create_error(EXECUTE_ERROR_TYPE);
+    return create_error(ERROR_TYPE);
 }
 
-static execute_passback_t *arguments_get(execute_passback_t **arguments, size_t length, size_t index)
+static handoff_t *arguments_get(handoff_t **arguments, size_t length, size_t index)
 {
     if (index >= 0 && index < length)
     {
@@ -794,13 +782,13 @@ static execute_passback_t *arguments_get(execute_passback_t **arguments, size_t 
     return NULL;
 }
 
-static void arguments_free(execute_passback_t **arguments, size_t length)
+static void arguments_free(handoff_t **arguments, size_t length)
 {
     size_t index;
 
     for (index = 0; index < length; index++)
     {
-        execute_destroy_passback(arguments[index]);
+        destroy_handoff(arguments[index]);
     }
 
     free(arguments);

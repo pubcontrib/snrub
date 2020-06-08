@@ -13,8 +13,8 @@ static int run_script(char *document);
 static char *read_file(char *path);
 static void print_version();
 static void print_usage();
-static void print_error(execute_error_t error);
-static void print_value(execute_type_t type, void *unsafe);
+static void print_error(error_t error);
+static void print_value(type_t type, void *unsafe);
 static int get_flag(int argc, char **argv, char *name);
 static char *get_option(int argc, char **argv, char *name);
 static char *unescape(char *value);
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 
         if (!document)
         {
-            print_error(EXECUTE_ERROR_SHORTAGE);
+            print_error(ERROR_SHORTAGE);
             return 1;
         }
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 
         if (!document)
         {
-            print_error(EXECUTE_ERROR_SHORTAGE);
+            print_error(ERROR_SHORTAGE);
             return 1;
         }
 
@@ -81,14 +81,14 @@ static int run_script(char *document)
 {
     scanner_t *scanner;
     expression_t *expressions;
-    execute_object_t *objects;
-    execute_passback_t *last;
+    object_t *objects;
+    handoff_t *handoff;
 
     scanner = start_scanner(document);
 
     if (!scanner)
     {
-        print_error(EXECUTE_ERROR_SHORTAGE);
+        print_error(ERROR_SHORTAGE);
         return 1;
     }
 
@@ -97,39 +97,39 @@ static int run_script(char *document)
 
     if (!expressions)
     {
-        print_error(EXECUTE_ERROR_SHORTAGE);
+        print_error(ERROR_SHORTAGE);
         return 1;
     }
 
-    objects = execute_empty_objects();
+    objects = empty_object();
 
     if (!objects)
     {
         destroy_expression(expressions);
-        print_error(EXECUTE_ERROR_SHORTAGE);
+        print_error(ERROR_SHORTAGE);
         return 1;
     }
 
-    last = execute_evaluate_expression(expressions, objects);
+    handoff = execute_expression(expressions, objects);
     destroy_expression(expressions);
-    execute_destroy_object(objects);
+    destroy_object(objects);
 
-    if (!last)
+    if (!handoff)
     {
-        print_error(EXECUTE_ERROR_SHORTAGE);
+        print_error(ERROR_SHORTAGE);
         return 1;
     }
 
-    if (last->error != EXECUTE_ERROR_UNKNOWN)
+    if (handoff->error != ERROR_UNKNOWN)
     {
-        print_error(last->error);
-        execute_destroy_passback(last);
+        print_error(handoff->error);
+        destroy_handoff(handoff);
         return 1;
     }
     else
     {
-        print_value(last->type, last->unsafe);
-        execute_destroy_passback(last);
+        print_value(handoff->type, handoff->unsafe);
+        destroy_handoff(handoff);
         return 0;
     }
 }
@@ -181,24 +181,24 @@ static void print_usage()
     printf("  -t --text     Execute script text.\n");
 }
 
-static void print_error(execute_error_t error)
+static void print_error(error_t error)
 {
     printf("#%d#\n", error);
 }
 
-static void print_value(execute_type_t type, void *unsafe)
+static void print_value(type_t type, void *unsafe)
 {
-    if (type == EXECUTE_TYPE_UNKNOWN || type == EXECUTE_TYPE_NULL)
+    if (type == TYPE_UNKNOWN || type == TYPE_NULL)
     {
         printf("?\n");
     }
-    else if (type == EXECUTE_TYPE_NUMBER)
+    else if (type == TYPE_NUMBER)
     {
         int number;
         number = ((int *) unsafe)[0];
         printf("#%d#\n", number);
     }
-    else if (type == EXECUTE_TYPE_STRING)
+    else if (type == TYPE_STRING)
     {
         char *string;
         string = unescape((char *) unsafe);

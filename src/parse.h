@@ -9,7 +9,9 @@ typedef enum
     ERROR_SYNTAX,
     ERROR_DEPTH,
     ERROR_TYPE,
-    ERROR_ARGUMENT
+    ERROR_ARGUMENT,
+    ERROR_ARITHMETIC,
+    ERROR_SHORTAGE
 } error_t;
 
 typedef enum
