@@ -12,8 +12,8 @@ static execute_passback_t *create_null();
 static execute_passback_t *create_number(int number);
 static execute_passback_t *create_string(char *string);
 static execute_passback_t *create_copy(execute_passback_t *this);
-static execute_passback_t *apply_expression(parse_expression_t *expression, execute_object_t *objects);
-static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t **arguments, size_t length, execute_object_t *objects);
+static execute_passback_t *apply_expression(expression_t *expression, execute_object_t *objects);
+static execute_passback_t *apply_operator(literal_t *literal, execute_passback_t **arguments, size_t length, execute_object_t *objects);
 static execute_passback_t *operator_comment(execute_passback_t *left, execute_passback_t *right);
 static execute_passback_t *operator_value(execute_passback_t *left, execute_passback_t *right, execute_object_t *objects);
 static execute_passback_t *operator_assign(execute_passback_t *left, execute_passback_t *right, execute_object_t *objects);
@@ -38,9 +38,9 @@ execute_object_t *execute_empty_objects()
     return create_object(EXECUTE_TYPE_UNKNOWN, NULL, 0, NULL, NULL);
 }
 
-execute_passback_t *execute_evaluate_expression(parse_expression_t *expressions, execute_object_t *objects)
+execute_passback_t *execute_evaluate_expression(expression_t *expressions, execute_object_t *objects)
 {
-    parse_expression_t *expression;
+    expression_t *expression;
     execute_passback_t *last;
 
     last = NULL;
@@ -217,23 +217,23 @@ static execute_passback_t *create_copy(execute_passback_t *this)
     }
 }
 
-static execute_passback_t *apply_expression(parse_expression_t *expression, execute_object_t *objects)
+static execute_passback_t *apply_expression(expression_t *expression, execute_object_t *objects)
 {
     execute_passback_t **arguments;
     execute_passback_t *result;
     size_t length, index;
 
-    if (expression->error != PARSE_ERROR_UNKNOWN)
+    if (expression->error != ERROR_UNKNOWN)
     {
         switch (expression->error)
         {
-            case PARSE_ERROR_SYNTAX:
+            case ERROR_SYNTAX:
                 return create_error(EXECUTE_ERROR_SYNTAX);
-            case PARSE_ERROR_DEPTH:
+            case ERROR_DEPTH:
                 return create_error(EXECUTE_ERROR_DEPTH);
-            case PARSE_ERROR_TYPE:
+            case ERROR_TYPE:
                 return create_error(EXECUTE_ERROR_TYPE);
-            case PARSE_ERROR_ARGUMENT:
+            case ERROR_ARGUMENT:
                 return create_error(EXECUTE_ERROR_ARGUMENT);
             default:
                 break;
@@ -258,14 +258,14 @@ static execute_passback_t *apply_expression(parse_expression_t *expression, exec
         arguments[index] = argument;
     }
 
-    result = apply_operator(expression->value, arguments, length, objects);
+    result = apply_operator(expression->literal, arguments, length, objects);
 
     arguments_free(arguments, length);
 
     return result;
 }
 
-static execute_passback_t *apply_operator(parse_value_t *value, execute_passback_t **arguments, size_t length, execute_object_t *objects)
+static execute_passback_t *apply_operator(literal_t *literal, execute_passback_t **arguments, size_t length, execute_object_t *objects)
 {
     execute_passback_t *operator, *left, *right;
 
@@ -275,16 +275,16 @@ static execute_passback_t *apply_operator(parse_value_t *value, execute_passback
 
     if (!operator)
     {
-        if (value)
+        if (literal)
         {
-            switch (value->type)
+            switch (literal->type)
             {
-                case PARSE_TYPE_NULL:
+                case TYPE_NULL:
                     return create_null();
-                case PARSE_TYPE_NUMBER:
-                    return create_number(((int *) value->unsafe)[0]);
-                case PARSE_TYPE_STRING:
-                    return create_string(value->unsafe);
+                case TYPE_NUMBER:
+                    return create_number(((int *) literal->unsafe)[0]);
+                case TYPE_STRING:
+                    return create_string(literal->unsafe);
                 default:
                     break;
             }

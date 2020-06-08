@@ -40,7 +40,7 @@ typedef struct execute_object_t
 } execute_object_t;
 
 execute_object_t *execute_empty_objects();
-execute_passback_t *execute_evaluate_expression(parse_expression_t *expressions, execute_object_t *objects);
+execute_passback_t *execute_evaluate_expression(expression_t *expressions, execute_object_t *objects);
 void execute_destroy_object(execute_object_t *object);
 void execute_destroy_passback(execute_passback_t *passback);
 

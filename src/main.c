@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 static int run_script(char *document)
 {
     scanner_t *scanner;
-    parse_expression_t *expressions;
+    expression_t *expressions;
     execute_object_t *objects;
     execute_passback_t *last;
 
@@ -92,7 +92,7 @@ static int run_script(char *document)
         return 1;
     }
 
-    expressions = parse_list_expressions(scanner);
+    expressions = parse_expressions(scanner);
     destroy_scanner(scanner);
 
     if (!expressions)
@@ -105,13 +105,13 @@ static int run_script(char *document)
 
     if (!objects)
     {
-        parse_destroy_expression(expressions);
+        destroy_expression(expressions);
         print_error(EXECUTE_ERROR_SHORTAGE);
         return 1;
     }
 
     last = execute_evaluate_expression(expressions, objects);
-    parse_destroy_expression(expressions);
+    destroy_expression(expressions);
     execute_destroy_object(objects);
 
     if (!last)

@@ -5,27 +5,36 @@
 #include "lex.h"
 #include "common.h"
 
-static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t **arguments, size_t length, parse_expression_t *next);
-static parse_value_t *create_value(parse_type_t type, void *unsafe);
-static parse_expression_t *next_expression(scanner_t *scanner, token_t *token, int depth);
-static parse_value_t *token_to_value(token_t *token);
-static parse_value_t *null_to_value(char *value);
-static parse_value_t *number_to_value(char *value);
-static parse_value_t *string_to_value(char *value);
-static int is_value(token_name_t name);
+typedef enum
+{
+    PARSER_STATE_SUCCESS,
+    PARSER_STATE_ERROR,
+    PARSER_STATE_START,
+    PARSER_STATE_ARGUMENTS,
+    PARSER_STATE_END
+} parser_state_t;
+
+static expression_t *create_expression(error_t error, literal_t *literal, expression_t **arguments, size_t length, expression_t *next);
+static literal_t *create_literal(type_t type, void *unsafe);
+static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth);
+static literal_t *token_to_literal(token_t *token);
+static literal_t *null_to_value(char *value);
+static literal_t *number_to_value(char *value);
+static literal_t *string_to_value(char *value);
+static int is_literal(token_name_t name);
 static char *escape(char *value);
 static char is_printable(char *value);
 
-parse_expression_t *parse_list_expressions(scanner_t *scanner)
+expression_t *parse_expressions(scanner_t *scanner)
 {
-    parse_expression_t *head, *tail;
+    expression_t *head, *tail;
 
     head = NULL;
     tail = NULL;
 
     do
     {
-        parse_expression_t *expression;
+        expression_t *expression;
 
         expression = next_expression(scanner, NULL, 1);
 
@@ -42,14 +51,14 @@ parse_expression_t *parse_list_expressions(scanner_t *scanner)
                 tail = head;
             }
 
-            if (expression->error != PARSE_ERROR_UNKNOWN)
+            if (expression->error != ERROR_UNKNOWN)
             {
                 return head;
             }
         }
         else
         {
-            parse_destroy_expression(head);
+            destroy_expression(head);
             return NULL;
         }
     } while (scanner->state != SCANNER_STATE_CLOSED);
@@ -57,11 +66,11 @@ parse_expression_t *parse_list_expressions(scanner_t *scanner)
     return head;
 }
 
-void parse_destroy_expression(parse_expression_t *expression)
+void destroy_expression(expression_t *expression)
 {
-    if (expression->value)
+    if (expression->literal)
     {
-        parse_destroy_value(expression->value);
+        destroy_literal(expression->literal);
     }
 
     if (expression->length > 0)
@@ -70,7 +79,7 @@ void parse_destroy_expression(parse_expression_t *expression)
 
         for (index = 0; index < expression->length; index++)
         {
-            parse_destroy_expression(expression->arguments[index]);
+            destroy_expression(expression->arguments[index]);
         }
 
         free(expression->arguments);
@@ -78,32 +87,32 @@ void parse_destroy_expression(parse_expression_t *expression)
 
     if (expression->next)
     {
-        parse_destroy_expression(expression->next);
+        destroy_expression(expression->next);
     }
 
     free(expression);
 }
 
-void parse_destroy_value(parse_value_t *value)
+void destroy_literal(literal_t *literal)
 {
-    if (value->unsafe)
+    if (literal->unsafe)
     {
-        free(value->unsafe);
+        free(literal->unsafe);
     }
 
-    free(value);
+    free(literal);
 }
 
-static parse_expression_t *create_expression(parse_error_t error, parse_value_t *value, parse_expression_t **arguments, size_t length, parse_expression_t *next)
+static expression_t *create_expression(error_t error, literal_t *literal, expression_t **arguments, size_t length, expression_t *next)
 {
-    parse_expression_t *expression;
+    expression_t *expression;
 
-    expression = malloc(sizeof(parse_expression_t));
+    expression = malloc(sizeof(expression_t));
 
     if (expression)
     {
         expression->error = error;
-        expression->value = value;
+        expression->literal = literal;
         expression->arguments = arguments;
         expression->length = length;
         expression->next = next;
@@ -112,41 +121,41 @@ static parse_expression_t *create_expression(parse_error_t error, parse_value_t 
     return expression;
 }
 
-static parse_value_t *create_value(parse_type_t type, void *unsafe)
+static literal_t *create_literal(type_t type, void *unsafe)
 {
-    parse_value_t *value;
+    literal_t *literal;
 
-    value = malloc(sizeof(parse_value_t));
+    literal = malloc(sizeof(literal_t));
 
-    if (value)
+    if (literal)
     {
-        value->type = type;
-        value->unsafe = unsafe;
+        literal->type = type;
+        literal->unsafe = unsafe;
     }
 
-    return value;
+    return literal;
 }
 
-static parse_expression_t *next_expression(scanner_t *scanner, token_t *token, int depth)
+static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth)
 {
-    parse_status_t status;
-    parse_expression_t *expression;
+    parser_state_t state;
+    expression_t *expression;
 
-    status = PARSE_STATUS_START;
-    expression = create_expression(PARSE_ERROR_UNKNOWN, NULL, NULL, 0, NULL);
+    state = PARSER_STATE_START;
+    expression = create_expression(ERROR_UNKNOWN, NULL, NULL, 0, NULL);
 
     if (depth > 32)
     {
-        status = PARSE_STATUS_ERROR;
-        expression->error = PARSE_ERROR_DEPTH;
+        state = PARSER_STATE_ERROR;
+        expression->error = ERROR_DEPTH;
     }
 
-    while (scanner->state != SCANNER_STATE_CLOSED && status != PARSE_STATUS_ERROR && status != PARSE_STATUS_SUCCESS)
+    while (scanner->state != SCANNER_STATE_CLOSED && state != PARSER_STATE_ERROR && state != PARSER_STATE_SUCCESS)
     {
         if (expression->length > 32)
         {
-            status = PARSE_STATUS_ERROR;
-            expression->error = PARSE_ERROR_DEPTH;
+            state = PARSER_STATE_ERROR;
+            expression->error = ERROR_DEPTH;
             break;
         }
 
@@ -156,64 +165,64 @@ static parse_expression_t *next_expression(scanner_t *scanner, token_t *token, i
         {
             if (token->name == TOKEN_NAME_UNKNOWN)
             {
-                status = PARSE_STATUS_ERROR;
+                state = PARSER_STATE_ERROR;
             }
             else if (token->name != TOKEN_NAME_WHITESPACE)
             {
-                if (status == PARSE_STATUS_START)
+                if (state == PARSER_STATE_START)
                 {
-                    if (is_value(token->name))
+                    if (is_literal(token->name))
                     {
-                        expression->value = token_to_value(token);
+                        expression->literal = token_to_literal(token);
 
-                        if (expression->value)
+                        if (expression->literal)
                         {
-                            status = expression->value->type == PARSE_TYPE_UNKNOWN ? PARSE_STATUS_ERROR : PARSE_STATUS_SUCCESS;
-                            expression->error = status == PARSE_STATUS_ERROR ? PARSE_ERROR_TYPE : PARSE_ERROR_UNKNOWN;
+                            state = expression->literal->type == TYPE_UNKNOWN ? PARSER_STATE_ERROR : PARSER_STATE_SUCCESS;
+                            expression->error = state == PARSER_STATE_ERROR ? ERROR_TYPE : ERROR_UNKNOWN;
                         }
                         else
                         {
                             destroy_token(token);
-                            parse_destroy_expression(expression);
+                            destroy_expression(expression);
                             return NULL;
                         }
                     }
                     else
                     {
-                        status = token->name == TOKEN_NAME_START ? PARSE_STATUS_ARGUMENTS : PARSE_STATUS_ERROR;
+                        state = token->name == TOKEN_NAME_START ? PARSER_STATE_ARGUMENTS : PARSER_STATE_ERROR;
                     }
                 }
-                else if (status == PARSE_STATUS_ARGUMENTS)
+                else if (state == PARSER_STATE_ARGUMENTS)
                 {
                     if (token->name == TOKEN_NAME_END)
                     {
                         if (expression->length > 0)
                         {
-                            status = PARSE_STATUS_SUCCESS;
+                            state = PARSER_STATE_SUCCESS;
                         }
                         else
                         {
-                            expression->error = PARSE_ERROR_ARGUMENT;
-                            status = PARSE_STATUS_ERROR;
+                            expression->error = ERROR_ARGUMENT;
+                            state = PARSER_STATE_ERROR;
                         }
                     }
                     else
                     {
-                        parse_expression_t *argument;
+                        expression_t *argument;
 
                         argument = next_expression(scanner, token, depth + 1);
                         token = NULL;
 
                         if (argument)
                         {
-                            parse_expression_t **existing;
+                            expression_t **existing;
 
                             expression->error = argument->error;
-                            status = expression->error == PARSE_ERROR_UNKNOWN ? PARSE_STATUS_ARGUMENTS : PARSE_STATUS_ERROR;
+                            state = expression->error == ERROR_UNKNOWN ? PARSER_STATE_ARGUMENTS : PARSER_STATE_ERROR;
 
                             existing = expression->arguments;
                             expression->length += 1;
-                            expression->arguments = malloc(sizeof(parse_expression_t *) * expression->length);
+                            expression->arguments = malloc(sizeof(expression_t *) * expression->length);
 
                             if (expression->length > 1)
                             {
@@ -231,7 +240,7 @@ static parse_expression_t *next_expression(scanner_t *scanner, token_t *token, i
                         }
                         else
                         {
-                            parse_destroy_expression(expression);
+                            destroy_expression(expression);
                             return NULL;
                         }
                     }
@@ -246,16 +255,16 @@ static parse_expression_t *next_expression(scanner_t *scanner, token_t *token, i
         }
         else
         {
-            parse_destroy_expression(expression);
+            destroy_expression(expression);
             return NULL;
         }
     }
 
-    if (status != PARSE_STATUS_SUCCESS && status != PARSE_STATUS_START)
+    if (state != PARSER_STATE_SUCCESS && state != PARSER_STATE_START)
     {
-        if (expression->error == PARSE_ERROR_UNKNOWN)
+        if (expression->error == ERROR_UNKNOWN)
         {
-            expression->error = PARSE_ERROR_SYNTAX;
+            expression->error = ERROR_SYNTAX;
         }
     }
 
@@ -267,7 +276,7 @@ static parse_expression_t *next_expression(scanner_t *scanner, token_t *token, i
     return expression;
 }
 
-static parse_value_t *token_to_value(token_t *token)
+static literal_t *token_to_literal(token_t *token)
 {
     switch (token->name)
     {
@@ -282,12 +291,12 @@ static parse_value_t *token_to_value(token_t *token)
     }
 }
 
-static parse_value_t *null_to_value(char *value)
+static literal_t *null_to_value(char *value)
 {
-    return strcmp(value, "?") ? create_value(PARSE_TYPE_UNKNOWN, NULL) : create_value(PARSE_TYPE_NULL, NULL);
+    return strcmp(value, "?") ? create_literal(TYPE_UNKNOWN, NULL) : create_literal(TYPE_NULL, NULL);
 }
 
-static parse_value_t *number_to_value(char *value)
+static literal_t *number_to_value(char *value)
 {
     size_t length, start, end, index;
     char *trimmed;
@@ -297,12 +306,12 @@ static parse_value_t *number_to_value(char *value)
 
     if (length < 2)
     {
-        return create_value(PARSE_TYPE_UNKNOWN, NULL);
+        return create_literal(TYPE_UNKNOWN, NULL);
     }
 
     if (value[0] != number_symbol() || value[length - 1] != number_symbol())
     {
-        return create_value(PARSE_TYPE_UNKNOWN, NULL);
+        return create_literal(TYPE_UNKNOWN, NULL);
     }
 
     start = value[1] == '-' ? 2 : 1;
@@ -310,14 +319,14 @@ static parse_value_t *number_to_value(char *value)
 
     if (start == end && value[1] == '-')
     {
-        return create_value(PARSE_TYPE_UNKNOWN, NULL);
+        return create_literal(TYPE_UNKNOWN, NULL);
     }
 
     for (index = start; index < end; index++)
     {
         if (!isdigit(value[index]))
         {
-            return create_value(PARSE_TYPE_UNKNOWN, NULL);
+            return create_literal(TYPE_UNKNOWN, NULL);
         }
     }
 
@@ -336,29 +345,29 @@ static parse_value_t *number_to_value(char *value)
         return NULL;
     }
 
-    return create_value(PARSE_TYPE_NUMBER, unsafe);
+    return create_literal(TYPE_NUMBER, unsafe);
 }
 
-static parse_value_t *string_to_value(char *value)
+static literal_t *string_to_value(char *value)
 {
     size_t length;
     char *trimmed, *unsafe;
 
     if (!is_printable(value))
     {
-        return create_value(PARSE_TYPE_UNKNOWN, NULL);
+        return create_literal(TYPE_UNKNOWN, NULL);
     }
 
     length = strlen(value);
 
     if (length < 2)
     {
-        return create_value(PARSE_TYPE_UNKNOWN, NULL);
+        return create_literal(TYPE_UNKNOWN, NULL);
     }
 
     if (value[0] != string_symbol() || value[length - 1] != string_symbol())
     {
-        return create_value(PARSE_TYPE_UNKNOWN, NULL);
+        return create_literal(TYPE_UNKNOWN, NULL);
     }
 
     trimmed = slice_string(value, 1, length - 1);
@@ -376,10 +385,10 @@ static parse_value_t *string_to_value(char *value)
         return NULL;
     }
 
-    return create_value(PARSE_TYPE_STRING, unsafe);
+    return create_literal(TYPE_STRING, unsafe);
 }
 
-static int is_value(token_name_t name)
+static int is_literal(token_name_t name)
 {
     switch (name)
     {
