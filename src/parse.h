@@ -5,17 +5,6 @@
 
 typedef enum
 {
-    ERROR_UNKNOWN,
-    ERROR_SYNTAX,
-    ERROR_DEPTH,
-    ERROR_TYPE,
-    ERROR_ARGUMENT,
-    ERROR_ARITHMETIC,
-    ERROR_SHORTAGE
-} error_t;
-
-typedef enum
-{
     TYPE_UNKNOWN,
     TYPE_NULL,
     TYPE_NUMBER,
@@ -27,6 +16,17 @@ typedef struct
     type_t type;
     void *unsafe;
 } literal_t;
+
+typedef enum
+{
+    ERROR_UNKNOWN,
+    ERROR_SYNTAX,
+    ERROR_DEPTH,
+    ERROR_TYPE,
+    ERROR_ARGUMENT,
+    ERROR_ARITHMETIC,
+    ERROR_SHORTAGE
+} error_t;
 
 typedef struct expression_t
 {

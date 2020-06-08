@@ -4,8 +4,8 @@
 #include "parse.h"
 #include "common.h"
 
-static object_t *create_object(type_t type, void *unsafe, size_t size, char *key, object_t *next);
-static handoff_t *create_handoff(type_t type, void *unsafe, size_t size, error_t error);
+static object_t *create_object(char *identifier, type_t type, void *unsafe, size_t size, object_t *next);
+static handoff_t *create_handoff(error_t error, type_t type, void *unsafe, size_t size);
 static handoff_t *create_error(error_t error);
 static handoff_t *create_unknown();
 static handoff_t *create_null();
@@ -35,7 +35,7 @@ static void arguments_free(handoff_t **arguments, size_t length);
 
 object_t *empty_object()
 {
-    return create_object(TYPE_UNKNOWN, NULL, 0, NULL, NULL);
+    return create_object(NULL, TYPE_UNKNOWN, NULL, 0, NULL);
 }
 
 handoff_t *execute_expression(expression_t *expressions, object_t *objects)
@@ -90,9 +90,9 @@ handoff_t *execute_expression(expression_t *expressions, object_t *objects)
 
 void destroy_object(object_t *object)
 {
-    if (object->next)
+    if (object->identifier)
     {
-        destroy_object(object->next);
+        free(object->identifier);
     }
 
     if (object->unsafe)
@@ -100,9 +100,9 @@ void destroy_object(object_t *object)
         free(object->unsafe);
     }
 
-    if (object->key)
+    if (object->next)
     {
-        free(object->key);
+        destroy_object(object->next);
     }
 
     free(object);
@@ -118,7 +118,7 @@ void destroy_handoff(handoff_t *handoff)
     free(handoff);
 }
 
-static object_t *create_object(type_t type, void *unsafe, size_t size, char *key, object_t *next)
+static object_t *create_object(char *identifier, type_t type, void *unsafe, size_t size, object_t *next)
 {
     object_t *object;
 
@@ -126,17 +126,17 @@ static object_t *create_object(type_t type, void *unsafe, size_t size, char *key
 
     if (object)
     {
+        object->identifier = identifier;
         object->type = type;
         object->unsafe = unsafe;
         object->size = size;
-        object->key = key;
         object->next = next;
     }
 
     return object;
 }
 
-static handoff_t *create_handoff(type_t type, void *unsafe, size_t size, error_t error)
+static handoff_t *create_handoff(error_t error, type_t type, void *unsafe, size_t size)
 {
     handoff_t *handoff;
 
@@ -144,10 +144,10 @@ static handoff_t *create_handoff(type_t type, void *unsafe, size_t size, error_t
 
     if (handoff)
     {
+        handoff->error = error;
         handoff->type = type;
         handoff->unsafe = unsafe;
         handoff->size = size;
-        handoff->error = error;
     }
 
     return handoff;
@@ -155,17 +155,17 @@ static handoff_t *create_handoff(type_t type, void *unsafe, size_t size, error_t
 
 static handoff_t *create_error(error_t error)
 {
-    return create_handoff(TYPE_NULL, NULL, 0, error);
+    return create_handoff(error, TYPE_NULL, NULL, 0);
 }
 
 static handoff_t *create_unknown()
 {
-    return create_handoff(TYPE_UNKNOWN, NULL, 0, ERROR_UNKNOWN);
+    return create_handoff(ERROR_UNKNOWN, TYPE_UNKNOWN, NULL, 0);
 }
 
 static handoff_t *create_null()
 {
-    return create_handoff(TYPE_NULL, NULL, 0, ERROR_UNKNOWN);
+    return create_handoff(ERROR_UNKNOWN, TYPE_NULL, NULL, 0);
 }
 
 static handoff_t *create_number(int number)
@@ -182,7 +182,7 @@ static handoff_t *create_number(int number)
 
     size = sizeof(int);
 
-    return create_handoff(TYPE_NUMBER, unsafe, size, ERROR_UNKNOWN);
+    return create_handoff(ERROR_UNKNOWN, TYPE_NUMBER, unsafe, size);
 }
 
 static handoff_t *create_string(char *string)
@@ -199,7 +199,7 @@ static handoff_t *create_string(char *string)
 
     size = sizeof(char) * (strlen(unsafe) + 1);
 
-    return create_handoff(TYPE_STRING, unsafe, size, ERROR_UNKNOWN);
+    return create_handoff(ERROR_UNKNOWN, TYPE_STRING, unsafe, size);
 }
 
 static handoff_t *create_copy(handoff_t *this)
@@ -389,7 +389,7 @@ static handoff_t *operator_value(handoff_t *left, handoff_t *right, object_t *ob
 
     for (object = objects; object != NULL; object = object->next)
     {
-        if (object->key && strcmp(object->key, left->unsafe) == 0)
+        if (object->identifier && strcmp(object->identifier, left->unsafe) == 0)
         {
             void *unsafe;
 
@@ -400,7 +400,7 @@ static handoff_t *operator_value(handoff_t *left, handoff_t *right, object_t *ob
                 return NULL;
             }
 
-            return create_handoff(object->type, unsafe, object->size, ERROR_UNKNOWN);
+            return create_handoff(ERROR_UNKNOWN, object->type, unsafe, object->size);
         }
     }
 
@@ -425,7 +425,7 @@ static handoff_t *operator_assign(handoff_t *left, handoff_t *right, object_t *o
 
     for (object = objects; object != NULL; object = object->next)
     {
-        if (object->key && strcmp(object->key, left->unsafe) == 0)
+        if (object->identifier && strcmp(object->identifier, left->unsafe) == 0)
         {
             if (right->type != TYPE_UNKNOWN && right->type != TYPE_NULL)
             {
@@ -459,7 +459,7 @@ static handoff_t *operator_assign(handoff_t *left, handoff_t *right, object_t *o
 
     if (right->type != TYPE_UNKNOWN && right->type != TYPE_NULL)
     {
-        last->next = create_object(right->type, right->unsafe, right->size, left->unsafe, NULL);
+        last->next = create_object(left->unsafe, right->type, right->unsafe, right->size, NULL);
 
         if (!last->next)
         {
@@ -766,7 +766,7 @@ static handoff_t *operator_string(handoff_t *left, handoff_t *right)
 
         size = sizeof(char) * (strlen(unsafe) + 1);
 
-        return create_handoff(TYPE_STRING, unsafe, size, ERROR_UNKNOWN);
+        return create_handoff(ERROR_UNKNOWN, TYPE_STRING, unsafe, size);
     }
 
     return create_error(ERROR_TYPE);

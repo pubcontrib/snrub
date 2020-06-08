@@ -5,18 +5,18 @@
 
 typedef struct
 {
+    error_t error;
     type_t type;
     void *unsafe;
     size_t size;
-    error_t error;
 } handoff_t;
 
 typedef struct object_t
 {
+    char *identifier;
     type_t type;
     void *unsafe;
     size_t size;
-    char *key;
     struct object_t *next;
 } object_t;
 
