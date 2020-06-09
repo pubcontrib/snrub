@@ -144,12 +144,6 @@ char is_integer(char *string)
     size_t length, index;
 
     length = strlen(string);
-
-    if (length == 0)
-    {
-        return 0;
-    }
-
     index = 0;
 
     if (string[0] == '-')

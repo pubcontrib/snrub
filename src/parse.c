@@ -298,7 +298,7 @@ static literal_t *null_to_value(char *value)
 
 static literal_t *number_to_value(char *value)
 {
-    size_t length, start, end, index;
+    size_t length;
     char *trimmed;
     int *unsafe;
 
@@ -314,27 +314,17 @@ static literal_t *number_to_value(char *value)
         return create_literal(TYPE_UNKNOWN, NULL);
     }
 
-    start = value[1] == '-' ? 2 : 1;
-    end = length - 1;
-
-    if (start == end && value[1] == '-')
-    {
-        return create_literal(TYPE_UNKNOWN, NULL);
-    }
-
-    for (index = start; index < end; index++)
-    {
-        if (!isdigit(value[index]))
-        {
-            return create_literal(TYPE_UNKNOWN, NULL);
-        }
-    }
-
-    trimmed = slice_string(value, 1, end);
+    trimmed = slice_string(value, 1, length - 1);
 
     if (!trimmed)
     {
         return NULL;
+    }
+
+    if (!is_integer(trimmed))
+    {
+        free(trimmed);
+        return create_literal(TYPE_UNKNOWN, NULL);
     }
 
     unsafe = integer_to_array(atoi(trimmed));
