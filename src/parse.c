@@ -468,7 +468,7 @@ static char is_printable(char *value)
 
         symbol = value[index];
 
-        if (!isprint(symbol))
+        if (!isprint((unsigned char) symbol))
         {
             return 0;
         }

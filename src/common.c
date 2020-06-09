@@ -162,7 +162,7 @@ char is_integer(char *string)
 
         symbol = string[index];
 
-        if (!isdigit(symbol))
+        if (!isdigit((unsigned char) symbol))
         {
             return 0;
         }
