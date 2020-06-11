@@ -13,11 +13,11 @@ PREFIX = /usr/local
 EXEC_PREFIX = $(PREFIX)
 BINDIR = $(EXEC_PREFIX)/bin
 OBJS = $(OBJ)/main.o \
-	   $(OBJ)/cli.o \
-       $(OBJ)/execute.o \
-	   $(OBJ)/parse.o \
-	   $(OBJ)/lex.o \
-	   $(OBJ)/common.o
+	$(OBJ)/cli.o \
+	$(OBJ)/execute.o \
+	$(OBJ)/parse.o \
+	$(OBJ)/lex.o \
+	$(OBJ)/common.o
 
 .PHONY: all clean check install uninstall
 
