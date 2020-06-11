@@ -1,9 +1,47 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "cli.h"
 
 static line_t *create_line(char *document, size_t size, size_t capacity, int exit);
 static line_t *empty_line();
+
+int get_flag(int argc, char **argv, char *name)
+{
+    int index;
+
+    for (index = 0; index < argc; index++)
+    {
+        char *arg = argv[index];
+
+        if (strcmp(arg, name) == 0)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+char *get_option(int argc, char **argv, char *name)
+{
+    int index;
+
+    for (index = 0; index < argc; index++)
+    {
+        char *arg = argv[index];
+
+        if (strcmp(arg, name) == 0)
+        {
+            if (index + 1 < argc)
+            {
+                return argv[index + 1];
+            }
+        }
+    }
+
+    return NULL;
+}
 
 line_t *next_line()
 {

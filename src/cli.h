@@ -9,6 +9,8 @@ typedef struct
     int exit;
 } line_t;
 
+int get_flag(int argc, char **argv, char *name);
+char *get_option(int argc, char **argv, char *name);
 line_t *next_line();
 void destroy_line(line_t *line);
 

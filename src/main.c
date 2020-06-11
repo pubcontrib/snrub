@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cli.h"
 #include "execute.h"
 #include "parse.h"
 #include "lex.h"
@@ -15,8 +16,6 @@ static void print_version();
 static void print_usage();
 static void print_error(error_t error);
 static void print_value(type_t type, void *unsafe);
-static int get_flag(int argc, char **argv, char *name);
-static char *get_option(int argc, char **argv, char *name);
 static char *unescape(char *value);
 
 int main(int argc, char **argv)
@@ -209,43 +208,6 @@ static void print_value(type_t type, void *unsafe)
             free(string);
         }
     }
-}
-
-static int get_flag(int argc, char **argv, char *name)
-{
-    int index;
-
-    for (index = 0; index < argc; index++)
-    {
-        char *arg = argv[index];
-
-        if (strcmp(arg, name) == 0)
-        {
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-static char *get_option(int argc, char **argv, char *name)
-{
-    int index;
-
-    for (index = 0; index < argc; index++)
-    {
-        char *arg = argv[index];
-
-        if (strcmp(arg, name) == 0)
-        {
-            if (index + 1 < argc)
-            {
-                return argv[index + 1];
-            }
-        }
-    }
-
-    return NULL;
 }
 
 static char *unescape(char *value)
