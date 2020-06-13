@@ -51,19 +51,15 @@ line_t *next_line()
 
     if (line)
     {
-        while (1)
-        {
-            int key;
+        int key;
 
+        do
+        {
             key = getchar();
 
             if (key == EOF)
             {
                 line->exit = 1;
-            }
-            else if (key == '\n')
-            {
-                break;
             }
             else
             {
@@ -86,7 +82,7 @@ line_t *next_line()
                 line->string[line->length++] = key;
                 line->string[line->length] = '\0';
             }
-        }
+        } while (key != EOF && key != '\n');
     }
 
     return line;
