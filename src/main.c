@@ -10,7 +10,8 @@
 #define PROGRAM_NAME "snrub"
 #define PROGRAM_VERSION "v0.17.5"
 
-static int run_script(char *document);
+static int complete_script(char *document);
+static int apply_script(char *document, object_t *objects);
 static char *read_file(char *path);
 static void print_version();
 static void print_usage();
@@ -47,7 +48,7 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        return run_script(document);
+        return complete_script(document);
     }
 
     text = get_option(argc, argv, "--text");
@@ -69,18 +70,85 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        return run_script(document);
+        return complete_script(document);
+    }
+
+    if (get_flag(argc, argv, "--interactive") || get_flag(argc, argv, "-i"))
+    {
+        object_t *objects;
+
+        objects = empty_object();
+
+        if (!objects)
+        {
+            print_error(ERROR_SHORTAGE);
+            return 1;
+        }
+
+        while (1)
+        {
+            line_t *line;
+            char *document;
+
+            printf("> ");
+            line = next_line();
+
+            if (!line)
+            {
+                destroy_object(objects);
+                print_error(ERROR_SHORTAGE);
+                return 1;
+            }
+
+            if (line->exit)
+            {
+                destroy_object(objects);
+                destroy_line(line);
+                return 0;
+            }
+
+            document = line->string;
+            line->string = NULL;
+
+            if (apply_script(document, objects))
+            {
+                destroy_object(objects);
+                destroy_line(line);
+                return 1;
+            }
+
+            destroy_line(line);
+        }
     }
 
     print_usage();
     return 0;
 }
 
-static int run_script(char *document)
+static int complete_script(char *document)
+{
+    object_t *objects;
+    int status;
+
+    objects = empty_object();
+
+    if (!objects)
+    {
+        print_error(ERROR_SHORTAGE);
+        return 1;
+    }
+
+    status = apply_script(document, objects);
+
+    destroy_object(objects);
+
+    return status;
+}
+
+static int apply_script(char *document, object_t *objects)
 {
     scanner_t *scanner;
     expression_t *expressions;
-    object_t *objects;
     handoff_t *handoff;
 
     scanner = start_scanner(document);
@@ -100,18 +168,8 @@ static int run_script(char *document)
         return 1;
     }
 
-    objects = empty_object();
-
-    if (!objects)
-    {
-        destroy_expression(expressions);
-        print_error(ERROR_SHORTAGE);
-        return 1;
-    }
-
     handoff = execute_expression(expressions, objects);
     destroy_expression(expressions);
-    destroy_object(objects);
 
     if (!handoff)
     {
