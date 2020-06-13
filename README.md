@@ -26,12 +26,17 @@ make install
 
 ## Running
 Once you've built and installed the project you'll have the interpreter at your
-system's disposal. Try one of the available options: `--file`, `--text`,
-`--help`, `--version`.
+system's disposal. Try one of the available options: `--file`, `--interactive`,
+`--text`, `--help`, `--version`.
 
 Run code from a file:
 ```shell
 snrub --file script.txt
+```
+
+Start an interactive scripting shell:
+```shell
+snrub --interactive
 ```
 
 Run code without a file:
