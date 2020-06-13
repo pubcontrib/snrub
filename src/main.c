@@ -233,9 +233,10 @@ static void print_usage()
     printf("  %s [options]\n", PROGRAM_NAME);
     printf("\n");
     printf("Options:\n");
-    printf("  -v --version  Show version.\n");
-    printf("  -f --file     Execute a script file.\n");
-    printf("  -t --text     Execute script text.\n");
+    printf("  -v --version      Show version.\n");
+    printf("  -f --file         Execute a script file.\n");
+    printf("  -i --interactive  Start an interactive scripting shell.\n");
+    printf("  -t --text         Execute script text.\n");
 }
 
 static void print_error(error_t error)
