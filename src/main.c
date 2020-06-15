@@ -112,14 +112,14 @@ int main(int argc, char **argv)
 
             if (apply_script(document, objects))
             {
+                fflush(stdout);
                 destroy_object(objects);
                 destroy_line(line);
                 return 1;
             }
 
-            destroy_line(line);
-
             fflush(stdout);
+            destroy_line(line);
         }
     }
 
