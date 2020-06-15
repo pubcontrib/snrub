@@ -118,6 +118,8 @@ int main(int argc, char **argv)
             }
 
             destroy_line(line);
+
+            fflush(stdout);
         }
     }
 
