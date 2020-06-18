@@ -352,16 +352,16 @@ static handoff_t *apply_operator(literal_t *literal, handoff_t **arguments, size
 
 static handoff_t *operator_comment(handoff_t **arguments, size_t length, object_t *objects)
 {
-    handoff_t *left;
+    handoff_t *message;
 
-    left = arguments_get(arguments, length, 1);
+    message = arguments_get(arguments, length, 1);
 
-    if (!left)
+    if (!message)
     {
         return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != TYPE_STRING)
+    if (message->type != TYPE_STRING)
     {
         return create_error(ERROR_ARGUMENT);
     }
@@ -752,30 +752,30 @@ static handoff_t *operator_equal(handoff_t **arguments, size_t length, object_t 
 
 static handoff_t *operator_number(handoff_t **arguments, size_t length, object_t *objects)
 {
-    handoff_t *left;
+    handoff_t *handoff;
 
-    left = arguments_get(arguments, length, 1);
+    handoff = arguments_get(arguments, length, 1);
 
-    if (!left)
+    if (!handoff)
     {
         return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type == TYPE_NULL)
+    if (handoff->type == TYPE_NULL)
     {
         return create_null();
     }
 
-    if (left->type == TYPE_NUMBER)
+    if (handoff->type == TYPE_NUMBER)
     {
-        return create_number(((int *) left->unsafe)[0]);
+        return create_number(((int *) handoff->unsafe)[0]);
     }
 
-    if (left->type == TYPE_STRING)
+    if (handoff->type == TYPE_STRING)
     {
-        if (is_integer(left->unsafe))
+        if (is_integer(handoff->unsafe))
         {
-            return create_number(atoi(left->unsafe));
+            return create_number(atoi(handoff->unsafe));
         }
         else
         {
@@ -788,31 +788,31 @@ static handoff_t *operator_number(handoff_t **arguments, size_t length, object_t
 
 static handoff_t *operator_string(handoff_t **arguments, size_t length, object_t *objects)
 {
-    handoff_t *left;
+    handoff_t *handoff;
 
-    left = arguments_get(arguments, length, 1);
+    handoff = arguments_get(arguments, length, 1);
 
-    if (!left)
+    if (!handoff)
     {
         return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type == TYPE_NULL)
+    if (handoff->type == TYPE_NULL)
     {
         return create_null();
     }
 
-    if (left->type == TYPE_STRING)
+    if (handoff->type == TYPE_STRING)
     {
-        return create_string(left->unsafe);
+        return create_string(handoff->unsafe);
     }
 
-    if (left->type == TYPE_NUMBER)
+    if (handoff->type == TYPE_NUMBER)
     {
         void *unsafe;
         size_t size;
 
-        unsafe = integer_to_string(((int *) left->unsafe)[0]);
+        unsafe = integer_to_string(((int *) handoff->unsafe)[0]);
 
         if (!unsafe)
         {
