@@ -14,22 +14,22 @@ static handoff_t *create_string(char *string);
 static handoff_t *create_copy(handoff_t *this);
 static handoff_t *apply_expression(expression_t *expression, object_t *objects);
 static handoff_t *apply_operator(literal_t *literal, handoff_t **arguments, size_t length, object_t *objects);
-static handoff_t *operator_comment(handoff_t *left, handoff_t *right);
-static handoff_t *operator_value(handoff_t *left, handoff_t *right, object_t *objects);
-static handoff_t *operator_assign(handoff_t *left, handoff_t *right, object_t *objects);
-static handoff_t *operator_add(handoff_t *left, handoff_t *right);
-static handoff_t *operator_subtract(handoff_t *left, handoff_t *right);
-static handoff_t *operator_multiply(handoff_t *left, handoff_t *right);
-static handoff_t *operator_divide(handoff_t *left, handoff_t *right);
-static handoff_t *operator_and(handoff_t *left, handoff_t *right);
-static handoff_t *operator_or(handoff_t *left, handoff_t *right);
-static handoff_t *operator_not(handoff_t *left, handoff_t *right);
-static handoff_t *operator_conditional(handoff_t *condition, handoff_t *pass, handoff_t *fail);
-static handoff_t *operator_less(handoff_t *left, handoff_t *right);
-static handoff_t *operator_greater(handoff_t *left, handoff_t *right);
-static handoff_t *operator_equal(handoff_t *left, handoff_t *right);
-static handoff_t *operator_number(handoff_t *left, handoff_t *right);
-static handoff_t *operator_string(handoff_t *left, handoff_t *right);
+static handoff_t *operator_comment(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_value(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_assign(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_add(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_subtract(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_multiply(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_divide(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_and(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_or(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_not(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_conditional(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_less(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_greater(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_equal(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_number(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_string(handoff_t **arguments, size_t length, object_t *objects);
 static handoff_t *arguments_get(handoff_t **arguments, size_t length, size_t index);
 static void arguments_free(handoff_t **arguments, size_t length);
 
@@ -255,11 +255,9 @@ static handoff_t *apply_expression(expression_t *expression, object_t *objects)
 
 static handoff_t *apply_operator(literal_t *literal, handoff_t **arguments, size_t length, object_t *objects)
 {
-    handoff_t *operator, *left, *right;
+    handoff_t *operator;
 
     operator = arguments_get(arguments, length, 0);
-    left = arguments_get(arguments, length, 1);
-    right = arguments_get(arguments, length, 2);
 
     if (!operator)
     {
@@ -285,81 +283,79 @@ static handoff_t *apply_operator(literal_t *literal, handoff_t **arguments, size
     {
         if (strcmp(operator->unsafe, "~") == 0)
         {
-            return operator_comment(left, right);
+            return operator_comment(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "<--") == 0)
         {
-            return operator_value(left, right, objects);
+            return operator_value(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "-->") == 0)
         {
-            return operator_assign(left, right, objects);
+            return operator_assign(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "+") == 0)
         {
-            return operator_add(left, right);
+            return operator_add(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "-") == 0)
         {
-            return operator_subtract(left, right);
+            return operator_subtract(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "*") == 0)
         {
-            return operator_multiply(left, right);
+            return operator_multiply(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "/") == 0)
         {
-            return operator_divide(left, right);
+            return operator_divide(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "&") == 0)
         {
-            return operator_and(left, right);
+            return operator_and(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "|") == 0)
         {
-            return operator_or(left, right);
+            return operator_or(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "!") == 0)
         {
-            return operator_not(left, right);
+            return operator_not(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "?") == 0)
         {
-            handoff_t *conditional, *pass, *fail;
-
-            conditional = arguments_get(arguments, length, 1);
-            pass = arguments_get(arguments, length, 2);
-            fail = arguments_get(arguments, length, 3);
-
-            return operator_conditional(conditional, pass, fail);
+            return operator_conditional(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "<") == 0)
         {
-            return operator_less(left, right);
+            return operator_less(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, ">") == 0)
         {
-            return operator_greater(left, right);
+            return operator_greater(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "=") == 0)
         {
-            return operator_equal(left, right);
+            return operator_equal(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "#") == 0)
         {
-            return operator_number(left, right);
+            return operator_number(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "\"") == 0)
         {
-            return operator_string(left, right);
+            return operator_string(arguments, length, objects);
         }
     }
 
     return create_error(ERROR_ARGUMENT);
 }
 
-static handoff_t *operator_comment(handoff_t *left, handoff_t *right)
+static handoff_t *operator_comment(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left;
+
+    left = arguments_get(arguments, length, 1);
+
     if (!left)
     {
         return create_error(ERROR_ARGUMENT);
@@ -373,9 +369,12 @@ static handoff_t *operator_comment(handoff_t *left, handoff_t *right)
     return create_unknown();
 }
 
-static handoff_t *operator_value(handoff_t *left, handoff_t *right, object_t *objects)
+static handoff_t *operator_value(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left;
     object_t *object;
+
+    left = arguments_get(arguments, length, 1);
 
     if (!left)
     {
@@ -407,9 +406,13 @@ static handoff_t *operator_value(handoff_t *left, handoff_t *right, object_t *ob
     return create_null();
 }
 
-static handoff_t *operator_assign(handoff_t *left, handoff_t *right, object_t *objects)
+static handoff_t *operator_assign(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left, *right;
     object_t *object, *last;
+
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
 
     if (!left || !right)
     {
@@ -473,9 +476,13 @@ static handoff_t *operator_assign(handoff_t *left, handoff_t *right, object_t *o
     return create_null();
 }
 
-static handoff_t *operator_add(handoff_t *left, handoff_t *right)
+static handoff_t *operator_add(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left, *right;
     int x, y;
+
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
 
     if (!left || !right)
     {
@@ -493,9 +500,13 @@ static handoff_t *operator_add(handoff_t *left, handoff_t *right)
     return create_number(x + y);
 }
 
-static handoff_t *operator_subtract(handoff_t *left, handoff_t *right)
+static handoff_t *operator_subtract(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left, *right;
     int x, y;
+
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
 
     if (!left || !right)
     {
@@ -513,9 +524,13 @@ static handoff_t *operator_subtract(handoff_t *left, handoff_t *right)
     return create_number(x - y);
 }
 
-static handoff_t *operator_multiply(handoff_t *left, handoff_t *right)
+static handoff_t *operator_multiply(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left, *right;
     int x, y;
+
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
 
     if (!left || !right)
     {
@@ -533,9 +548,13 @@ static handoff_t *operator_multiply(handoff_t *left, handoff_t *right)
     return create_number(x * y);
 }
 
-static handoff_t *operator_divide(handoff_t *left, handoff_t *right)
+static handoff_t *operator_divide(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left, *right;
     int x, y;
+
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
 
     if (!left || !right)
     {
@@ -558,9 +577,13 @@ static handoff_t *operator_divide(handoff_t *left, handoff_t *right)
     return create_number(x / y);
 }
 
-static handoff_t *operator_and(handoff_t *left, handoff_t *right)
+static handoff_t *operator_and(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left, *right;
     int x, y;
+
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
 
     if (!left || !right)
     {
@@ -578,9 +601,13 @@ static handoff_t *operator_and(handoff_t *left, handoff_t *right)
     return create_number(x && y);
 }
 
-static handoff_t *operator_or(handoff_t *left, handoff_t *right)
+static handoff_t *operator_or(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left, *right;
     int x, y;
+
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
 
     if (!left || !right)
     {
@@ -598,9 +625,12 @@ static handoff_t *operator_or(handoff_t *left, handoff_t *right)
     return create_number(x || y);
 }
 
-static handoff_t *operator_not(handoff_t *left, handoff_t *right)
+static handoff_t *operator_not(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left;
     int x;
+
+    left = arguments_get(arguments, length, 1);
 
     if (!left)
     {
@@ -617,9 +647,14 @@ static handoff_t *operator_not(handoff_t *left, handoff_t *right)
     return create_number(!x);
 }
 
-static handoff_t *operator_conditional(handoff_t *condition, handoff_t *pass, handoff_t *fail)
+static handoff_t *operator_conditional(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *condition, *pass, *fail;
     int x;
+
+    condition = arguments_get(arguments, length, 1);
+    pass = arguments_get(arguments, length, 2);
+    fail = arguments_get(arguments, length, 3);
 
     if (!condition || !pass || !fail)
     {
@@ -643,9 +678,13 @@ static handoff_t *operator_conditional(handoff_t *condition, handoff_t *pass, ha
     }
 }
 
-static handoff_t *operator_less(handoff_t *left, handoff_t *right)
+static handoff_t *operator_less(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left, *right;
     int x, y;
+
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
 
     if (!left || !right)
     {
@@ -663,9 +702,13 @@ static handoff_t *operator_less(handoff_t *left, handoff_t *right)
     return create_number(x < y);
 }
 
-static handoff_t *operator_greater(handoff_t *left, handoff_t *right)
+static handoff_t *operator_greater(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left, *right;
     int x, y;
+
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
 
     if (!left || !right)
     {
@@ -683,9 +726,13 @@ static handoff_t *operator_greater(handoff_t *left, handoff_t *right)
     return create_number(x > y);
 }
 
-static handoff_t *operator_equal(handoff_t *left, handoff_t *right)
+static handoff_t *operator_equal(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left, *right;
     int x, y;
+
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
 
     if (!left || !right)
     {
@@ -703,8 +750,12 @@ static handoff_t *operator_equal(handoff_t *left, handoff_t *right)
     return create_number(x == y);
 }
 
-static handoff_t *operator_number(handoff_t *left, handoff_t *right)
+static handoff_t *operator_number(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left;
+
+    left = arguments_get(arguments, length, 1);
+
     if (!left)
     {
         return create_error(ERROR_ARGUMENT);
@@ -735,8 +786,12 @@ static handoff_t *operator_number(handoff_t *left, handoff_t *right)
     return create_error(ERROR_TYPE);
 }
 
-static handoff_t *operator_string(handoff_t *left, handoff_t *right)
+static handoff_t *operator_string(handoff_t **arguments, size_t length, object_t *objects)
 {
+    handoff_t *left;
+
+    left = arguments_get(arguments, length, 1);
+
     if (!left)
     {
         return create_error(ERROR_ARGUMENT);
