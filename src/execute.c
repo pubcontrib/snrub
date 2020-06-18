@@ -371,24 +371,24 @@ static handoff_t *operator_comment(handoff_t **arguments, size_t length, object_
 
 static handoff_t *operator_value(handoff_t **arguments, size_t length, object_t *objects)
 {
-    handoff_t *left;
+    handoff_t *identifier;
     object_t *object;
 
-    left = arguments_get(arguments, length, 1);
+    identifier = arguments_get(arguments, length, 1);
 
-    if (!left)
+    if (!identifier)
     {
         return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != TYPE_STRING)
+    if (identifier->type != TYPE_STRING)
     {
         return create_error(ERROR_ARGUMENT);
     }
 
     for (object = objects; object != NULL; object = object->next)
     {
-        if (object->identifier && strcmp(object->identifier, left->unsafe) == 0)
+        if (object->identifier && strcmp(object->identifier, identifier->unsafe) == 0)
         {
             void *unsafe;
 
@@ -408,18 +408,18 @@ static handoff_t *operator_value(handoff_t **arguments, size_t length, object_t 
 
 static handoff_t *operator_assign(handoff_t **arguments, size_t length, object_t *objects)
 {
-    handoff_t *left, *right;
+    handoff_t *identifier, *handoff;
     object_t *object, *last;
 
-    left = arguments_get(arguments, length, 1);
-    right = arguments_get(arguments, length, 2);
+    identifier = arguments_get(arguments, length, 1);
+    handoff = arguments_get(arguments, length, 2);
 
-    if (!left || !right)
+    if (!identifier || !handoff)
     {
         return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != TYPE_STRING)
+    if (identifier->type != TYPE_STRING)
     {
         return create_error(ERROR_ARGUMENT);
     }
@@ -428,20 +428,20 @@ static handoff_t *operator_assign(handoff_t **arguments, size_t length, object_t
 
     for (object = objects; object != NULL; object = object->next)
     {
-        if (object->identifier && strcmp(object->identifier, left->unsafe) == 0)
+        if (object->identifier && strcmp(object->identifier, identifier->unsafe) == 0)
         {
-            if (right->type != TYPE_UNKNOWN && right->type != TYPE_NULL)
+            if (handoff->type != TYPE_UNKNOWN && handoff->type != TYPE_NULL)
             {
                 if (object->unsafe)
                 {
                     free(object->unsafe);
                 }
 
-                object->type = right->type;
-                object->unsafe = right->unsafe;
-                object->size = right->size;
+                object->type = handoff->type;
+                object->unsafe = handoff->unsafe;
+                object->size = handoff->size;
 
-                right->unsafe = NULL;
+                handoff->unsafe = NULL;
             }
             else
             {
@@ -460,17 +460,17 @@ static handoff_t *operator_assign(handoff_t **arguments, size_t length, object_t
         last = object;
     }
 
-    if (right->type != TYPE_UNKNOWN && right->type != TYPE_NULL)
+    if (handoff->type != TYPE_UNKNOWN && handoff->type != TYPE_NULL)
     {
-        last->next = create_object(left->unsafe, right->type, right->unsafe, right->size, NULL);
+        last->next = create_object(identifier->unsafe, handoff->type, handoff->unsafe, handoff->size, NULL);
 
         if (!last->next)
         {
             return NULL;
         }
 
-        left->unsafe = NULL;
-        right->unsafe = NULL;
+        identifier->unsafe = NULL;
+        handoff->unsafe = NULL;
     }
 
     return create_null();
