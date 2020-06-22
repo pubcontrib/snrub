@@ -309,7 +309,7 @@ static literal_t *number_to_value(char *value)
         return create_literal(TYPE_UNKNOWN, NULL);
     }
 
-    if (value[0] != number_symbol() || value[length - 1] != number_symbol())
+    if (value[0] != SYMBOL_NUMBER || value[length - 1] != SYMBOL_NUMBER)
     {
         return create_literal(TYPE_UNKNOWN, NULL);
     }
@@ -355,7 +355,7 @@ static literal_t *string_to_value(char *value)
         return create_literal(TYPE_UNKNOWN, NULL);
     }
 
-    if (value[0] != string_symbol() || value[length - 1] != string_symbol())
+    if (value[0] != SYMBOL_STRING || value[length - 1] != SYMBOL_STRING)
     {
         return create_literal(TYPE_UNKNOWN, NULL);
     }

@@ -3,6 +3,10 @@
 
 #include <stdlib.h>
 
+static const char SYMBOL_NUMBER = '#';
+static const char SYMBOL_STRING = '"';
+static const char SYMBOL_ESCAPE = '\\';
+
 typedef enum
 {
     SCANNER_STATE_ROAMING,
@@ -37,9 +41,6 @@ typedef struct
 
 scanner_t *start_scanner(char *document);
 token_t *next_token(scanner_t *scanner);
-char number_symbol();
-char string_symbol();
-char escape_symbol();
 void destroy_scanner(scanner_t *scanner);
 void destroy_token(token_t *token);
 

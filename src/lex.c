@@ -37,12 +37,12 @@ token_t *next_token(scanner_t *scanner)
 
         if (scanner->state == SCANNER_STATE_ROAMING)
         {
-            if (symbol == number_symbol())
+            if (symbol == SYMBOL_NUMBER)
             {
                 start = scanner->position - 1;
                 scanner->state = SCANNER_STATE_NUMBER;
             }
-            else if (symbol == string_symbol())
+            else if (symbol == SYMBOL_STRING)
             {
                 start = scanner->position - 1;
                 scanner->state = SCANNER_STATE_STRING;
@@ -58,14 +58,14 @@ token_t *next_token(scanner_t *scanner)
         }
         else if (scanner->state == SCANNER_STATE_NUMBER)
         {
-            if (symbol == number_symbol())
+            if (symbol == SYMBOL_NUMBER)
             {
                 return slice_token(scanner, start, end, length, TOKEN_NAME_NUMBER);
             }
         }
         else if (scanner->state == SCANNER_STATE_STRING)
         {
-            if (symbol == string_symbol())
+            if (symbol == SYMBOL_STRING)
             {
                 if (escaping)
                 {
@@ -76,7 +76,7 @@ token_t *next_token(scanner_t *scanner)
                     return slice_token(scanner, start, end, length, TOKEN_NAME_STRING);
                 }
             }
-            else if (symbol == escape_symbol())
+            else if (symbol == SYMBOL_ESCAPE)
             {
                 escaping = escaping ? 0 : 1;
             }
@@ -100,21 +100,6 @@ token_t *next_token(scanner_t *scanner)
 
         return NULL;
     }
-}
-
-char number_symbol()
-{
-    return '#';
-}
-
-char string_symbol()
-{
-    return '"';
-}
-
-char escape_symbol()
-{
-    return '\\';
 }
 
 void destroy_scanner(scanner_t *scanner)
