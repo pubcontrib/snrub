@@ -295,19 +295,13 @@ static literal_t *token_to_literal(token_t *token)
 
 static literal_t *null_to_value(char *value)
 {
-    size_t length, index;
+    int match;
+    type_t type;
 
-    length = strlen(value);
+    match = strlen(value) == 1 && value[0] == SYMBOL_NULL;
+    type = match ? TYPE_NULL : TYPE_UNKNOWN;
 
-    for (index = 0; index < length && index < 1; index++)
-    {
-        if (value[index] == SYMBOL_NULL)
-        {
-            return create_literal(TYPE_NULL, NULL);
-        }
-    }
-
-    return create_literal(TYPE_UNKNOWN, NULL);
+    return create_literal(type, NULL);
 }
 
 static literal_t *number_to_value(char *value)
