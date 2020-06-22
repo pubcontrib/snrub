@@ -439,7 +439,7 @@ static char *escape(char *value)
         }
         else
         {
-            if (current == '\\')
+            if (current == SYMBOL_ESCAPE)
             {
                 escaping = 1;
             }

@@ -295,27 +295,27 @@ static char *unescape(char *value)
 
             if (symbol == '\\')
             {
-                buffer[left++] = '\\';
+                buffer[left++] = SYMBOL_ESCAPE;
                 buffer[left++] = '\\';
             }
             else if (symbol == '"')
             {
-                buffer[left++] = '\\';
+                buffer[left++] = SYMBOL_ESCAPE;
                 buffer[left++] = '"';
             }
             else if (symbol == '\t')
             {
-                buffer[left++] = '\\';
+                buffer[left++] = SYMBOL_ESCAPE;
                 buffer[left++] = 't';
             }
             else if (symbol == '\n')
             {
-                buffer[left++] = '\\';
+                buffer[left++] = SYMBOL_ESCAPE;
                 buffer[left++] = 'n';
             }
             else if (symbol == '\r')
             {
-                buffer[left++] = '\\';
+                buffer[left++] = SYMBOL_ESCAPE;
                 buffer[left++] = 'r';
             }
             else
