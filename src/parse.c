@@ -295,7 +295,19 @@ static literal_t *token_to_literal(token_t *token)
 
 static literal_t *null_to_value(char *value)
 {
-    return strcmp(value, "?") ? create_literal(TYPE_UNKNOWN, NULL) : create_literal(TYPE_NULL, NULL);
+    size_t length, index;
+
+    length = strlen(value);
+
+    for (index = 0; index < length && index < 1; index++)
+    {
+        if (value[index] == SYMBOL_NULL)
+        {
+            return create_literal(TYPE_NULL, NULL);
+        }
+    }
+
+    return create_literal(TYPE_UNKNOWN, NULL);
 }
 
 static literal_t *number_to_value(char *value)

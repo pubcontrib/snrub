@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 
+static const char SYMBOL_NULL = '?';
 static const char SYMBOL_NUMBER = '#';
 static const char SYMBOL_STRING = '"';
 static const char SYMBOL_ESCAPE = '\\';

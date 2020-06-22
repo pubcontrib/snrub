@@ -170,6 +170,11 @@ static token_t *slice_token(scanner_t *scanner, size_t start, size_t end, size_t
 
 static token_name_t match_name(char symbol)
 {
+    if (symbol == SYMBOL_NULL)
+    {
+        return TOKEN_NAME_NULL;
+    }
+
     switch (symbol)
     {
         case '(':
@@ -181,8 +186,6 @@ static token_name_t match_name(char symbol)
         case '\n':
         case '\r':
             return TOKEN_NAME_WHITESPACE;
-        case '?':
-            return TOKEN_NAME_NULL;
         default:
             return TOKEN_NAME_UNKNOWN;
     }

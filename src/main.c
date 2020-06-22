@@ -249,7 +249,7 @@ static void print_value(type_t type, void *unsafe)
 {
     if (type == TYPE_UNKNOWN || type == TYPE_NULL)
     {
-        printf("?\n");
+        printf("%c\n", SYMBOL_NULL);
     }
     else if (type == TYPE_NUMBER)
     {
