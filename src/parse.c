@@ -5,6 +5,8 @@
 #include "lex.h"
 #include "common.h"
 
+static const int LIMIT_DEPTH = 32;
+
 typedef enum
 {
     PARSER_STATE_SUCCESS,
@@ -144,7 +146,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     state = PARSER_STATE_START;
     expression = create_expression(ERROR_UNKNOWN, NULL, NULL, 0, NULL);
 
-    if (depth > 32)
+    if (depth > LIMIT_DEPTH)
     {
         state = PARSER_STATE_ERROR;
         expression->error = ERROR_DEPTH;
@@ -152,7 +154,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
 
     while (scanner->state != SCANNER_STATE_CLOSED && state != PARSER_STATE_ERROR && state != PARSER_STATE_SUCCESS)
     {
-        if (expression->length > 32)
+        if (expression->length > LIMIT_DEPTH)
         {
             state = PARSER_STATE_ERROR;
             expression->error = ERROR_DEPTH;
