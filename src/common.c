@@ -145,17 +145,7 @@ int is_integer(char *string)
     size_t length, index;
 
     length = strlen(string);
-    index = 0;
-
-    if (string[0] == '-')
-    {
-        if (length == 1)
-        {
-            return 0;
-        }
-
-        index = 1;
-    }
+    index = length > 1 && string[0] == '-' ? 1 : 0;
 
     for (; index < length; index++)
     {
