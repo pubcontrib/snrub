@@ -25,7 +25,7 @@ static literal_t *number_to_value(char *value);
 static literal_t *string_to_value(char *value);
 static int is_literal(token_name_t name);
 static char *escape(char *value);
-static char is_printable(char *value);
+static int is_printable(char *value);
 
 expression_t *parse_expressions(scanner_t *scanner)
 {
@@ -466,7 +466,7 @@ static char *escape(char *value)
     return tight;
 }
 
-static char is_printable(char *value)
+static int is_printable(char *value)
 {
     size_t index;
 

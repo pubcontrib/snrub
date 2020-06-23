@@ -139,7 +139,7 @@ int integer_digits(int integer)
     return digits;
 }
 
-char is_integer(char *string)
+int is_integer(char *string)
 {
     size_t length, index;
 
