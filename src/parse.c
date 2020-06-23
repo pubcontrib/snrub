@@ -468,9 +468,11 @@ static char *escape(char *value)
 
 static int is_printable(char *value)
 {
-    size_t index;
+    size_t length, index;
 
-    for (index = 0; index < strlen(value); index++)
+    length = strlen(value);
+
+    for (index = 0; index < length; index++)
     {
         char symbol;
 

@@ -38,19 +38,20 @@ char *copy_string(char *string)
 
 size_t characters_in_string(char *string, char character)
 {
-    size_t length, index;
+    size_t count, length, index;
 
-    length = 0;
+    count = 0;
+    length = strlen(string);
 
-    for (index = 0; index < strlen(string); index++)
+    for (index = 0; index < length; index++)
     {
         if (string[index] == character)
         {
-            length += 1;
+            count += 1;
         }
     }
 
-    return length;
+    return count;
 }
 
 void *copy_memory(void *memory, size_t size)
