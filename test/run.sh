@@ -29,6 +29,7 @@ fi
 . test/suite/operator/divide.sh
 . test/suite/operator/number.sh
 . test/suite/operator/string.sh
+. test/suite/operator/length.sh
 
 . test/suite/whitespace.sh
 . test/suite/expression.sh

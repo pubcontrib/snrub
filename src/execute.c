@@ -30,6 +30,7 @@ static handoff_t *operator_greater(handoff_t **arguments, size_t length, object_
 static handoff_t *operator_equal(handoff_t **arguments, size_t length, object_t *objects);
 static handoff_t *operator_number(handoff_t **arguments, size_t length, object_t *objects);
 static handoff_t *operator_string(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_length(handoff_t **arguments, size_t length, object_t *objects);
 static handoff_t *arguments_get(handoff_t **arguments, size_t length, size_t index);
 static void arguments_free(handoff_t **arguments, size_t length);
 
@@ -344,6 +345,10 @@ static handoff_t *apply_operator(literal_t *literal, handoff_t **arguments, size
         else if (strcmp(operator->unsafe, "\"") == 0)
         {
             return operator_string(arguments, length, objects);
+        }
+        else if (strcmp(operator->unsafe, "| |") == 0)
+        {
+            return operator_length(arguments, length, objects);
         }
     }
 
@@ -825,6 +830,28 @@ static handoff_t *operator_string(handoff_t **arguments, size_t length, object_t
     }
 
     return create_error(ERROR_TYPE);
+}
+
+static handoff_t *operator_length(handoff_t **arguments, size_t length, object_t *objects)
+{
+    handoff_t *left;
+    int x;
+
+    left = arguments_get(arguments, length, 1);
+
+    if (!left)
+    {
+        return create_error(ERROR_ARGUMENT);
+    }
+
+    if (left->type != TYPE_STRING)
+    {
+        return create_error(ERROR_ARGUMENT);
+    }
+
+    x = strlen(left->unsafe);
+
+    return create_number(x);
 }
 
 static handoff_t *arguments_get(handoff_t **arguments, size_t length, size_t index)
