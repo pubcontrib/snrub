@@ -686,7 +686,6 @@ static handoff_t *operator_conditional(handoff_t **arguments, size_t length, obj
 static handoff_t *operator_less(handoff_t **arguments, size_t length, object_t *objects)
 {
     handoff_t *left, *right;
-    int x, y;
 
     left = arguments_get(arguments, length, 1);
     right = arguments_get(arguments, length, 2);
@@ -696,15 +695,32 @@ static handoff_t *operator_less(handoff_t **arguments, size_t length, object_t *
         return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
+    if (left->type != right->type)
     {
-        return create_error(ERROR_ARGUMENT);
+        return create_number(0);
     }
 
-    x = ((int *) left->unsafe)[0];
-    y = ((int *) right->unsafe)[0];
+    if (left->type == TYPE_NULL)
+    {
+        return create_number(0);
+    }
 
-    return create_number(x < y);
+    if (left->type == TYPE_NUMBER)
+    {
+        int x, y;
+
+        x = ((int *) left->unsafe)[0];
+        y = ((int *) right->unsafe)[0];
+
+        return create_number(x < y);
+    }
+
+    if (left->type == TYPE_STRING)
+    {
+        return create_number(strcmp(left->unsafe, right->unsafe) < 0);
+    }
+
+    return create_error(ERROR_TYPE);
 }
 
 static handoff_t *operator_greater(handoff_t **arguments, size_t length, object_t *objects)
