@@ -69,74 +69,71 @@ expression_t *parse_expressions(scanner_t *scanner)
 
 char *escape_string(char *string)
 {
-    size_t length, scan, fill;
-    char *loose, *tight;
-    int escaping;
+    size_t length;
+    char *escape;
 
     length = strlen(string);
-    loose = malloc(sizeof(char) * (length + 1));
+    escape = malloc(sizeof(char) * (length + 1));
 
-    if (!loose)
+    if (escape)
     {
-        return NULL;
-    }
+        size_t left, right;
+        int escaping;
 
-    escaping = 0;
-    fill = 0;
+        escaping = 0;
+        right = 0;
 
-    for (scan = 0; scan < length; scan++)
-    {
-        char current;
-
-        current = string[scan];
-
-        if (escaping)
+        for (left = 0; left < length; left++)
         {
-            switch (current)
-            {
-                case '\\':
-                    loose[fill++] = '\\';
-                    break;
-                case '"':
-                    loose[fill++] = '"';
-                    break;
-                case 't':
-                    loose[fill++] = '\t';
-                    break;
-                case 'n':
-                    loose[fill++] = '\n';
-                    break;
-                case 'r':
-                    loose[fill++] = '\r';
-                    break;
-            }
+            char current;
 
-            escaping = 0;
-        }
-        else
-        {
-            if (current == SYMBOL_ESCAPE)
+            current = string[left];
+
+            if (escaping)
             {
-                escaping = 1;
+                switch (current)
+                {
+                    case '\\':
+                        escape[right++] = '\\';
+                        break;
+                    case '"':
+                        escape[right++] = '"';
+                        break;
+                    case 't':
+                        escape[right++] = '\t';
+                        break;
+                    case 'n':
+                        escape[right++] = '\n';
+                        break;
+                    case 'r':
+                        escape[right++] = '\r';
+                        break;
+                }
+
+                escaping = 0;
             }
             else
             {
-                loose[fill++] = current;
+                if (current == SYMBOL_ESCAPE)
+                {
+                    escaping = 1;
+                }
+                else
+                {
+                    escape[right++] = current;
+                }
             }
         }
+
+        escape[right] = '\0';
     }
 
-    loose[fill] = '\0';
-
-    tight = copy_string(loose);
-    free(loose);
-
-    return tight;
+    return escape;
 }
 
 char *unescape_string(char *string)
 {
-    char *buffer;
+    char *unescape;
     size_t length;
 
     length = strlen(string)
@@ -145,9 +142,9 @@ char *unescape_string(char *string)
         + characters_in_string(string, '\t')
         + characters_in_string(string, '\n')
         + characters_in_string(string, '\r');
-    buffer = malloc(sizeof(char) * (length + 1));
+    unescape = malloc(sizeof(char) * (length + 1));
 
-    if (buffer)
+    if (unescape)
     {
         size_t left, right;
 
@@ -159,39 +156,39 @@ char *unescape_string(char *string)
 
             if (symbol == '\\')
             {
-                buffer[left++] = SYMBOL_ESCAPE;
-                buffer[left++] = '\\';
+                unescape[left++] = SYMBOL_ESCAPE;
+                unescape[left++] = '\\';
             }
             else if (symbol == '"')
             {
-                buffer[left++] = SYMBOL_ESCAPE;
-                buffer[left++] = '"';
+                unescape[left++] = SYMBOL_ESCAPE;
+                unescape[left++] = '"';
             }
             else if (symbol == '\t')
             {
-                buffer[left++] = SYMBOL_ESCAPE;
-                buffer[left++] = 't';
+                unescape[left++] = SYMBOL_ESCAPE;
+                unescape[left++] = 't';
             }
             else if (symbol == '\n')
             {
-                buffer[left++] = SYMBOL_ESCAPE;
-                buffer[left++] = 'n';
+                unescape[left++] = SYMBOL_ESCAPE;
+                unescape[left++] = 'n';
             }
             else if (symbol == '\r')
             {
-                buffer[left++] = SYMBOL_ESCAPE;
-                buffer[left++] = 'r';
+                unescape[left++] = SYMBOL_ESCAPE;
+                unescape[left++] = 'r';
             }
             else
             {
-                buffer[left++] = symbol;
+                unescape[left++] = symbol;
             }
         }
 
-        buffer[length] = '\0';
+        unescape[length] = '\0';
     }
 
-    return buffer;
+    return unescape;
 }
 
 void destroy_expression(expression_t *expression)
