@@ -17,7 +17,6 @@ static void print_version();
 static void print_usage();
 static void print_error(error_t error);
 static void print_value(type_t type, void *unsafe);
-static char *unescape(char *value);
 
 int main(int argc, char **argv)
 {
@@ -268,64 +267,4 @@ static void print_value(type_t type, void *unsafe)
             free(string);
         }
     }
-}
-
-static char *unescape(char *value)
-{
-    char *buffer;
-    size_t length;
-
-    length = strlen(value)
-        + characters_in_string(value, '\\')
-        + characters_in_string(value, '"')
-        + characters_in_string(value, '\t')
-        + characters_in_string(value, '\n')
-        + characters_in_string(value, '\r');
-    buffer = malloc(sizeof(char) * (length + 1));
-
-    if (buffer)
-    {
-        size_t left, right;
-
-        for (left = 0, right = 0; left < length; right++)
-        {
-            char symbol;
-
-            symbol = value[right];
-
-            if (symbol == '\\')
-            {
-                buffer[left++] = SYMBOL_ESCAPE;
-                buffer[left++] = '\\';
-            }
-            else if (symbol == '"')
-            {
-                buffer[left++] = SYMBOL_ESCAPE;
-                buffer[left++] = '"';
-            }
-            else if (symbol == '\t')
-            {
-                buffer[left++] = SYMBOL_ESCAPE;
-                buffer[left++] = 't';
-            }
-            else if (symbol == '\n')
-            {
-                buffer[left++] = SYMBOL_ESCAPE;
-                buffer[left++] = 'n';
-            }
-            else if (symbol == '\r')
-            {
-                buffer[left++] = SYMBOL_ESCAPE;
-                buffer[left++] = 'r';
-            }
-            else
-            {
-                buffer[left++] = symbol;
-            }
-        }
-
-        buffer[length] = '\0';
-    }
-
-    return buffer;
 }

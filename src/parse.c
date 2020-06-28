@@ -24,7 +24,6 @@ static literal_t *null_to_value(char *value);
 static literal_t *number_to_value(char *value);
 static literal_t *string_to_value(char *value);
 static int is_literal(token_name_t name);
-static char *escape(char *value);
 static int is_printable(char *value);
 
 expression_t *parse_expressions(scanner_t *scanner)
@@ -66,6 +65,133 @@ expression_t *parse_expressions(scanner_t *scanner)
     } while (scanner->state != SCANNER_STATE_CLOSED);
 
     return head;
+}
+
+char *escape(char *value)
+{
+    size_t length, scan, fill;
+    char *loose, *tight;
+    int escaping;
+
+    length = strlen(value);
+    loose = malloc(sizeof(char) * (length + 1));
+
+    if (!loose)
+    {
+        return NULL;
+    }
+
+    escaping = 0;
+    fill = 0;
+
+    for (scan = 0; scan < length; scan++)
+    {
+        char current;
+
+        current = value[scan];
+
+        if (escaping)
+        {
+            switch (current)
+            {
+                case '\\':
+                    loose[fill++] = '\\';
+                    break;
+                case '"':
+                    loose[fill++] = '"';
+                    break;
+                case 't':
+                    loose[fill++] = '\t';
+                    break;
+                case 'n':
+                    loose[fill++] = '\n';
+                    break;
+                case 'r':
+                    loose[fill++] = '\r';
+                    break;
+            }
+
+            escaping = 0;
+        }
+        else
+        {
+            if (current == SYMBOL_ESCAPE)
+            {
+                escaping = 1;
+            }
+            else
+            {
+                loose[fill++] = current;
+            }
+        }
+    }
+
+    loose[fill] = '\0';
+
+    tight = copy_string(loose);
+    free(loose);
+
+    return tight;
+}
+
+char *unescape(char *value)
+{
+    char *buffer;
+    size_t length;
+
+    length = strlen(value)
+        + characters_in_string(value, '\\')
+        + characters_in_string(value, '"')
+        + characters_in_string(value, '\t')
+        + characters_in_string(value, '\n')
+        + characters_in_string(value, '\r');
+    buffer = malloc(sizeof(char) * (length + 1));
+
+    if (buffer)
+    {
+        size_t left, right;
+
+        for (left = 0, right = 0; left < length; right++)
+        {
+            char symbol;
+
+            symbol = value[right];
+
+            if (symbol == '\\')
+            {
+                buffer[left++] = SYMBOL_ESCAPE;
+                buffer[left++] = '\\';
+            }
+            else if (symbol == '"')
+            {
+                buffer[left++] = SYMBOL_ESCAPE;
+                buffer[left++] = '"';
+            }
+            else if (symbol == '\t')
+            {
+                buffer[left++] = SYMBOL_ESCAPE;
+                buffer[left++] = 't';
+            }
+            else if (symbol == '\n')
+            {
+                buffer[left++] = SYMBOL_ESCAPE;
+                buffer[left++] = 'n';
+            }
+            else if (symbol == '\r')
+            {
+                buffer[left++] = SYMBOL_ESCAPE;
+                buffer[left++] = 'r';
+            }
+            else
+            {
+                buffer[left++] = symbol;
+            }
+        }
+
+        buffer[length] = '\0';
+    }
+
+    return buffer;
 }
 
 void destroy_expression(expression_t *expression)
@@ -397,73 +523,6 @@ static int is_literal(token_name_t name)
         default:
             return 0;
     }
-}
-
-static char *escape(char *value)
-{
-    size_t length, scan, fill;
-    char *loose, *tight;
-    int escaping;
-
-    length = strlen(value);
-    loose = malloc(sizeof(char) * (length + 1));
-
-    if (!loose)
-    {
-        return NULL;
-    }
-
-    escaping = 0;
-    fill = 0;
-
-    for (scan = 0; scan < length; scan++)
-    {
-        char current;
-
-        current = value[scan];
-
-        if (escaping)
-        {
-            switch (current)
-            {
-                case '\\':
-                    loose[fill++] = '\\';
-                    break;
-                case '"':
-                    loose[fill++] = '"';
-                    break;
-                case 't':
-                    loose[fill++] = '\t';
-                    break;
-                case 'n':
-                    loose[fill++] = '\n';
-                    break;
-                case 'r':
-                    loose[fill++] = '\r';
-                    break;
-            }
-
-            escaping = 0;
-        }
-        else
-        {
-            if (current == SYMBOL_ESCAPE)
-            {
-                escaping = 1;
-            }
-            else
-            {
-                loose[fill++] = current;
-            }
-        }
-    }
-
-    loose[fill] = '\0';
-
-    tight = copy_string(loose);
-    free(loose);
-
-    return tight;
 }
 
 static int is_printable(char *value)
