@@ -38,8 +38,8 @@ typedef struct expression_t
 } expression_t;
 
 expression_t *parse_expressions(scanner_t *scanner);
-char *escape(char *value);
-char *unescape(char *value);
+char *escape_string(char *string);
+char *unescape_string(char *string);
 void destroy_expression(expression_t *expression);
 void destroy_literal(literal_t *literal);
 

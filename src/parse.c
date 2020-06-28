@@ -67,13 +67,13 @@ expression_t *parse_expressions(scanner_t *scanner)
     return head;
 }
 
-char *escape(char *value)
+char *escape_string(char *string)
 {
     size_t length, scan, fill;
     char *loose, *tight;
     int escaping;
 
-    length = strlen(value);
+    length = strlen(string);
     loose = malloc(sizeof(char) * (length + 1));
 
     if (!loose)
@@ -88,7 +88,7 @@ char *escape(char *value)
     {
         char current;
 
-        current = value[scan];
+        current = string[scan];
 
         if (escaping)
         {
@@ -134,17 +134,17 @@ char *escape(char *value)
     return tight;
 }
 
-char *unescape(char *value)
+char *unescape_string(char *string)
 {
     char *buffer;
     size_t length;
 
-    length = strlen(value)
-        + characters_in_string(value, '\\')
-        + characters_in_string(value, '"')
-        + characters_in_string(value, '\t')
-        + characters_in_string(value, '\n')
-        + characters_in_string(value, '\r');
+    length = strlen(string)
+        + characters_in_string(string, '\\')
+        + characters_in_string(string, '"')
+        + characters_in_string(string, '\t')
+        + characters_in_string(string, '\n')
+        + characters_in_string(string, '\r');
     buffer = malloc(sizeof(char) * (length + 1));
 
     if (buffer)
@@ -155,7 +155,7 @@ char *unescape(char *value)
         {
             char symbol;
 
-            symbol = value[right];
+            symbol = string[right];
 
             if (symbol == '\\')
             {
@@ -501,7 +501,7 @@ static literal_t *string_to_value(char *value)
         return NULL;
     }
 
-    unsafe = escape(trimmed);
+    unsafe = escape_string(trimmed);
     free(trimmed);
 
     if (!unsafe)

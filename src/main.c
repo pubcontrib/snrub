@@ -259,7 +259,7 @@ static void print_value(type_t type, void *unsafe)
     else if (type == TYPE_STRING)
     {
         char *string;
-        string = unescape((char *) unsafe);
+        string = unescape_string((char *) unsafe);
 
         if (string)
         {
