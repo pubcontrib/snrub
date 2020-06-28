@@ -69,8 +69,8 @@ expression_t *parse_expressions(scanner_t *scanner)
 
 char *escape_string(char *string)
 {
-    size_t length;
     char *escape;
+    size_t length;
 
     length = strlen(string);
     escape = malloc(sizeof(char) * (length + 1));
