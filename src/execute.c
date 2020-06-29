@@ -510,16 +510,19 @@ static handoff_t *operator_add(handoff_t **arguments, size_t length, object_t *o
 
     if (left->type == TYPE_STRING)
     {
-        char *merge;
+        char *unsafe;
+        size_t size;
 
-        merge = merge_strings(left->unsafe, right->unsafe);
+        unsafe = merge_strings(left->unsafe, right->unsafe);
 
-        if (!merge)
+        if (!unsafe)
         {
             return NULL;
         }
 
-        return create_string(merge);
+        size = sizeof(char) * (strlen(unsafe) + 1);
+
+        return create_handoff(ERROR_UNKNOWN, TYPE_STRING, unsafe, size);
     }
 
     return create_error(ERROR_ARGUMENT);
