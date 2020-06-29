@@ -36,6 +36,21 @@ char *copy_string(char *string)
     return copy;
 }
 
+char *merge_strings(char *left, char *right)
+{
+    char *merge;
+
+    merge = malloc(sizeof(char) * (strlen(left) + strlen(right) + 1));
+
+    if (merge)
+    {
+        strncpy(merge, left, strlen(left));
+        strncpy(merge + strlen(left), right, strlen(right) + 1);
+    }
+
+    return merge;
+}
+
 size_t characters_in_string(char *string, char character)
 {
     size_t count, length, index;

@@ -484,7 +484,6 @@ static handoff_t *operator_assign(handoff_t **arguments, size_t length, object_t
 static handoff_t *operator_add(handoff_t **arguments, size_t length, object_t *objects)
 {
     handoff_t *left, *right;
-    int x, y;
 
     left = arguments_get(arguments, length, 1);
     right = arguments_get(arguments, length, 2);
@@ -494,15 +493,36 @@ static handoff_t *operator_add(handoff_t **arguments, size_t length, object_t *o
         return create_error(ERROR_ARGUMENT);
     }
 
-    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
+    if (left->type != right->type)
     {
         return create_error(ERROR_ARGUMENT);
     }
 
-    x = ((int *) left->unsafe)[0];
-    y = ((int *) right->unsafe)[0];
+    if (left->type == TYPE_NUMBER)
+    {
+        int x, y;
 
-    return create_number(x + y);
+        x = ((int *) left->unsafe)[0];
+        y = ((int *) right->unsafe)[0];
+
+        return create_number(x + y);
+    }
+
+    if (left->type == TYPE_STRING)
+    {
+        char *merge;
+
+        merge = merge_strings(left->unsafe, right->unsafe);
+
+        if (!merge)
+        {
+            return NULL;
+        }
+
+        return create_string(merge);
+    }
+
+    return create_error(ERROR_ARGUMENT);
 }
 
 static handoff_t *operator_subtract(handoff_t **arguments, size_t length, object_t *objects)
