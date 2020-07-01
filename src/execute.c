@@ -607,7 +607,7 @@ static handoff_t *operator_divide(handoff_t **arguments, size_t length, object_t
         return create_error(ERROR_ARITHMETIC);
     }
 
-    return create_number(x / y);
+    return create_number(div(x, y).quot);
 }
 
 static handoff_t *operator_modulo(handoff_t **arguments, size_t length, object_t *objects)
