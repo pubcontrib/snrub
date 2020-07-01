@@ -19,6 +19,8 @@ fi
 . test/suite/operator/add.sh
 . test/suite/operator/subtract.sh
 . test/suite/operator/multiply.sh
+. test/suite/operator/divide.sh
+. test/suite/operator/modulo.sh
 . test/suite/operator/and.sh
 . test/suite/operator/or.sh
 . test/suite/operator/not.sh
@@ -26,7 +28,6 @@ fi
 . test/suite/operator/less.sh
 . test/suite/operator/greater.sh
 . test/suite/operator/equal.sh
-. test/suite/operator/divide.sh
 . test/suite/operator/number.sh
 . test/suite/operator/string.sh
 . test/suite/operator/length.sh

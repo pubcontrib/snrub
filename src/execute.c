@@ -21,6 +21,7 @@ static handoff_t *operator_add(handoff_t **arguments, size_t length, object_t *o
 static handoff_t *operator_subtract(handoff_t **arguments, size_t length, object_t *objects);
 static handoff_t *operator_multiply(handoff_t **arguments, size_t length, object_t *objects);
 static handoff_t *operator_divide(handoff_t **arguments, size_t length, object_t *objects);
+static handoff_t *operator_modulo(handoff_t **arguments, size_t length, object_t *objects);
 static handoff_t *operator_and(handoff_t **arguments, size_t length, object_t *objects);
 static handoff_t *operator_or(handoff_t **arguments, size_t length, object_t *objects);
 static handoff_t *operator_not(handoff_t **arguments, size_t length, object_t *objects);
@@ -309,6 +310,10 @@ static handoff_t *apply_operator(literal_t *literal, handoff_t **arguments, size
         else if (strcmp(operator->unsafe, "/") == 0)
         {
             return operator_divide(arguments, length, objects);
+        }
+        else if (strcmp(operator->unsafe, "%") == 0)
+        {
+            return operator_modulo(arguments, length, objects);
         }
         else if (strcmp(operator->unsafe, "&") == 0)
         {
@@ -603,6 +608,35 @@ static handoff_t *operator_divide(handoff_t **arguments, size_t length, object_t
     }
 
     return create_number(x / y);
+}
+
+static handoff_t *operator_modulo(handoff_t **arguments, size_t length, object_t *objects)
+{
+    handoff_t *left, *right;
+    int x, y;
+
+    left = arguments_get(arguments, length, 1);
+    right = arguments_get(arguments, length, 2);
+
+    if (!left || !right)
+    {
+        return create_error(ERROR_ARGUMENT);
+    }
+
+    if (left->type != TYPE_NUMBER || right->type != TYPE_NUMBER)
+    {
+        return create_error(ERROR_ARGUMENT);
+    }
+
+    x = ((int *) left->unsafe)[0];
+    y = ((int *) right->unsafe)[0];
+
+    if (y == 0)
+    {
+        return create_error(ERROR_ARITHMETIC);
+    }
+
+    return create_number(x % y);
 }
 
 static handoff_t *operator_and(handoff_t **arguments, size_t length, object_t *objects)
