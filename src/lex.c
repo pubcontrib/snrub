@@ -142,17 +142,12 @@ static token_t *create_token(token_name_t name, char *value)
 {
     token_t *token;
 
-    token = NULL;
+    token = malloc(sizeof(token_t));
 
-    if (value)
+    if (token)
     {
-        token = malloc(sizeof(token_t));
-
-        if (token)
-        {
-            token->name = name;
-            token->value = value;
-        }
+        token->name = name;
+        token->value = value;
     }
 
     return token;
@@ -164,6 +159,11 @@ static token_t *slice_token(scanner_t *scanner, size_t start, size_t end, size_t
 
     scanner->state = scanner->position < length ? SCANNER_STATE_ROAMING : SCANNER_STATE_CLOSED;
     value = slice_string(scanner->document, start, end);
+
+    if (!value)
+    {
+        return NULL;
+    }
 
     return create_token(name, value);
 }
