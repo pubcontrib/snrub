@@ -15,6 +15,34 @@ pass '"word"
 pass '"before"
 ("~" "comments")
 "after"' '"after"'
+pass '("-->" "path" "none")
+("?" #1#
+    ("..."
+        ("-->" "path" "pass")
+        ("<--" "path")
+    )
+    ("..."
+        ("-->" "path" "fail")
+        ("<--" "path")
+    )
+)' '"pass"'
+pass '("-->" "path" "none")
+("?" #0#
+    ?
+    ("..."
+        ("-->" "path" "fail")
+        ("<--" "path")
+    )
+)' '"fail"'
+
+pass '("-->" "path" "none")
+("?" #1#
+    ("..."
+        ("-->" "path" "pass")
+        ("<--" "path")
+    )
+    ?
+)' '"pass"'
 fail '()' '#4#'
 pass '("+" #1# #2# #3#)' '#3#'
 fail '"+" #10# #5#)' '#1#'
