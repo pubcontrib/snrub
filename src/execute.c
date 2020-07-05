@@ -34,6 +34,7 @@ static handoff_t *operator_and(argument_iterator_t *arguments, object_t *objects
 static handoff_t *operator_or(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_not(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_conditional(argument_iterator_t *arguments, object_t *objects);
+static handoff_t *operator_chain(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_less(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_greater(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_equal(argument_iterator_t *arguments, object_t *objects);
@@ -359,6 +360,10 @@ static handoff_t *apply_operator(literal_t *literal, argument_iterator_t *argume
         else if (strcmp(operator->unsafe, "?") == 0)
         {
             return operator_conditional(arguments, objects);
+        }
+        else if (strcmp(operator->unsafe, "...") == 0)
+        {
+            return operator_chain(arguments, objects);
         }
         else if (strcmp(operator->unsafe, "<") == 0)
         {
@@ -978,6 +983,28 @@ static handoff_t *operator_conditional(argument_iterator_t *arguments, object_t 
 
         return create_copy(fail);
     }
+}
+
+static handoff_t *operator_chain(argument_iterator_t *arguments, object_t *objects)
+{
+    handoff_t *last;
+
+    if (!has_next_argument(arguments))
+    {
+        return create_null();
+    }
+
+    while (has_next_argument(arguments))
+    {
+        last = next_argument(arguments, objects);
+
+        if (!last)
+        {
+            break;
+        }
+    }
+
+    return create_copy(last);
 }
 
 static handoff_t *operator_less(argument_iterator_t *arguments, object_t *objects)
