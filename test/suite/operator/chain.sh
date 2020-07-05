@@ -17,3 +17,15 @@ pass '("-->" "count" #0#)
     ("-->" "count" ("+" ("<--" "count") #1#))
 )
 ("<--" "count")' '#3#'
+fail '("-->" "count" #0#)
+("..."
+    #not a number#
+    ("-->" "count" ("+" ("<--" "count") #1#))
+)
+("<--" "count")' '#3#'
+fail '("-->" "count" #0#)
+("..."
+    ("-->" "count" ("+" ("<--" "count") #1#))
+    #not a number#
+)
+("<--" "count")' '#3#'
