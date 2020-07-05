@@ -247,22 +247,31 @@ static handoff_t *apply_expression(expression_t *expression, object_t *objects)
     }
 
     arguments->candidates = expression->arguments;
-    arguments->evaluated = malloc(sizeof(handoff_t *) * expression->length);
     arguments->length = expression->length;
     arguments->index = 0;
 
+    if (expression->length > 0)
+    {
+        arguments->evaluated = malloc(sizeof(handoff_t *) * expression->length);
+    }
+
     result = apply_operator(expression->literal, arguments, objects);
 
-    for (index = 0; index < arguments->index; index++)
+    if (arguments->length > 0)
     {
-        handoff_t *handoff;
-
-        handoff = arguments->evaluated[index];
-
-        if (handoff)
+        for (index = 0; index < arguments->index; index++)
         {
-            destroy_handoff(handoff);
+            handoff_t *handoff;
+
+            handoff = arguments->evaluated[index];
+
+            if (handoff)
+            {
+                destroy_handoff(handoff);
+            }
         }
+
+        free(arguments->evaluated);
     }
 
     free(arguments);
