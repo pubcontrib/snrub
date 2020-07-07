@@ -16,7 +16,7 @@ static char *read_file(char *path);
 static void print_version();
 static void print_usage();
 static void print_error(error_t error);
-static void print_value(type_t type, void *unsafe);
+static int print_value(type_t type, void *unsafe);
 
 int main(int argc, char **argv)
 {
@@ -185,9 +185,10 @@ static int apply_script(char *document, object_t *objects)
     }
     else
     {
-        print_value(handoff->type, handoff->unsafe);
+        int status;
+        status = print_value(handoff->type, handoff->unsafe);
         destroy_handoff(handoff);
-        return 0;
+        return status;
     }
 }
 
@@ -244,17 +245,19 @@ static void print_error(error_t error)
     printf("#%d#\n", error);
 }
 
-static void print_value(type_t type, void *unsafe)
+static int print_value(type_t type, void *unsafe)
 {
     if (type == TYPE_UNKNOWN || type == TYPE_NULL)
     {
         printf("%c\n", SYMBOL_NULL);
+        return 0;
     }
     else if (type == TYPE_NUMBER)
     {
         int number;
         number = ((int *) unsafe)[0];
         printf("#%d#\n", number);
+        return 0;
     }
     else if (type == TYPE_STRING)
     {
@@ -265,6 +268,14 @@ static void print_value(type_t type, void *unsafe)
         {
             printf("\"%s\"\n", string);
             free(string);
+            return 0;
+        }
+        else
+        {
+            print_error(ERROR_SHORTAGE);
+            return 1;
         }
     }
+
+    return 1;
 }
