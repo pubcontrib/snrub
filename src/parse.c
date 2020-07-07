@@ -349,19 +349,28 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                             expression->length += 1;
                             expression->arguments = malloc(sizeof(expression_t *) * expression->length);
 
-                            if (expression->length > 1)
+                            if (expression->arguments)
                             {
-                                size_t index;
-
-                                for (index = 0; index < expression->length - 1; index++)
+                                if (expression->length > 1)
                                 {
-                                    expression->arguments[index] = existing[index];
+                                    size_t index;
+
+                                    for (index = 0; index < expression->length - 1; index++)
+                                    {
+                                        expression->arguments[index] = existing[index];
+                                    }
+
+                                    free(existing);
                                 }
 
-                                free(existing);
+                                expression->arguments[expression->length - 1] = argument;
                             }
-
-                            expression->arguments[expression->length - 1] = argument;
+                            else
+                            {
+                                destroy_expression(argument);
+                                destroy_expression(expression);
+                                return NULL;
+                            }
                         }
                         else
                         {
