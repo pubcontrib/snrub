@@ -254,6 +254,11 @@ static handoff_t *apply_expression(expression_t *expression, object_t *objects)
     if (expression->length > 0)
     {
         arguments->evaluated = malloc(sizeof(handoff_t *) * expression->length);
+
+        if (!arguments->evaluated)
+        {
+            return NULL;
+        }
     }
 
     result = apply_operator(expression->literal, arguments, objects);
