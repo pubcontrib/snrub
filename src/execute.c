@@ -415,6 +415,11 @@ static handoff_t *operator_comment(argument_iterator_t *arguments, object_t *obj
         return NULL;
     }
 
+    if (message->error != ERROR_UNKNOWN)
+    {
+        return create_error(message->error);
+    }
+
     if (message->type != TYPE_STRING)
     {
         return create_error(ERROR_ARGUMENT);
@@ -438,6 +443,11 @@ static handoff_t *operator_value(argument_iterator_t *arguments, object_t *objec
     if (!identifier)
     {
         return NULL;
+    }
+
+    if (identifier->error != ERROR_UNKNOWN)
+    {
+        return create_error(identifier->error);
     }
 
     if (identifier->type != TYPE_STRING)
@@ -482,6 +492,11 @@ static handoff_t *operator_assign(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
+    if (identifier->error != ERROR_UNKNOWN)
+    {
+        return create_error(identifier->error);
+    }
+
     if (identifier->type != TYPE_STRING)
     {
         return create_error(ERROR_ARGUMENT);
@@ -497,6 +512,11 @@ static handoff_t *operator_assign(argument_iterator_t *arguments, object_t *obje
     if (!handoff)
     {
         return NULL;
+    }
+
+    if (handoff->error != ERROR_UNKNOWN)
+    {
+        return create_error(handoff->error);
     }
 
     last = NULL;
@@ -567,6 +587,11 @@ static handoff_t *operator_add(argument_iterator_t *arguments, object_t *objects
         return NULL;
     }
 
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
     if (left->type != TYPE_NUMBER && left->type != TYPE_STRING)
     {
         return create_error(ERROR_ARGUMENT);
@@ -582,6 +607,11 @@ static handoff_t *operator_add(argument_iterator_t *arguments, object_t *objects
     if (!right)
     {
         return NULL;
+    }
+
+    if (right->error != ERROR_UNKNOWN)
+    {
+        return create_error(right->error);
     }
 
     if (left->type != right->type)
@@ -636,6 +666,11 @@ static handoff_t *operator_subtract(argument_iterator_t *arguments, object_t *ob
         return NULL;
     }
 
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
     if (left->type != TYPE_NUMBER)
     {
         return create_error(ERROR_ARGUMENT);
@@ -651,6 +686,11 @@ static handoff_t *operator_subtract(argument_iterator_t *arguments, object_t *ob
     if (!right)
     {
         return NULL;
+    }
+
+    if (right->error != ERROR_UNKNOWN)
+    {
+        return create_error(right->error);
     }
 
     if (right->type != TYPE_NUMBER)
@@ -681,6 +721,11 @@ static handoff_t *operator_multiply(argument_iterator_t *arguments, object_t *ob
         return NULL;
     }
 
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
     if (left->type != TYPE_NUMBER)
     {
         return create_error(ERROR_ARGUMENT);
@@ -696,6 +741,11 @@ static handoff_t *operator_multiply(argument_iterator_t *arguments, object_t *ob
     if (!right)
     {
         return NULL;
+    }
+
+    if (right->error != ERROR_UNKNOWN)
+    {
+        return create_error(right->error);
     }
 
     if (right->type != TYPE_NUMBER)
@@ -726,6 +776,11 @@ static handoff_t *operator_divide(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
     if (left->type != TYPE_NUMBER)
     {
         return create_error(ERROR_ARGUMENT);
@@ -741,6 +796,11 @@ static handoff_t *operator_divide(argument_iterator_t *arguments, object_t *obje
     if (!right)
     {
         return NULL;
+    }
+
+    if (right->error != ERROR_UNKNOWN)
+    {
+        return create_error(right->error);
     }
 
     if (right->type != TYPE_NUMBER)
@@ -776,6 +836,11 @@ static handoff_t *operator_modulo(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
     if (left->type != TYPE_NUMBER)
     {
         return create_error(ERROR_ARGUMENT);
@@ -791,6 +856,11 @@ static handoff_t *operator_modulo(argument_iterator_t *arguments, object_t *obje
     if (!right)
     {
         return NULL;
+    }
+
+    if (right->error != ERROR_UNKNOWN)
+    {
+        return create_error(right->error);
     }
 
     if (right->type != TYPE_NUMBER)
@@ -826,6 +896,11 @@ static handoff_t *operator_and(argument_iterator_t *arguments, object_t *objects
         return NULL;
     }
 
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
     if (left->type != TYPE_NUMBER)
     {
         return create_error(ERROR_ARGUMENT);
@@ -841,6 +916,11 @@ static handoff_t *operator_and(argument_iterator_t *arguments, object_t *objects
     if (!right)
     {
         return NULL;
+    }
+
+    if (right->error != ERROR_UNKNOWN)
+    {
+        return create_error(right->error);
     }
 
     if (right->type != TYPE_NUMBER)
@@ -871,6 +951,11 @@ static handoff_t *operator_or(argument_iterator_t *arguments, object_t *objects)
         return NULL;
     }
 
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
     if (left->type != TYPE_NUMBER)
     {
         return create_error(ERROR_ARGUMENT);
@@ -886,6 +971,11 @@ static handoff_t *operator_or(argument_iterator_t *arguments, object_t *objects)
     if (!right)
     {
         return NULL;
+    }
+
+    if (right->error != ERROR_UNKNOWN)
+    {
+        return create_error(right->error);
     }
 
     if (right->type != TYPE_NUMBER)
@@ -916,6 +1006,11 @@ static handoff_t *operator_not(argument_iterator_t *arguments, object_t *objects
         return NULL;
     }
 
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
     if (left->type != TYPE_NUMBER)
     {
         return create_error(ERROR_ARGUMENT);
@@ -943,6 +1038,11 @@ static handoff_t *operator_conditional(argument_iterator_t *arguments, object_t 
         return NULL;
     }
 
+    if (condition->error != ERROR_UNKNOWN)
+    {
+        return create_error(condition->error);
+    }
+
     if (condition->type != TYPE_NUMBER)
     {
         return create_error(ERROR_ARGUMENT);
@@ -966,6 +1066,11 @@ static handoff_t *operator_conditional(argument_iterator_t *arguments, object_t 
             return NULL;
         }
 
+        if (pass->error != ERROR_UNKNOWN)
+        {
+            return create_error(pass->error);
+        }
+
         return create_copy(pass);
     }
     else
@@ -984,6 +1089,11 @@ static handoff_t *operator_conditional(argument_iterator_t *arguments, object_t 
         if (!fail)
         {
             return NULL;
+        }
+
+        if (fail->error != ERROR_UNKNOWN)
+        {
+            return create_error(fail->error);
         }
 
         return create_copy(fail);
@@ -1007,6 +1117,11 @@ static handoff_t *operator_chain(argument_iterator_t *arguments, object_t *objec
         {
             return NULL;
         }
+
+        if (last->error != ERROR_UNKNOWN)
+        {
+            return create_error(last->error);
+        }
     }
 
     return create_copy(last);
@@ -1028,6 +1143,11 @@ static handoff_t *operator_less(argument_iterator_t *arguments, object_t *object
         return NULL;
     }
 
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
     if (!has_next_argument(arguments))
     {
         return create_error(ERROR_ARGUMENT);
@@ -1038,6 +1158,11 @@ static handoff_t *operator_less(argument_iterator_t *arguments, object_t *object
     if (!right)
     {
         return NULL;
+    }
+
+    if (right->error != ERROR_UNKNOWN)
+    {
+        return create_error(right->error);
     }
 
     if (left->type != right->type)
@@ -1084,6 +1209,11 @@ static handoff_t *operator_greater(argument_iterator_t *arguments, object_t *obj
         return NULL;
     }
 
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
     if (!has_next_argument(arguments))
     {
         return create_error(ERROR_ARGUMENT);
@@ -1094,6 +1224,11 @@ static handoff_t *operator_greater(argument_iterator_t *arguments, object_t *obj
     if (!right)
     {
         return NULL;
+    }
+
+    if (right->error != ERROR_UNKNOWN)
+    {
+        return create_error(right->error);
     }
 
     if (left->type != right->type)
@@ -1140,6 +1275,11 @@ static handoff_t *operator_equal(argument_iterator_t *arguments, object_t *objec
         return NULL;
     }
 
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
     if (!has_next_argument(arguments))
     {
         return create_error(ERROR_ARGUMENT);
@@ -1150,6 +1290,11 @@ static handoff_t *operator_equal(argument_iterator_t *arguments, object_t *objec
     if (!right)
     {
         return NULL;
+    }
+
+    if (right->error != ERROR_UNKNOWN)
+    {
+        return create_error(right->error);
     }
 
     if (left->type != right->type)
@@ -1196,6 +1341,11 @@ static handoff_t *operator_number(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
+    if (handoff->error != ERROR_UNKNOWN)
+    {
+        return create_error(handoff->error);
+    }
+
     if (handoff->type == TYPE_NULL)
     {
         return create_null();
@@ -1235,6 +1385,11 @@ static handoff_t *operator_string(argument_iterator_t *arguments, object_t *obje
     if (!handoff)
     {
         return NULL;
+    }
+
+    if (handoff->error != ERROR_UNKNOWN)
+    {
+        return create_error(handoff->error);
     }
 
     if (handoff->type == TYPE_NULL)
@@ -1282,6 +1437,11 @@ static handoff_t *operator_length(argument_iterator_t *arguments, object_t *obje
     if (!left)
     {
         return NULL;
+    }
+
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
     }
 
     if (left->type != TYPE_STRING)
