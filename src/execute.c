@@ -1000,7 +1000,7 @@ static handoff_t *operator_chain(argument_iterator_t *arguments, object_t *objec
 
         if (!last)
         {
-            break;
+            return NULL;
         }
     }
 
