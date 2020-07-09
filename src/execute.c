@@ -55,6 +55,14 @@ handoff_t *execute_expression(expression_t *expressions, object_t *objects)
     expression_t *expression;
     handoff_t *last;
 
+    for (expression = expressions; expression != NULL; expression = expression->next)
+    {
+        if (expression->error != ERROR_UNKNOWN)
+        {
+            return create_error(expression->error);
+        }
+    }
+
     last = NULL;
 
     for (expression = expressions; expression != NULL; expression = expression->next)
@@ -234,11 +242,6 @@ static handoff_t *apply_expression(expression_t *expression, object_t *objects)
     argument_iterator_t *arguments;
     handoff_t *result;
     size_t index;
-
-    if (expression->error != ERROR_UNKNOWN)
-    {
-        return create_error(expression->error);
-    }
 
     arguments = malloc(sizeof(argument_iterator_t));
 
