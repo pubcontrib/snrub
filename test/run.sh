@@ -25,6 +25,7 @@ fi
 . test/suite/operator/or.sh
 . test/suite/operator/not.sh
 . test/suite/operator/conditional.sh
+. test/suite/operator/loop.sh
 . test/suite/operator/chain.sh
 . test/suite/operator/less.sh
 . test/suite/operator/greater.sh

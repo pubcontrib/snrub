@@ -34,6 +34,7 @@ static handoff_t *operator_and(argument_iterator_t *arguments, object_t *objects
 static handoff_t *operator_or(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_not(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_conditional(argument_iterator_t *arguments, object_t *objects);
+static handoff_t *operator_loop(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_chain(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_less(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_greater(argument_iterator_t *arguments, object_t *objects);
@@ -44,6 +45,7 @@ static handoff_t *operator_length(argument_iterator_t *arguments, object_t *obje
 static int has_next_argument(argument_iterator_t *iterator);
 static handoff_t *next_argument(argument_iterator_t *iterator, object_t *objects);
 static void skip_argument(argument_iterator_t *iterator);
+static void rewind_argument(argument_iterator_t *iterator);
 
 object_t *empty_object()
 {
@@ -368,6 +370,10 @@ static handoff_t *apply_operator(literal_t *literal, argument_iterator_t *argume
         else if (strcmp(operator->unsafe, "?") == 0)
         {
             return operator_conditional(arguments, objects);
+        }
+        else if (strcmp(operator->unsafe, "o") == 0)
+        {
+            return operator_loop(arguments, objects);
         }
         else if (strcmp(operator->unsafe, "...") == 0)
         {
@@ -1103,6 +1109,67 @@ static handoff_t *operator_conditional(argument_iterator_t *arguments, object_t 
     }
 }
 
+static handoff_t *operator_loop(argument_iterator_t *arguments, object_t *objects)
+{
+    int proceed;
+
+    while (proceed)
+    {
+        handoff_t *condition;
+
+        if (!has_next_argument(arguments))
+        {
+            return create_error(ERROR_ARGUMENT);
+        }
+
+        condition = next_argument(arguments, objects);
+
+        if (!condition)
+        {
+            return NULL;
+        }
+
+        if (condition->error != ERROR_UNKNOWN)
+        {
+            return create_error(condition->error);
+        }
+
+        if (condition->type != TYPE_NUMBER)
+        {
+            return create_error(ERROR_ARGUMENT);
+        }
+
+        proceed = ((int *) condition->unsafe)[0];
+
+        if (proceed)
+        {
+            handoff_t *pass;
+
+            if (!has_next_argument(arguments))
+            {
+                return create_error(ERROR_ARGUMENT);
+            }
+
+            pass = next_argument(arguments, objects);
+
+            if (!pass)
+            {
+                return NULL;
+            }
+
+            if (pass->error != ERROR_UNKNOWN)
+            {
+                return create_error(pass->error);
+            }
+
+            rewind_argument(arguments);
+            rewind_argument(arguments);
+        }
+    }
+
+    return create_null();
+}
+
 static handoff_t *operator_chain(argument_iterator_t *arguments, object_t *objects)
 {
     handoff_t *last;
@@ -1477,4 +1544,11 @@ static void skip_argument(argument_iterator_t *iterator)
 {
     iterator->evaluated[iterator->index] = NULL;
     iterator->index += 1;
+}
+
+static void rewind_argument(argument_iterator_t *iterator)
+{
+    iterator->index -= 1;
+    destroy_handoff(iterator->evaluated[iterator->index]);
+    iterator->evaluated[iterator->index] = NULL;
 }
