@@ -1113,6 +1113,8 @@ static handoff_t *operator_loop(argument_iterator_t *arguments, object_t *object
 {
     int proceed;
 
+    proceed = 1;
+
     while (proceed)
     {
         handoff_t *condition;
