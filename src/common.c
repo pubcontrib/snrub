@@ -99,6 +99,11 @@ void *copy_memory(void *memory, size_t size)
     return copy;
 }
 
+int hash_integer(int integer)
+{
+    return integer;
+}
+
 int *integer_to_array(int integer)
 {
     int *array;

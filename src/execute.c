@@ -914,12 +914,17 @@ static handoff_t *operator_hash(argument_iterator_t *arguments, object_t *object
         return create_error(left->error);
     }
 
-    if (left->type != TYPE_STRING)
+    if (left->type == TYPE_NUMBER)
     {
-        return create_error(ERROR_ARGUMENT);
+        return create_number(hash_integer(((int *) left->unsafe)[0]));
     }
 
-    return create_number(hash_string(left->unsafe));
+    if (left->type == TYPE_STRING)
+    {
+        return create_number(hash_string(left->unsafe));
+    }
+
+    return create_error(ERROR_ARGUMENT);
 }
 
 static handoff_t *operator_and(argument_iterator_t *arguments, object_t *objects)
