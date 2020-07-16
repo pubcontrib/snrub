@@ -21,6 +21,7 @@ fi
 . test/suite/operator/multiply.sh
 . test/suite/operator/divide.sh
 . test/suite/operator/modulo.sh
+. test/suite/operator/hash.sh
 . test/suite/operator/and.sh
 . test/suite/operator/or.sh
 . test/suite/operator/not.sh

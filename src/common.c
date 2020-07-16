@@ -36,6 +36,22 @@ char *copy_string(char *string)
     return copy;
 }
 
+int hash_string(char *string)
+{
+    int hash;
+    size_t length, index;
+
+    hash = 0;
+    length = strlen(string);
+
+    for (index = 0; index < length; index++)
+    {
+        hash += string[index];
+    }
+
+    return hash;
+}
+
 char *merge_strings(char *left, char *right)
 {
     char *merge;
