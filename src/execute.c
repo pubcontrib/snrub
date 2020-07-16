@@ -914,6 +914,11 @@ static handoff_t *operator_hash(argument_iterator_t *arguments, object_t *object
         return create_error(left->error);
     }
 
+    if (left->type == TYPE_NULL)
+    {
+        return create_number(hash_null());
+    }
+
     if (left->type == TYPE_NUMBER)
     {
         return create_number(hash_integer(((int *) left->unsafe)[0]));

@@ -1,6 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+int hash_null();
 char *slice_string(char *string, size_t start, size_t end);
 char *copy_string(char *string);
 int hash_string(char *string);

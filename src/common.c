@@ -3,6 +3,11 @@
 #include <ctype.h>
 #include "common.h"
 
+int hash_null()
+{
+    return 0;
+}
+
 char *slice_string(char *string, size_t start, size_t end)
 {
     char *slice;
