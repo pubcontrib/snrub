@@ -30,7 +30,6 @@ static handoff_t *operator_subtract(argument_iterator_t *arguments, object_t *ob
 static handoff_t *operator_multiply(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_divide(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_modulo(argument_iterator_t *arguments, object_t *objects);
-static handoff_t *operator_hash(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_and(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_or(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_not(argument_iterator_t *arguments, object_t *objects);
@@ -42,6 +41,7 @@ static handoff_t *operator_greater(argument_iterator_t *arguments, object_t *obj
 static handoff_t *operator_equal(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_number(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_string(argument_iterator_t *arguments, object_t *objects);
+static handoff_t *operator_hash(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_length(argument_iterator_t *arguments, object_t *objects);
 static int has_next_argument(argument_iterator_t *iterator);
 static handoff_t *next_argument(argument_iterator_t *iterator, object_t *objects);
@@ -356,10 +356,6 @@ static handoff_t *apply_operator(literal_t *literal, argument_iterator_t *argume
         {
             return operator_modulo(arguments, objects);
         }
-        else if (strcmp(operator->unsafe, "::") == 0)
-        {
-            return operator_hash(arguments, objects);
-        }
         else if (strcmp(operator->unsafe, "&") == 0)
         {
             return operator_and(arguments, objects);
@@ -403,6 +399,10 @@ static handoff_t *apply_operator(literal_t *literal, argument_iterator_t *argume
         else if (strcmp(operator->unsafe, "\"") == 0)
         {
             return operator_string(arguments, objects);
+        }
+        else if (strcmp(operator->unsafe, "::") == 0)
+        {
+            return operator_hash(arguments, objects);
         }
         else if (strcmp(operator->unsafe, "| |") == 0)
         {
@@ -891,45 +891,6 @@ static handoff_t *operator_modulo(argument_iterator_t *arguments, object_t *obje
     }
 
     return create_number(div(x, y).rem);
-}
-
-static handoff_t *operator_hash(argument_iterator_t *arguments, object_t *objects)
-{
-    handoff_t *left;
-
-    if (!has_next_argument(arguments))
-    {
-        return create_error(ERROR_ARGUMENT);
-    }
-
-    left = next_argument(arguments, objects);
-
-    if (!left)
-    {
-        return NULL;
-    }
-
-    if (left->error != ERROR_UNKNOWN)
-    {
-        return create_error(left->error);
-    }
-
-    if (left->type == TYPE_NULL)
-    {
-        return create_number(hash_null());
-    }
-
-    if (left->type == TYPE_NUMBER)
-    {
-        return create_number(hash_integer(((int *) left->unsafe)[0]));
-    }
-
-    if (left->type == TYPE_STRING)
-    {
-        return create_number(hash_string(left->unsafe));
-    }
-
-    return create_error(ERROR_ARGUMENT);
 }
 
 static handoff_t *operator_and(argument_iterator_t *arguments, object_t *objects)
@@ -1536,6 +1497,45 @@ static handoff_t *operator_string(argument_iterator_t *arguments, object_t *obje
     }
 
     return create_error(ERROR_TYPE);
+}
+
+static handoff_t *operator_hash(argument_iterator_t *arguments, object_t *objects)
+{
+    handoff_t *left;
+
+    if (!has_next_argument(arguments))
+    {
+        return create_error(ERROR_ARGUMENT);
+    }
+
+    left = next_argument(arguments, objects);
+
+    if (!left)
+    {
+        return NULL;
+    }
+
+    if (left->error != ERROR_UNKNOWN)
+    {
+        return create_error(left->error);
+    }
+
+    if (left->type == TYPE_NULL)
+    {
+        return create_number(hash_null());
+    }
+
+    if (left->type == TYPE_NUMBER)
+    {
+        return create_number(hash_integer(((int *) left->unsafe)[0]));
+    }
+
+    if (left->type == TYPE_STRING)
+    {
+        return create_number(hash_string(left->unsafe));
+    }
+
+    return create_error(ERROR_ARGUMENT);
 }
 
 static handoff_t *operator_length(argument_iterator_t *arguments, object_t *objects)
