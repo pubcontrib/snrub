@@ -25,6 +25,7 @@ static handoff_t *apply_operator(literal_t *literal, argument_iterator_t *argume
 static handoff_t *operator_comment(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_value(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_assign(argument_iterator_t *arguments, object_t *objects);
+static handoff_t *operator_catch(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_add(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_subtract(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_multiply(argument_iterator_t *arguments, object_t *objects);
@@ -336,6 +337,10 @@ static handoff_t *apply_operator(literal_t *literal, argument_iterator_t *argume
         {
             return operator_assign(arguments, objects);
         }
+        else if (strcmp(operator->unsafe, "><") == 0)
+        {
+            return operator_catch(arguments, objects);
+        }
         else if (strcmp(operator->unsafe, "+") == 0)
         {
             return operator_add(arguments, objects);
@@ -580,6 +585,30 @@ static handoff_t *operator_assign(argument_iterator_t *arguments, object_t *obje
 
         identifier->unsafe = NULL;
         handoff->unsafe = NULL;
+    }
+
+    return create_null();
+}
+
+static handoff_t *operator_catch(argument_iterator_t *arguments, object_t *objects)
+{
+    handoff_t *handoff;
+
+    if (!has_next_argument(arguments))
+    {
+        return create_null();
+    }
+
+    handoff = next_argument(arguments, objects);
+
+    if (!handoff)
+    {
+        return NULL;
+    }
+
+    if (handoff->error != ERROR_UNKNOWN)
+    {
+        return create_number(handoff->error);
     }
 
     return create_null();

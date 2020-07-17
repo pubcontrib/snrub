@@ -16,6 +16,7 @@ fi
 . test/suite/operator/comment.sh
 . test/suite/operator/value.sh
 . test/suite/operator/assign.sh
+. test/suite/operator/catch.sh
 . test/suite/operator/add.sh
 . test/suite/operator/subtract.sh
 . test/suite/operator/multiply.sh
