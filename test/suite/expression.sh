@@ -8,13 +8,13 @@ pass '("-->" "number" #1#)
 ("<--" "number")' '#2#'
 pass '("-->" "operator" "+")
 (("<--" "operator") #10# #5#)' '#15#'
-pass '`comments`
-"word"' '"word"'
-pass '"word"
-`comments`' '"word"'
-pass '"before"
-`comments`
-"after"' '"after"'
+pass '`comments` "after"' '"after"'
+pass '"before" `comments`' '"before"'
+pass '"before" `comments` "after"' '"after"'
+pass '`comments` `comments`' '?'
+pass '`("-->" "number" #1#) ("<--" "number")`' '?'
+pass '`("#" "text")`' '?'
+pass '`\``' '?'
 pass '("-->" "path" "none")
 ("?" #1#
     ("..."
@@ -42,6 +42,7 @@ pass '("-->" "path" "none")
     )
     ?
 )' '"pass"'
+fail '`' '#1#'
 fail '()' '#4#'
 pass '("+" #1# #2# #3#)' '#3#'
 fail '"+" #10# #5#)' '#1#'
