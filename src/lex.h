@@ -22,6 +22,7 @@ typedef struct
 {
     char *document;
     size_t position;
+    size_t length;
     scanner_state_t state;
 } scanner_t;
 

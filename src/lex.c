@@ -3,31 +3,32 @@
 #include "lex.h"
 #include "common.h"
 
-static scanner_t *create_scanner(char *document, size_t position, scanner_state_t state);
+static scanner_t *create_scanner(char *document, size_t position, size_t length, scanner_state_t state);
 static token_t *create_token(token_name_t name, char *value);
 static token_t *slice_token(scanner_t *scanner, size_t start, size_t end, size_t length, token_name_t name);
 static token_name_t match_name(char symbol);
 
 scanner_t *start_scanner(char *document)
 {
+    size_t length;
     scanner_state_t state;
 
-    state = strlen(document) == 0 ? SCANNER_STATE_CLOSED : SCANNER_STATE_ROAMING;
+    length = strlen(document);
+    state = length ? SCANNER_STATE_ROAMING : SCANNER_STATE_CLOSED;
 
-    return create_scanner(document, 0, state);
+    return create_scanner(document, 0, length, state);
 }
 
 token_t *next_token(scanner_t *scanner)
 {
-    size_t length, start, end;
+    size_t start, end;
     int escaping;
 
-    length = strlen(scanner->document);
     start = 0;
     end = 0;
     escaping = 0;
 
-    while (scanner->position < length)
+    while (scanner->position < scanner->length)
     {
         char symbol;
 
@@ -58,7 +59,7 @@ token_t *next_token(scanner_t *scanner)
 
                 name = match_name(symbol);
 
-                return slice_token(scanner, scanner->position - 1, scanner->position, length, name);
+                return slice_token(scanner, scanner->position - 1, scanner->position, scanner->length, name);
             }
         }
         else if (scanner->state == SCANNER_STATE_COMMENT)
@@ -71,7 +72,7 @@ token_t *next_token(scanner_t *scanner)
                 }
                 else
                 {
-                    return slice_token(scanner, start, end, length, TOKEN_NAME_COMMENT);
+                    return slice_token(scanner, start, end, scanner->length, TOKEN_NAME_COMMENT);
                 }
             }
             else if (symbol == SYMBOL_ESCAPE)
@@ -90,7 +91,7 @@ token_t *next_token(scanner_t *scanner)
         {
             if (symbol == SYMBOL_NUMBER)
             {
-                return slice_token(scanner, start, end, length, TOKEN_NAME_NUMBER);
+                return slice_token(scanner, start, end, scanner->length, TOKEN_NAME_NUMBER);
             }
         }
         else if (scanner->state == SCANNER_STATE_STRING)
@@ -103,7 +104,7 @@ token_t *next_token(scanner_t *scanner)
                 }
                 else
                 {
-                    return slice_token(scanner, start, end, length, TOKEN_NAME_STRING);
+                    return slice_token(scanner, start, end, scanner->length, TOKEN_NAME_STRING);
                 }
             }
             else if (symbol == SYMBOL_ESCAPE)
@@ -122,7 +123,7 @@ token_t *next_token(scanner_t *scanner)
 
     if (scanner->state == SCANNER_STATE_COMMENT || scanner->state == SCANNER_STATE_NUMBER || scanner->state == SCANNER_STATE_STRING)
     {
-        return slice_token(scanner, start, end, length, TOKEN_NAME_UNKNOWN);
+        return slice_token(scanner, start, end, scanner->length, TOKEN_NAME_UNKNOWN);
     }
     else
     {
@@ -152,7 +153,7 @@ void destroy_token(token_t *token)
     free(token);
 }
 
-static scanner_t *create_scanner(char *document, size_t position, scanner_state_t state)
+static scanner_t *create_scanner(char *document, size_t position, size_t length, scanner_state_t state)
 {
     scanner_t *scanner;
 
@@ -162,6 +163,7 @@ static scanner_t *create_scanner(char *document, size_t position, scanner_state_
     {
         scanner->document = document;
         scanner->position = position;
+        scanner->length = length;
         scanner->state = state;
     }
 
