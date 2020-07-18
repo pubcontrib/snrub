@@ -78,9 +78,7 @@ handoff_t *execute_expression(expression_t *expressions, object_t *objects)
         if (!handoff)
         {
             destroy_handoff(last);
-            last = NULL;
-
-            break;
+            return NULL;
         }
 
         if (handoff->type == TYPE_UNKNOWN)
