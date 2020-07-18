@@ -8,12 +8,12 @@ pass '("-->" "number" #1#)
 ("<--" "number")' '#2#'
 pass '("-->" "operator" "+")
 (("<--" "operator") #10# #5#)' '#15#'
-pass '("~" "comments")
+pass '`comments`
 "word"' '"word"'
 pass '"word"
-("~" "comments")' '"word"'
+`comments`' '"word"'
 pass '"before"
-("~" "comments")
+`comments`
 "after"' '"after"'
 pass '("-->" "path" "none")
 ("?" #1#

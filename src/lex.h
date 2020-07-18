@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 
+static const char SYMBOL_COMMENT = '`';
 static const char SYMBOL_NULL = '?';
 static const char SYMBOL_NUMBER = '#';
 static const char SYMBOL_STRING = '"';
@@ -11,6 +12,7 @@ static const char SYMBOL_ESCAPE = '\\';
 typedef enum
 {
     SCANNER_STATE_ROAMING,
+    SCANNER_STATE_COMMENT,
     SCANNER_STATE_NUMBER,
     SCANNER_STATE_STRING,
     SCANNER_STATE_CLOSED
@@ -29,6 +31,7 @@ typedef enum
     TOKEN_NAME_START,
     TOKEN_NAME_END,
     TOKEN_NAME_WHITESPACE,
+    TOKEN_NAME_COMMENT,
     TOKEN_NAME_NULL,
     TOKEN_NAME_NUMBER,
     TOKEN_NAME_STRING

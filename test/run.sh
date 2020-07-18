@@ -13,7 +13,6 @@ fi
 . test/suite/type/number.sh
 . test/suite/type/string.sh
 
-. test/suite/operator/comment.sh
 . test/suite/operator/value.sh
 . test/suite/operator/assign.sh
 . test/suite/operator/catch.sh

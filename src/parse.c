@@ -292,7 +292,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
             {
                 state = PARSER_STATE_ERROR;
             }
-            else if (token->name != TOKEN_NAME_WHITESPACE)
+            else if (token->name != TOKEN_NAME_WHITESPACE && token->name != TOKEN_NAME_COMMENT)
             {
                 if (state == PARSER_STATE_START)
                 {

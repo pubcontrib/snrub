@@ -37,7 +37,12 @@ token_t *next_token(scanner_t *scanner)
 
         if (scanner->state == SCANNER_STATE_ROAMING)
         {
-            if (symbol == SYMBOL_NUMBER)
+            if (symbol == SYMBOL_COMMENT)
+            {
+                start = scanner->position - 1;
+                scanner->state = SCANNER_STATE_COMMENT;
+            }
+            else if (symbol == SYMBOL_NUMBER)
             {
                 start = scanner->position - 1;
                 scanner->state = SCANNER_STATE_NUMBER;
@@ -54,6 +59,31 @@ token_t *next_token(scanner_t *scanner)
                 name = match_name(symbol);
 
                 return slice_token(scanner, scanner->position - 1, scanner->position, length, name);
+            }
+        }
+        else if (scanner->state == SCANNER_STATE_COMMENT)
+        {
+            if (symbol == SYMBOL_COMMENT)
+            {
+                if (escaping)
+                {
+                    escaping = 0;
+                }
+                else
+                {
+                    return slice_token(scanner, start, end, length, TOKEN_NAME_COMMENT);
+                }
+            }
+            else if (symbol == SYMBOL_ESCAPE)
+            {
+                escaping = escaping ? 0 : 1;
+            }
+            else
+            {
+                if (escaping)
+                {
+                    escaping = 0;
+                }
             }
         }
         else if (scanner->state == SCANNER_STATE_NUMBER)
@@ -90,7 +120,7 @@ token_t *next_token(scanner_t *scanner)
         }
     }
 
-    if (scanner->state == SCANNER_STATE_NUMBER || scanner->state == SCANNER_STATE_STRING)
+    if (scanner->state == SCANNER_STATE_COMMENT || scanner->state == SCANNER_STATE_NUMBER || scanner->state == SCANNER_STATE_STRING)
     {
         return slice_token(scanner, start, end, length, TOKEN_NAME_UNKNOWN);
     }

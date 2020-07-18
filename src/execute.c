@@ -22,7 +22,6 @@ static handoff_t *create_string(char *string);
 static handoff_t *create_copy(handoff_t *this);
 static handoff_t *apply_expression(expression_t *expression, object_t *objects);
 static handoff_t *apply_operator(literal_t *literal, argument_iterator_t *arguments, object_t *objects);
-static handoff_t *operator_comment(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_value(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_assign(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_catch(argument_iterator_t *arguments, object_t *objects);
@@ -326,11 +325,7 @@ static handoff_t *apply_operator(literal_t *literal, argument_iterator_t *argume
 
     if (operator->type == TYPE_STRING)
     {
-        if (strcmp(operator->unsafe, "~") == 0)
-        {
-            return operator_comment(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "<--") == 0)
+        if (strcmp(operator->unsafe, "<--") == 0)
         {
             return operator_value(arguments, objects);
         }
@@ -421,35 +416,6 @@ static handoff_t *apply_operator(literal_t *literal, argument_iterator_t *argume
     }
 
     return create_error(ERROR_ARGUMENT);
-}
-
-static handoff_t *operator_comment(argument_iterator_t *arguments, object_t *objects)
-{
-    handoff_t *message;
-
-    if (!has_next_argument(arguments))
-    {
-        return create_error(ERROR_ARGUMENT);
-    }
-
-    message = next_argument(arguments, objects);
-
-    if (!message)
-    {
-        return NULL;
-    }
-
-    if (message->error != ERROR_UNKNOWN)
-    {
-        return create_error(message->error);
-    }
-
-    if (message->type != TYPE_STRING)
-    {
-        return create_error(ERROR_ARGUMENT);
-    }
-
-    return create_unknown();
 }
 
 static handoff_t *operator_value(argument_iterator_t *arguments, object_t *objects)
