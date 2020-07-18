@@ -5,7 +5,7 @@
 
 static scanner_t *create_scanner(char *document, size_t position, size_t length, scanner_state_t state);
 static token_t *create_token(token_name_t name, char *value);
-static token_t *slice_token(scanner_t *scanner, size_t start, size_t end, size_t length, token_name_t name);
+static token_t *slice_token(scanner_t *scanner, size_t start, size_t end, token_name_t name);
 static token_name_t match_name(char symbol);
 
 scanner_t *start_scanner(char *document)
@@ -59,7 +59,7 @@ token_t *next_token(scanner_t *scanner)
 
                 name = match_name(symbol);
 
-                return slice_token(scanner, scanner->position - 1, scanner->position, scanner->length, name);
+                return slice_token(scanner, scanner->position - 1, scanner->position, name);
             }
         }
         else if (scanner->state == SCANNER_STATE_COMMENT)
@@ -72,7 +72,7 @@ token_t *next_token(scanner_t *scanner)
                 }
                 else
                 {
-                    return slice_token(scanner, start, end, scanner->length, TOKEN_NAME_COMMENT);
+                    return slice_token(scanner, start, end, TOKEN_NAME_COMMENT);
                 }
             }
             else if (symbol == SYMBOL_ESCAPE)
@@ -91,7 +91,7 @@ token_t *next_token(scanner_t *scanner)
         {
             if (symbol == SYMBOL_NUMBER)
             {
-                return slice_token(scanner, start, end, scanner->length, TOKEN_NAME_NUMBER);
+                return slice_token(scanner, start, end, TOKEN_NAME_NUMBER);
             }
         }
         else if (scanner->state == SCANNER_STATE_STRING)
@@ -104,7 +104,7 @@ token_t *next_token(scanner_t *scanner)
                 }
                 else
                 {
-                    return slice_token(scanner, start, end, scanner->length, TOKEN_NAME_STRING);
+                    return slice_token(scanner, start, end, TOKEN_NAME_STRING);
                 }
             }
             else if (symbol == SYMBOL_ESCAPE)
@@ -123,7 +123,7 @@ token_t *next_token(scanner_t *scanner)
 
     if (scanner->state == SCANNER_STATE_COMMENT || scanner->state == SCANNER_STATE_NUMBER || scanner->state == SCANNER_STATE_STRING)
     {
-        return slice_token(scanner, start, end, scanner->length, TOKEN_NAME_UNKNOWN);
+        return slice_token(scanner, start, end, TOKEN_NAME_UNKNOWN);
     }
     else
     {
@@ -185,11 +185,11 @@ static token_t *create_token(token_name_t name, char *value)
     return token;
 }
 
-static token_t *slice_token(scanner_t *scanner, size_t start, size_t end, size_t length, token_name_t name)
+static token_t *slice_token(scanner_t *scanner, size_t start, size_t end, token_name_t name)
 {
     char *value;
 
-    scanner->state = scanner->position < length ? SCANNER_STATE_ROAMING : SCANNER_STATE_CLOSED;
+    scanner->state = scanner->position < scanner->length ? SCANNER_STATE_ROAMING : SCANNER_STATE_CLOSED;
     value = slice_string(scanner->document, start, end);
 
     if (!value)
