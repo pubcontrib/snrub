@@ -31,6 +31,7 @@ fi
 . test/suite/operator/less.sh
 . test/suite/operator/greater.sh
 . test/suite/operator/equal.sh
+. test/suite/operator/type.sh
 . test/suite/operator/number.sh
 . test/suite/operator/string.sh
 . test/suite/operator/hash.sh
