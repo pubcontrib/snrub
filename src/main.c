@@ -247,7 +247,7 @@ static void print_error(error_t error)
 
 static int print_value(type_t type, void *unsafe)
 {
-    if (type == TYPE_UNKNOWN || type == TYPE_NULL)
+    if (type == TYPE_NULL)
     {
         printf("%c\n", SYMBOL_NULL);
         return 0;

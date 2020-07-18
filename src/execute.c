@@ -67,7 +67,7 @@ handoff_t *execute_expression(expression_t *expressions, object_t *objects)
         }
     }
 
-    last = NULL;
+    last = create_null();
 
     for (expression = expressions; expression != NULL; expression = expression->next)
     {
@@ -77,29 +77,19 @@ handoff_t *execute_expression(expression_t *expressions, object_t *objects)
 
         if (!handoff)
         {
-            if (last)
-            {
-                destroy_handoff(last);
-                last = NULL;
-            }
+            destroy_handoff(last);
+            last = NULL;
 
             break;
         }
 
-        if (last)
+        if (handoff->type == TYPE_UNKNOWN)
         {
-            if (handoff->type == TYPE_UNKNOWN)
-            {
-                destroy_handoff(handoff);
-            }
-            else
-            {
-                destroy_handoff(last);
-                last = handoff;
-            }
+            destroy_handoff(handoff);
         }
         else
         {
+            destroy_handoff(last);
             last = handoff;
         }
 
@@ -515,7 +505,7 @@ static handoff_t *operator_assign(argument_iterator_t *arguments, object_t *obje
     {
         if (object->identifier && strcmp(object->identifier, identifier->unsafe) == 0)
         {
-            if (handoff->type != TYPE_UNKNOWN && handoff->type != TYPE_NULL)
+            if (handoff->type != TYPE_NULL)
             {
                 if (object->unsafe)
                 {
@@ -545,7 +535,7 @@ static handoff_t *operator_assign(argument_iterator_t *arguments, object_t *obje
         last = object;
     }
 
-    if (handoff->type != TYPE_UNKNOWN && handoff->type != TYPE_NULL)
+    if (handoff->type != TYPE_NULL)
     {
         last->next = create_object(identifier->unsafe, handoff->type, handoff->unsafe, handoff->size, NULL);
 
