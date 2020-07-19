@@ -21,7 +21,8 @@ typedef enum
 typedef struct
 {
     char *document;
-    size_t position;
+    size_t start;
+    size_t end;
     size_t length;
     int escaping;
     scanner_state_t state;
