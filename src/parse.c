@@ -62,7 +62,7 @@ expression_t *parse_expressions(scanner_t *scanner)
             destroy_expression(head);
             return NULL;
         }
-    } while (scanner->state != SCANNER_STATE_CLOSED);
+    } while (!scanner->closed);
 
     return head;
 }
@@ -275,7 +275,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
         expression->error = ERROR_DEPTH;
     }
 
-    while (scanner->state != SCANNER_STATE_CLOSED && state != PARSER_STATE_ERROR && state != PARSER_STATE_SUCCESS)
+    while (!scanner->closed && state != PARSER_STATE_ERROR && state != PARSER_STATE_SUCCESS)
     {
         if (expression->length > LIMIT_DEPTH)
         {

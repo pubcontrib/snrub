@@ -9,15 +9,6 @@ static const char SYMBOL_NUMBER = '#';
 static const char SYMBOL_STRING = '"';
 static const char SYMBOL_ESCAPE = '\\';
 
-typedef enum
-{
-    SCANNER_STATE_ROAMING,
-    SCANNER_STATE_COMMENT,
-    SCANNER_STATE_NUMBER,
-    SCANNER_STATE_STRING,
-    SCANNER_STATE_CLOSED
-} scanner_state_t;
-
 typedef struct
 {
     char *document;
@@ -25,7 +16,7 @@ typedef struct
     size_t end;
     size_t length;
     int escaping;
-    scanner_state_t state;
+    int closed;
 } scanner_t;
 
 typedef enum
