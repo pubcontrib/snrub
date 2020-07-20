@@ -111,6 +111,8 @@ static token_t *escape_token(scanner_t *scanner, char qualifier, token_name_t na
 {
     int escaping;
 
+    escaping = 0;
+
     while (scanner->end < scanner->length)
     {
         char symbol;
