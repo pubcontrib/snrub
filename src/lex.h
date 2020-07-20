@@ -15,7 +15,6 @@ typedef struct
     size_t start;
     size_t end;
     size_t length;
-    int escaping;
     int closed;
 } scanner_t;
 
