@@ -273,7 +273,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     if (depth > LIMIT_DEPTH)
     {
         state = PARSER_STATE_ERROR;
-        expression->error = ERROR_DEPTH;
+        expression->error = ERROR_BOUNDS;
     }
 
     while (!scanner->closed && state != PARSER_STATE_ERROR && state != PARSER_STATE_SUCCESS)
@@ -281,7 +281,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
         if (expression->length > LIMIT_BREADTH)
         {
             state = PARSER_STATE_ERROR;
-            expression->error = ERROR_DEPTH;
+            expression->error = ERROR_BOUNDS;
             break;
         }
 
