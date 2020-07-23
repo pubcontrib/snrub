@@ -71,13 +71,13 @@ fail '("+" #10# #5#' '#1#'
 fail '(?)' '#4#'
 fail '(#1#)' '#4#'
 fail '("unknown")' '#4#'
-start=`repeat '("..."' 31`
-end=`repeat ')' 31`
-pass "$start$end" '?'
 start=`repeat '("..."' 32`
 end=`repeat ')' 32`
+pass "$start$end" '?'
+start=`repeat '("..."' 33`
+end=`repeat ')' 33`
 fail "$start$end" '#2#'
-center=`repeat "?" 1023`
+center=`repeat '?' 1023`
 pass "(\"...\" $center)" '?'
-center=`repeat "?" 1024`
+center=`repeat '?' 1024`
 fail "(\"...\" $center)" '#2#'

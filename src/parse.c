@@ -38,7 +38,7 @@ expression_t *parse_expressions(scanner_t *scanner)
     {
         expression_t *expression;
 
-        expression = next_expression(scanner, NULL, 1);
+        expression = next_expression(scanner, NULL, 0);
 
         if (expression)
         {
