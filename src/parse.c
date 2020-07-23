@@ -17,7 +17,7 @@ typedef enum
     PARSER_STATE_END
 } parser_state_t;
 
-static expression_t *create_expression(error_t error, literal_t *literal, expression_t **arguments, size_t length, expression_t *next);
+static expression_t *create_expression(error_t error, type_t type, void *segment, expression_t **arguments, size_t length, expression_t *next);
 static literal_t *create_literal(type_t type, void *unsafe);
 static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth);
 static literal_t *token_to_literal(token_t *token);
@@ -194,9 +194,9 @@ char *unescape_string(char *string)
 
 void destroy_expression(expression_t *expression)
 {
-    if (expression->literal)
+    if (expression->segment)
     {
-        destroy_literal(expression->literal);
+        free(expression->segment);
     }
 
     if (expression->length > 0)
@@ -229,7 +229,7 @@ void destroy_literal(literal_t *literal)
     free(literal);
 }
 
-static expression_t *create_expression(error_t error, literal_t *literal, expression_t **arguments, size_t length, expression_t *next)
+static expression_t *create_expression(error_t error, type_t type, void *segment, expression_t **arguments, size_t length, expression_t *next)
 {
     expression_t *expression;
 
@@ -238,7 +238,8 @@ static expression_t *create_expression(error_t error, literal_t *literal, expres
     if (expression)
     {
         expression->error = error;
-        expression->literal = literal;
+        expression->type = type;
+        expression->segment = segment;
         expression->arguments = arguments;
         expression->length = length;
         expression->next = next;
@@ -268,7 +269,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     expression_t *expression;
 
     state = PARSER_STATE_START;
-    expression = create_expression(ERROR_UNKNOWN, NULL, NULL, 0, NULL);
+    expression = create_expression(ERROR_UNKNOWN, TYPE_UNKNOWN, NULL, NULL, 0, NULL);
 
     if (depth > LIMIT_DEPTH)
     {
@@ -299,12 +300,18 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                 {
                     if (is_literal(token->name))
                     {
-                        expression->literal = token_to_literal(token);
+                        literal_t *literal;
+                        literal = token_to_literal(token);
 
-                        if (expression->literal)
+                        if (literal)
                         {
-                            state = expression->literal->type == TYPE_UNKNOWN ? PARSER_STATE_ERROR : PARSER_STATE_SUCCESS;
+                            state = literal->type == TYPE_UNKNOWN ? PARSER_STATE_ERROR : PARSER_STATE_SUCCESS;
                             expression->error = state == PARSER_STATE_ERROR ? ERROR_TYPE : ERROR_UNKNOWN;
+                            expression->type = literal->type;
+                            expression->segment = literal->unsafe;
+
+                            literal->unsafe = NULL;
+                            destroy_literal(literal);
                         }
                         else
                         {
@@ -316,6 +323,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                     else
                     {
                         state = token->name == TOKEN_NAME_CALL_START ? PARSER_STATE_ARGUMENTS : PARSER_STATE_ERROR;
+                        expression->type = TYPE_CALL;
                     }
                 }
                 else if (state == PARSER_STATE_ARGUMENTS)

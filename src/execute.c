@@ -21,7 +21,7 @@ static handoff_t *create_number(int number);
 static handoff_t *create_string(char *string);
 static handoff_t *create_copy(handoff_t *this);
 static handoff_t *apply_expression(expression_t *expression, object_t *objects);
-static handoff_t *apply_operator(literal_t *literal, argument_iterator_t *arguments, object_t *objects);
+static handoff_t *apply_operator(expression_t *expression, argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_value(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_assign(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_catch(argument_iterator_t *arguments, object_t *objects);
@@ -256,7 +256,7 @@ static handoff_t *apply_expression(expression_t *expression, object_t *objects)
         }
     }
 
-    result = apply_operator(expression->literal, arguments, objects);
+    result = apply_operator(expression, arguments, objects);
 
     if (arguments->length > 0)
     {
@@ -280,28 +280,27 @@ static handoff_t *apply_expression(expression_t *expression, object_t *objects)
     return result;
 }
 
-static handoff_t *apply_operator(literal_t *literal, argument_iterator_t *arguments, object_t *objects)
+static handoff_t *apply_operator(expression_t *expression, argument_iterator_t *arguments, object_t *objects)
 {
     handoff_t *operator;
 
+    switch (expression->type)
+    {
+        case TYPE_UNKNOWN:
+            return create_unknown();
+        case TYPE_NULL:
+            return create_null();
+        case TYPE_NUMBER:
+            return create_number(((int *) expression->segment)[0]);
+        case TYPE_STRING:
+            return create_string(expression->segment);
+        default:
+            break;
+    }
+
     if (!has_next_argument(arguments))
     {
-        if (literal)
-        {
-            switch (literal->type)
-            {
-                case TYPE_NULL:
-                    return create_null();
-                case TYPE_NUMBER:
-                    return create_number(((int *) literal->unsafe)[0]);
-                case TYPE_STRING:
-                    return create_string(literal->unsafe);
-                default:
-                    break;
-            }
-        }
-
-        return create_unknown();
+        return create_error(ERROR_ARGUMENT);
     }
 
     operator = next_argument(arguments, objects);

@@ -8,7 +8,8 @@ typedef enum
     TYPE_UNKNOWN,
     TYPE_NULL,
     TYPE_NUMBER,
-    TYPE_STRING
+    TYPE_STRING,
+    TYPE_CALL
 } type_t;
 
 typedef struct
@@ -31,7 +32,8 @@ typedef enum
 typedef struct expression_t
 {
     error_t error;
-    literal_t *literal;
+    type_t type;
+    void *segment;
     struct expression_t **arguments;
     size_t length;
     struct expression_t *next;
