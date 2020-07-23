@@ -21,7 +21,7 @@ static handoff_t *create_number(int number);
 static handoff_t *create_string(char *string);
 static handoff_t *create_copy(handoff_t *this);
 static handoff_t *apply_expression(expression_t *expression, object_t *objects);
-static handoff_t *apply_operator(expression_t *expression, argument_iterator_t *arguments, object_t *objects);
+static handoff_t *apply_call(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_value(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_assign(argument_iterator_t *arguments, object_t *objects);
 static handoff_t *operator_catch(argument_iterator_t *arguments, object_t *objects);
@@ -256,7 +256,27 @@ static handoff_t *apply_expression(expression_t *expression, object_t *objects)
         }
     }
 
-    result = apply_operator(expression, arguments, objects);
+    switch (expression->type)
+    {
+        case TYPE_UNKNOWN:
+            result = create_unknown();
+            break;
+        case TYPE_NULL:
+            result = create_null();
+            break;
+        case TYPE_NUMBER:
+            result = create_number(((int *) expression->segment)[0]);
+            break;
+        case TYPE_STRING:
+            result = create_string(expression->segment);
+            break;
+        case TYPE_CALL:
+            result = apply_call(arguments, objects);
+            break;
+        default:
+            result = create_error(ERROR_UNSUPPORTED);
+            break;
+    }
 
     if (arguments->length > 0)
     {
@@ -280,23 +300,10 @@ static handoff_t *apply_expression(expression_t *expression, object_t *objects)
     return result;
 }
 
-static handoff_t *apply_operator(expression_t *expression, argument_iterator_t *arguments, object_t *objects)
+static handoff_t *apply_call(argument_iterator_t *arguments, object_t *objects)
 {
     handoff_t *operator;
-
-    switch (expression->type)
-    {
-        case TYPE_UNKNOWN:
-            return create_unknown();
-        case TYPE_NULL:
-            return create_null();
-        case TYPE_NUMBER:
-            return create_number(((int *) expression->segment)[0]);
-        case TYPE_STRING:
-            return create_string(expression->segment);
-        default:
-            break;
-    }
+    char *name;
 
     if (!has_next_argument(arguments))
     {
@@ -310,96 +317,100 @@ static handoff_t *apply_operator(expression_t *expression, argument_iterator_t *
         return NULL;
     }
 
-    if (operator->type == TYPE_STRING)
+    if (operator->type != TYPE_STRING)
     {
-        if (strcmp(operator->unsafe, "<--") == 0)
-        {
-            return operator_value(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "-->") == 0)
-        {
-            return operator_assign(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "><") == 0)
-        {
-            return operator_catch(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "+") == 0)
-        {
-            return operator_add(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "-") == 0)
-        {
-            return operator_subtract(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "*") == 0)
-        {
-            return operator_multiply(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "/") == 0)
-        {
-            return operator_divide(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "%") == 0)
-        {
-            return operator_modulo(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "&") == 0)
-        {
-            return operator_and(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "|") == 0)
-        {
-            return operator_or(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "!") == 0)
-        {
-            return operator_not(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "?") == 0)
-        {
-            return operator_conditional(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "o") == 0)
-        {
-            return operator_loop(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "...") == 0)
-        {
-            return operator_chain(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "<") == 0)
-        {
-            return operator_less(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, ">") == 0)
-        {
-            return operator_greater(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "=") == 0)
-        {
-            return operator_equal(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "_") == 0)
-        {
-            return operator_type(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "#") == 0)
-        {
-            return operator_number(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "\"") == 0)
-        {
-            return operator_string(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "::") == 0)
-        {
-            return operator_hash(arguments, objects);
-        }
-        else if (strcmp(operator->unsafe, "| |") == 0)
-        {
-            return operator_length(arguments, objects);
-        }
+        return create_error(ERROR_ARGUMENT);
+    }
+
+    name = operator->unsafe;
+
+    if (strcmp(name, "<--") == 0)
+    {
+        return operator_value(arguments, objects);
+    }
+    else if (strcmp(name, "-->") == 0)
+    {
+        return operator_assign(arguments, objects);
+    }
+    else if (strcmp(name, "><") == 0)
+    {
+        return operator_catch(arguments, objects);
+    }
+    else if (strcmp(name, "+") == 0)
+    {
+        return operator_add(arguments, objects);
+    }
+    else if (strcmp(name, "-") == 0)
+    {
+        return operator_subtract(arguments, objects);
+    }
+    else if (strcmp(name, "*") == 0)
+    {
+        return operator_multiply(arguments, objects);
+    }
+    else if (strcmp(name, "/") == 0)
+    {
+        return operator_divide(arguments, objects);
+    }
+    else if (strcmp(name, "%") == 0)
+    {
+        return operator_modulo(arguments, objects);
+    }
+    else if (strcmp(name, "&") == 0)
+    {
+        return operator_and(arguments, objects);
+    }
+    else if (strcmp(name, "|") == 0)
+    {
+        return operator_or(arguments, objects);
+    }
+    else if (strcmp(name, "!") == 0)
+    {
+        return operator_not(arguments, objects);
+    }
+    else if (strcmp(name, "?") == 0)
+    {
+        return operator_conditional(arguments, objects);
+    }
+    else if (strcmp(name, "o") == 0)
+    {
+        return operator_loop(arguments, objects);
+    }
+    else if (strcmp(name, "...") == 0)
+    {
+        return operator_chain(arguments, objects);
+    }
+    else if (strcmp(name, "<") == 0)
+    {
+        return operator_less(arguments, objects);
+    }
+    else if (strcmp(name, ">") == 0)
+    {
+        return operator_greater(arguments, objects);
+    }
+    else if (strcmp(name, "=") == 0)
+    {
+        return operator_equal(arguments, objects);
+    }
+    else if (strcmp(name, "_") == 0)
+    {
+        return operator_type(arguments, objects);
+    }
+    else if (strcmp(name, "#") == 0)
+    {
+        return operator_number(arguments, objects);
+    }
+    else if (strcmp(name, "\"") == 0)
+    {
+        return operator_string(arguments, objects);
+    }
+    else if (strcmp(name, "::") == 0)
+    {
+        return operator_hash(arguments, objects);
+    }
+    else if (strcmp(name, "| |") == 0)
+    {
+        return operator_length(arguments, objects);
     }
 
     return create_error(ERROR_ARGUMENT);

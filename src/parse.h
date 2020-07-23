@@ -26,7 +26,8 @@ typedef enum
     ERROR_TYPE,
     ERROR_ARGUMENT,
     ERROR_ARITHMETIC,
-    ERROR_SHORTAGE
+    ERROR_SHORTAGE,
+    ERROR_UNSUPPORTED
 } error_t;
 
 typedef struct expression_t
