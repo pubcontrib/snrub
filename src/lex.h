@@ -21,13 +21,13 @@ typedef struct
 typedef enum
 {
     TOKEN_NAME_UNKNOWN,
-    TOKEN_NAME_START,
-    TOKEN_NAME_END,
     TOKEN_NAME_WHITESPACE,
     TOKEN_NAME_COMMENT,
     TOKEN_NAME_NULL,
     TOKEN_NAME_NUMBER,
-    TOKEN_NAME_STRING
+    TOKEN_NAME_STRING,
+    TOKEN_NAME_CALL_START,
+    TOKEN_NAME_CALL_END
 } token_name_t;
 
 typedef struct

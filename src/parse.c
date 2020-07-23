@@ -315,12 +315,12 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                     }
                     else
                     {
-                        state = token->name == TOKEN_NAME_START ? PARSER_STATE_ARGUMENTS : PARSER_STATE_ERROR;
+                        state = token->name == TOKEN_NAME_CALL_START ? PARSER_STATE_ARGUMENTS : PARSER_STATE_ERROR;
                     }
                 }
                 else if (state == PARSER_STATE_ARGUMENTS)
                 {
-                    if (token->name == TOKEN_NAME_END)
+                    if (token->name == TOKEN_NAME_CALL_END)
                     {
                         if (expression->length > 0)
                         {

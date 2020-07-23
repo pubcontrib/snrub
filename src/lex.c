@@ -174,9 +174,9 @@ static token_name_t match_name(char symbol)
     switch (symbol)
     {
         case '(':
-            return TOKEN_NAME_START;
+            return TOKEN_NAME_CALL_START;
         case ')':
-            return TOKEN_NAME_END;
+            return TOKEN_NAME_CALL_END;
         case ' ':
         case '\t':
         case '\n':
