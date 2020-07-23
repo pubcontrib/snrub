@@ -6,6 +6,7 @@
 #include "common.h"
 
 static const int LIMIT_DEPTH = 32;
+static const int LIMIT_BREADTH = 1024;
 
 typedef enum
 {
@@ -277,7 +278,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
 
     while (!scanner->closed && state != PARSER_STATE_ERROR && state != PARSER_STATE_SUCCESS)
     {
-        if (expression->length > LIMIT_DEPTH)
+        if (expression->length > LIMIT_BREADTH)
         {
             state = PARSER_STATE_ERROR;
             expression->error = ERROR_DEPTH;

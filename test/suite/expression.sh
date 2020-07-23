@@ -3,6 +3,23 @@
 
 hint 'expression'
 
+repeat()
+{
+    text=$1
+    count=$2
+
+    result="$text"
+    index=1
+
+    while [ $index -lt $count ]
+    do
+        result="$result $text"
+        index=$((index + 1))
+    done
+
+    printf "%s" "$result"
+}
+
 pass '("-->" "number" #1#)
 ("-->" "number" ("+" ("<--" "number") ("<--" "number")))
 ("<--" "number")' '#2#'
@@ -54,18 +71,13 @@ fail '("+" #10# #5#' '#1#'
 fail '(?)' '#4#'
 fail '(#1#)' '#4#'
 fail '("unknown")' '#4#'
-fail '("."("."("."("."("."("."("."("."
-("."("."("."("."("."("."("."("."
-("."("."("."("."("."("."("."("."
-("."("."("."("."("."("."("."("."
-"k"
-))))))))
-))))))))
-))))))))
-))))))))' '#2#'
-fail '("." "." "." "." "." "." "." "."
-"." "." "." "." "." "." "." "."
-"." "." "." "." "." "." "." "."
-"." "." "." "." "." "." "." "."
-"!"
-)' '#2#'
+start=`repeat '("..."' 31`
+end=`repeat ')' 31`
+pass "$start$end" '?'
+start=`repeat '("..."' 32`
+end=`repeat ')' 32`
+fail "$start$end" '#2#'
+center=`repeat "?" 1023`
+pass "(\"...\" $center)" '?'
+center=`repeat "?" 1024`
+fail "(\"...\" $center)" '#2#'
