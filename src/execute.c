@@ -15,7 +15,7 @@ typedef struct
 static object_t *create_object(char *identifier, type_t type, void *unsafe, size_t size, object_t *next);
 static handoff_t *create_handoff(error_t error, type_t type, void *unsafe, size_t size);
 static handoff_t *create_error(error_t error);
-static handoff_t *create_unknown();
+static handoff_t *create_unset();
 static handoff_t *create_null();
 static handoff_t *create_number(int number);
 static handoff_t *create_string(char *string);
@@ -170,7 +170,7 @@ static handoff_t *create_error(error_t error)
     return create_handoff(error, TYPE_NULL, NULL, 0);
 }
 
-static handoff_t *create_unknown()
+static handoff_t *create_unset()
 {
     return create_handoff(ERROR_UNKNOWN, TYPE_UNSET, NULL, 0);
 }
@@ -259,7 +259,7 @@ static handoff_t *apply_expression(expression_t *expression, object_t *objects)
     switch (expression->type)
     {
         case TYPE_UNSET:
-            result = create_unknown();
+            result = create_unset();
             break;
         case TYPE_NULL:
             result = create_null();
