@@ -658,7 +658,7 @@ static handoff_t *operator_add(argument_iterator_t *arguments, object_t *objects
         return create_handoff(ERROR_UNSET, TYPE_STRING, unsafe, size);
     }
 
-    return create_error(ERROR_ARGUMENT);
+    return create_error(ERROR_UNSUPPORTED);
 }
 
 static handoff_t *operator_subtract(argument_iterator_t *arguments, object_t *objects)
@@ -1265,7 +1265,7 @@ static handoff_t *operator_less(argument_iterator_t *arguments, object_t *object
         return create_number(strcmp(left->unsafe, right->unsafe) < 0);
     }
 
-    return create_error(ERROR_TYPE);
+    return create_error(ERROR_UNSUPPORTED);
 }
 
 static handoff_t *operator_greater(argument_iterator_t *arguments, object_t *objects)
@@ -1331,7 +1331,7 @@ static handoff_t *operator_greater(argument_iterator_t *arguments, object_t *obj
         return create_number(strcmp(left->unsafe, right->unsafe) > 0);
     }
 
-    return create_error(ERROR_TYPE);
+    return create_error(ERROR_UNSUPPORTED);
 }
 
 static handoff_t *operator_equal(argument_iterator_t *arguments, object_t *objects)
@@ -1397,7 +1397,7 @@ static handoff_t *operator_equal(argument_iterator_t *arguments, object_t *objec
         return create_number(strcmp(left->unsafe, right->unsafe) == 0);
     }
 
-    return create_error(ERROR_TYPE);
+    return create_error(ERROR_UNSUPPORTED);
 }
 
 static handoff_t *operator_type(argument_iterator_t *arguments, object_t *objects)
@@ -1436,7 +1436,7 @@ static handoff_t *operator_type(argument_iterator_t *arguments, object_t *object
         return create_string("\"");
     }
 
-    return create_error(ERROR_TYPE);
+    return create_error(ERROR_UNSUPPORTED);
 }
 
 static handoff_t *operator_number(argument_iterator_t *arguments, object_t *objects)
@@ -1482,7 +1482,7 @@ static handoff_t *operator_number(argument_iterator_t *arguments, object_t *obje
         }
     }
 
-    return create_error(ERROR_TYPE);
+    return create_error(ERROR_UNSUPPORTED);
 }
 
 static handoff_t *operator_string(argument_iterator_t *arguments, object_t *objects)
@@ -1533,7 +1533,7 @@ static handoff_t *operator_string(argument_iterator_t *arguments, object_t *obje
         return create_handoff(ERROR_UNSET, TYPE_STRING, unsafe, size);
     }
 
-    return create_error(ERROR_TYPE);
+    return create_error(ERROR_UNSUPPORTED);
 }
 
 static handoff_t *operator_hash(argument_iterator_t *arguments, object_t *objects)
@@ -1572,7 +1572,7 @@ static handoff_t *operator_hash(argument_iterator_t *arguments, object_t *object
         return create_number(hash_string(left->unsafe));
     }
 
-    return create_error(ERROR_ARGUMENT);
+    return create_error(ERROR_UNSUPPORTED);
 }
 
 static handoff_t *operator_length(argument_iterator_t *arguments, object_t *objects)
