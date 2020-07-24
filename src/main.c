@@ -177,7 +177,7 @@ static int apply_script(char *document, object_t *objects)
         return 1;
     }
 
-    if (handoff->error != ERROR_UNKNOWN)
+    if (handoff->error != ERROR_UNSET)
     {
         print_error(handoff->error);
         destroy_handoff(handoff);

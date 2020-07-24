@@ -14,7 +14,7 @@ typedef enum
 
 typedef enum
 {
-    ERROR_UNKNOWN,
+    ERROR_UNSET,
     ERROR_SYNTAX,
     ERROR_BOUNDS,
     ERROR_TYPE,

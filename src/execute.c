@@ -61,7 +61,7 @@ handoff_t *execute_expression(expression_t *expressions, object_t *objects)
 
     for (expression = expressions; expression != NULL; expression = expression->next)
     {
-        if (expression->error != ERROR_UNKNOWN)
+        if (expression->error != ERROR_UNSET)
         {
             return create_error(expression->error);
         }
@@ -91,7 +91,7 @@ handoff_t *execute_expression(expression_t *expressions, object_t *objects)
             last = handoff;
         }
 
-        if (last->error != ERROR_UNKNOWN)
+        if (last->error != ERROR_UNSET)
         {
             break;
         }
@@ -172,12 +172,12 @@ static handoff_t *create_error(error_t error)
 
 static handoff_t *create_unset()
 {
-    return create_handoff(ERROR_UNKNOWN, TYPE_UNSET, NULL, 0);
+    return create_handoff(ERROR_UNSET, TYPE_UNSET, NULL, 0);
 }
 
 static handoff_t *create_null()
 {
-    return create_handoff(ERROR_UNKNOWN, TYPE_NULL, NULL, 0);
+    return create_handoff(ERROR_UNSET, TYPE_NULL, NULL, 0);
 }
 
 static handoff_t *create_number(int number)
@@ -194,7 +194,7 @@ static handoff_t *create_number(int number)
 
     size = sizeof(int);
 
-    return create_handoff(ERROR_UNKNOWN, TYPE_NUMBER, unsafe, size);
+    return create_handoff(ERROR_UNSET, TYPE_NUMBER, unsafe, size);
 }
 
 static handoff_t *create_string(char *string)
@@ -211,7 +211,7 @@ static handoff_t *create_string(char *string)
 
     size = sizeof(char) * (strlen(unsafe) + 1);
 
-    return create_handoff(ERROR_UNKNOWN, TYPE_STRING, unsafe, size);
+    return create_handoff(ERROR_UNSET, TYPE_STRING, unsafe, size);
 }
 
 static handoff_t *create_copy(handoff_t *this)
@@ -433,7 +433,7 @@ static handoff_t *operator_value(argument_iterator_t *arguments, object_t *objec
         return NULL;
     }
 
-    if (identifier->error != ERROR_UNKNOWN)
+    if (identifier->error != ERROR_UNSET)
     {
         return create_error(identifier->error);
     }
@@ -456,7 +456,7 @@ static handoff_t *operator_value(argument_iterator_t *arguments, object_t *objec
                 return NULL;
             }
 
-            return create_handoff(ERROR_UNKNOWN, object->type, unsafe, object->size);
+            return create_handoff(ERROR_UNSET, object->type, unsafe, object->size);
         }
     }
 
@@ -480,7 +480,7 @@ static handoff_t *operator_assign(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
-    if (identifier->error != ERROR_UNKNOWN)
+    if (identifier->error != ERROR_UNSET)
     {
         return create_error(identifier->error);
     }
@@ -502,7 +502,7 @@ static handoff_t *operator_assign(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
-    if (handoff->error != ERROR_UNKNOWN)
+    if (handoff->error != ERROR_UNSET)
     {
         return create_error(handoff->error);
     }
@@ -575,7 +575,7 @@ static handoff_t *operator_catch(argument_iterator_t *arguments, object_t *objec
         return NULL;
     }
 
-    if (handoff->error != ERROR_UNKNOWN)
+    if (handoff->error != ERROR_UNSET)
     {
         return create_number(handoff->error);
     }
@@ -599,7 +599,7 @@ static handoff_t *operator_add(argument_iterator_t *arguments, object_t *objects
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -621,7 +621,7 @@ static handoff_t *operator_add(argument_iterator_t *arguments, object_t *objects
         return NULL;
     }
 
-    if (right->error != ERROR_UNKNOWN)
+    if (right->error != ERROR_UNSET)
     {
         return create_error(right->error);
     }
@@ -655,7 +655,7 @@ static handoff_t *operator_add(argument_iterator_t *arguments, object_t *objects
 
         size = sizeof(char) * (strlen(unsafe) + 1);
 
-        return create_handoff(ERROR_UNKNOWN, TYPE_STRING, unsafe, size);
+        return create_handoff(ERROR_UNSET, TYPE_STRING, unsafe, size);
     }
 
     return create_error(ERROR_ARGUMENT);
@@ -678,7 +678,7 @@ static handoff_t *operator_subtract(argument_iterator_t *arguments, object_t *ob
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -700,7 +700,7 @@ static handoff_t *operator_subtract(argument_iterator_t *arguments, object_t *ob
         return NULL;
     }
 
-    if (right->error != ERROR_UNKNOWN)
+    if (right->error != ERROR_UNSET)
     {
         return create_error(right->error);
     }
@@ -733,7 +733,7 @@ static handoff_t *operator_multiply(argument_iterator_t *arguments, object_t *ob
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -755,7 +755,7 @@ static handoff_t *operator_multiply(argument_iterator_t *arguments, object_t *ob
         return NULL;
     }
 
-    if (right->error != ERROR_UNKNOWN)
+    if (right->error != ERROR_UNSET)
     {
         return create_error(right->error);
     }
@@ -788,7 +788,7 @@ static handoff_t *operator_divide(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -810,7 +810,7 @@ static handoff_t *operator_divide(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
-    if (right->error != ERROR_UNKNOWN)
+    if (right->error != ERROR_UNSET)
     {
         return create_error(right->error);
     }
@@ -848,7 +848,7 @@ static handoff_t *operator_modulo(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -870,7 +870,7 @@ static handoff_t *operator_modulo(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
-    if (right->error != ERROR_UNKNOWN)
+    if (right->error != ERROR_UNSET)
     {
         return create_error(right->error);
     }
@@ -908,7 +908,7 @@ static handoff_t *operator_and(argument_iterator_t *arguments, object_t *objects
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -930,7 +930,7 @@ static handoff_t *operator_and(argument_iterator_t *arguments, object_t *objects
         return NULL;
     }
 
-    if (right->error != ERROR_UNKNOWN)
+    if (right->error != ERROR_UNSET)
     {
         return create_error(right->error);
     }
@@ -963,7 +963,7 @@ static handoff_t *operator_or(argument_iterator_t *arguments, object_t *objects)
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -985,7 +985,7 @@ static handoff_t *operator_or(argument_iterator_t *arguments, object_t *objects)
         return NULL;
     }
 
-    if (right->error != ERROR_UNKNOWN)
+    if (right->error != ERROR_UNSET)
     {
         return create_error(right->error);
     }
@@ -1018,7 +1018,7 @@ static handoff_t *operator_not(argument_iterator_t *arguments, object_t *objects
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -1050,7 +1050,7 @@ static handoff_t *operator_conditional(argument_iterator_t *arguments, object_t 
         return NULL;
     }
 
-    if (condition->error != ERROR_UNKNOWN)
+    if (condition->error != ERROR_UNSET)
     {
         return create_error(condition->error);
     }
@@ -1078,7 +1078,7 @@ static handoff_t *operator_conditional(argument_iterator_t *arguments, object_t 
             return NULL;
         }
 
-        if (pass->error != ERROR_UNKNOWN)
+        if (pass->error != ERROR_UNSET)
         {
             return create_error(pass->error);
         }
@@ -1103,7 +1103,7 @@ static handoff_t *operator_conditional(argument_iterator_t *arguments, object_t 
             return NULL;
         }
 
-        if (fail->error != ERROR_UNKNOWN)
+        if (fail->error != ERROR_UNSET)
         {
             return create_error(fail->error);
         }
@@ -1134,7 +1134,7 @@ static handoff_t *operator_loop(argument_iterator_t *arguments, object_t *object
             return NULL;
         }
 
-        if (condition->error != ERROR_UNKNOWN)
+        if (condition->error != ERROR_UNSET)
         {
             return create_error(condition->error);
         }
@@ -1162,7 +1162,7 @@ static handoff_t *operator_loop(argument_iterator_t *arguments, object_t *object
                 return NULL;
             }
 
-            if (pass->error != ERROR_UNKNOWN)
+            if (pass->error != ERROR_UNSET)
             {
                 return create_error(pass->error);
             }
@@ -1193,7 +1193,7 @@ static handoff_t *operator_chain(argument_iterator_t *arguments, object_t *objec
             return NULL;
         }
 
-        if (last->error != ERROR_UNKNOWN)
+        if (last->error != ERROR_UNSET)
         {
             return create_error(last->error);
         }
@@ -1218,7 +1218,7 @@ static handoff_t *operator_less(argument_iterator_t *arguments, object_t *object
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -1235,7 +1235,7 @@ static handoff_t *operator_less(argument_iterator_t *arguments, object_t *object
         return NULL;
     }
 
-    if (right->error != ERROR_UNKNOWN)
+    if (right->error != ERROR_UNSET)
     {
         return create_error(right->error);
     }
@@ -1284,7 +1284,7 @@ static handoff_t *operator_greater(argument_iterator_t *arguments, object_t *obj
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -1301,7 +1301,7 @@ static handoff_t *operator_greater(argument_iterator_t *arguments, object_t *obj
         return NULL;
     }
 
-    if (right->error != ERROR_UNKNOWN)
+    if (right->error != ERROR_UNSET)
     {
         return create_error(right->error);
     }
@@ -1350,7 +1350,7 @@ static handoff_t *operator_equal(argument_iterator_t *arguments, object_t *objec
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -1367,7 +1367,7 @@ static handoff_t *operator_equal(argument_iterator_t *arguments, object_t *objec
         return NULL;
     }
 
-    if (right->error != ERROR_UNKNOWN)
+    if (right->error != ERROR_UNSET)
     {
         return create_error(right->error);
     }
@@ -1416,7 +1416,7 @@ static handoff_t *operator_type(argument_iterator_t *arguments, object_t *object
         return NULL;
     }
 
-    if (handoff->error != ERROR_UNKNOWN)
+    if (handoff->error != ERROR_UNSET)
     {
         return create_error(handoff->error);
     }
@@ -1455,7 +1455,7 @@ static handoff_t *operator_number(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
-    if (handoff->error != ERROR_UNKNOWN)
+    if (handoff->error != ERROR_UNSET)
     {
         return create_error(handoff->error);
     }
@@ -1501,7 +1501,7 @@ static handoff_t *operator_string(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
-    if (handoff->error != ERROR_UNKNOWN)
+    if (handoff->error != ERROR_UNSET)
     {
         return create_error(handoff->error);
     }
@@ -1530,7 +1530,7 @@ static handoff_t *operator_string(argument_iterator_t *arguments, object_t *obje
 
         size = sizeof(char) * (strlen(unsafe) + 1);
 
-        return create_handoff(ERROR_UNKNOWN, TYPE_STRING, unsafe, size);
+        return create_handoff(ERROR_UNSET, TYPE_STRING, unsafe, size);
     }
 
     return create_error(ERROR_TYPE);
@@ -1552,7 +1552,7 @@ static handoff_t *operator_hash(argument_iterator_t *arguments, object_t *object
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }
@@ -1592,7 +1592,7 @@ static handoff_t *operator_length(argument_iterator_t *arguments, object_t *obje
         return NULL;
     }
 
-    if (left->error != ERROR_UNKNOWN)
+    if (left->error != ERROR_UNSET)
     {
         return create_error(left->error);
     }

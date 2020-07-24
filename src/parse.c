@@ -50,7 +50,7 @@ expression_t *parse_expressions(scanner_t *scanner)
                 tail = head;
             }
 
-            if (expression->error != ERROR_UNKNOWN)
+            if (expression->error != ERROR_UNSET)
             {
                 return head;
             }
@@ -241,7 +241,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     expression_t *expression;
 
     state = PARSER_STATE_START;
-    expression = create_expression(ERROR_UNKNOWN, TYPE_UNSET, NULL, NULL, 0, NULL);
+    expression = create_expression(ERROR_UNSET, TYPE_UNSET, NULL, NULL, 0, NULL);
 
     if (depth > LIMIT_DEPTH)
     {
@@ -299,7 +299,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                         return NULL;
                     }
 
-                    if (expression->error != ERROR_UNKNOWN)
+                    if (expression->error != ERROR_UNSET)
                     {
                         state = PARSER_STATE_ERROR;
                     }
@@ -330,7 +330,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                             expression_t **existing;
 
                             expression->error = argument->error;
-                            state = expression->error == ERROR_UNKNOWN ? PARSER_STATE_ARGUMENTS : PARSER_STATE_ERROR;
+                            state = expression->error == ERROR_UNSET ? PARSER_STATE_ARGUMENTS : PARSER_STATE_ERROR;
 
                             existing = expression->arguments;
                             expression->length += 1;
@@ -383,7 +383,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
 
     if (state != PARSER_STATE_SUCCESS && state != PARSER_STATE_START)
     {
-        if (expression->error == ERROR_UNKNOWN)
+        if (expression->error == ERROR_UNSET)
         {
             expression->error = ERROR_SYNTAX;
         }
