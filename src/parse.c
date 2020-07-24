@@ -18,13 +18,10 @@ typedef enum
 } parser_state_t;
 
 static expression_t *create_expression(error_t error, type_t type, void *segment, expression_t **arguments, size_t length, expression_t *next);
-static literal_t *create_literal(type_t type, void *unsafe);
 static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth);
-static literal_t *token_to_literal(token_t *token);
-static literal_t *null_to_value(char *value);
-static literal_t *number_to_value(char *value);
-static literal_t *string_to_value(char *value);
-static int is_literal(token_name_t name);
+static void set_null(expression_t *expression, char *value);
+static void set_number(expression_t *expression, char *value);
+static void set_string(expression_t *expression, char *value);
 static int is_printable(char *value);
 
 expression_t *parse_expressions(scanner_t *scanner)
@@ -219,16 +216,6 @@ void destroy_expression(expression_t *expression)
     free(expression);
 }
 
-void destroy_literal(literal_t *literal)
-{
-    if (literal->unsafe)
-    {
-        free(literal->unsafe);
-    }
-
-    free(literal);
-}
-
 static expression_t *create_expression(error_t error, type_t type, void *segment, expression_t **arguments, size_t length, expression_t *next)
 {
     expression_t *expression;
@@ -246,21 +233,6 @@ static expression_t *create_expression(error_t error, type_t type, void *segment
     }
 
     return expression;
-}
-
-static literal_t *create_literal(type_t type, void *unsafe)
-{
-    literal_t *literal;
-
-    literal = malloc(sizeof(literal_t));
-
-    if (literal)
-    {
-        literal->type = type;
-        literal->unsafe = unsafe;
-    }
-
-    return literal;
 }
 
 static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth)
@@ -298,32 +270,31 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
             {
                 if (state == PARSER_STATE_START)
                 {
-                    if (is_literal(token->name))
+                    state = PARSER_STATE_SUCCESS;
+
+                    switch (token->name)
                     {
-                        literal_t *literal;
-                        literal = token_to_literal(token);
-
-                        if (literal)
-                        {
-                            state = literal->type == TYPE_UNKNOWN ? PARSER_STATE_ERROR : PARSER_STATE_SUCCESS;
-                            expression->error = state == PARSER_STATE_ERROR ? ERROR_TYPE : ERROR_UNKNOWN;
-                            expression->type = literal->type;
-                            expression->segment = literal->unsafe;
-
-                            literal->unsafe = NULL;
-                            destroy_literal(literal);
-                        }
-                        else
-                        {
-                            destroy_token(token);
-                            destroy_expression(expression);
-                            return NULL;
-                        }
+                        case TOKEN_NAME_NULL:
+                            set_null(expression, token->value);
+                            break;
+                        case TOKEN_NAME_NUMBER:
+                            set_number(expression, token->value);
+                            break;
+                        case TOKEN_NAME_STRING:
+                            set_string(expression, token->value);
+                            break;
+                        case TOKEN_NAME_CALL_START:
+                            state = PARSER_STATE_ARGUMENTS;
+                            expression->type = TYPE_CALL;
+                            break;
+                        default:
+                            expression->error = ERROR_SYNTAX;
+                            break;
                     }
-                    else
+
+                    if (expression->error != ERROR_UNKNOWN)
                     {
-                        state = token->name == TOKEN_NAME_CALL_START ? PARSER_STATE_ARGUMENTS : PARSER_STATE_ERROR;
-                        expression->type = TYPE_CALL;
+                        state = PARSER_STATE_ERROR;
                     }
                 }
                 else if (state == PARSER_STATE_ARGUMENTS)
@@ -419,125 +390,117 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     return expression;
 }
 
-static literal_t *token_to_literal(token_t *token)
+static void set_null(expression_t *expression, char *value)
 {
-    switch (token->name)
+    if (strlen(value) != 1)
     {
-        case TOKEN_NAME_NULL:
-            return null_to_value(token->value);
-        case TOKEN_NAME_NUMBER:
-            return number_to_value(token->value);
-        case TOKEN_NAME_STRING:
-            return string_to_value(token->value);
-        default:
-            return NULL;
+        expression->error = ERROR_TYPE;
+        return;
     }
+
+    if (value[0] != SYMBOL_NULL)
+    {
+        expression->error = ERROR_TYPE;
+        return;
+    }
+
+    expression->type = TYPE_NULL;
+    expression->segment = NULL;
 }
 
-static literal_t *null_to_value(char *value)
-{
-    int match;
-    type_t type;
-
-    match = strlen(value) == 1 && value[0] == SYMBOL_NULL;
-    type = match ? TYPE_NULL : TYPE_UNKNOWN;
-
-    return create_literal(type, NULL);
-}
-
-static literal_t *number_to_value(char *value)
+static void set_number(expression_t *expression, char *value)
 {
     size_t length;
     char *trimmed;
-    int *unsafe;
+    int *numbered;
 
     length = strlen(value);
 
     if (length < 2)
     {
-        return create_literal(TYPE_UNKNOWN, NULL);
+        expression->error = ERROR_TYPE;
+        return;
     }
 
     if (value[0] != SYMBOL_NUMBER || value[length - 1] != SYMBOL_NUMBER)
     {
-        return create_literal(TYPE_UNKNOWN, NULL);
+        expression->error = ERROR_TYPE;
+        return;
     }
 
     trimmed = slice_string(value, 1, length - 1);
 
     if (!trimmed)
     {
-        return NULL;
+        expression->error = ERROR_SHORTAGE;
+        return;
     }
 
     if (!is_integer(trimmed))
     {
         free(trimmed);
-        return create_literal(TYPE_UNKNOWN, NULL);
+        expression->error = ERROR_TYPE;
+        return;
     }
 
-    unsafe = integer_to_array(atoi(trimmed));
+    numbered = integer_to_array(atoi(trimmed));
     free(trimmed);
 
-    if (!unsafe)
+    if (!numbered)
     {
-        return NULL;
+        expression->error = ERROR_SHORTAGE;
+        return;
     }
 
-    return create_literal(TYPE_NUMBER, unsafe);
+    expression->type = TYPE_NUMBER;
+    expression->segment = numbered;
 }
 
-static literal_t *string_to_value(char *value)
+static void set_string(expression_t *expression, char *value)
 {
     size_t length;
-    char *trimmed, *unsafe;
-
-    if (!is_printable(value))
-    {
-        return create_literal(TYPE_UNKNOWN, NULL);
-    }
+    char *trimmed, *escaped;
 
     length = strlen(value);
 
     if (length < 2)
     {
-        return create_literal(TYPE_UNKNOWN, NULL);
+        expression->error = ERROR_TYPE;
+        return;
     }
 
     if (value[0] != SYMBOL_STRING || value[length - 1] != SYMBOL_STRING)
     {
-        return create_literal(TYPE_UNKNOWN, NULL);
+        expression->error = ERROR_TYPE;
+        return;
     }
 
     trimmed = slice_string(value, 1, length - 1);
 
     if (!trimmed)
     {
-        return NULL;
+        expression->error = ERROR_SHORTAGE;
+        return;
     }
 
-    unsafe = escape_string(trimmed);
+    if (!is_printable(trimmed))
+    {
+        free(trimmed);
+        expression->error = ERROR_TYPE;
+        return;
+    }
+
+    escaped = escape_string(trimmed);
     free(trimmed);
 
-    if (!unsafe)
+    if (!escaped)
     {
-        return NULL;
+        expression->error = ERROR_SHORTAGE;
+        return;
     }
 
-    return create_literal(TYPE_STRING, unsafe);
-}
-
-static int is_literal(token_name_t name)
-{
-    switch (name)
-    {
-        case TOKEN_NAME_NULL:
-        case TOKEN_NAME_NUMBER:
-        case TOKEN_NAME_STRING:
-            return 1;
-        default:
-            return 0;
-    }
+    expression->type = TYPE_STRING;
+    expression->segment = escaped;
 }
 
 static int is_printable(char *value)

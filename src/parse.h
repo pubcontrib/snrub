@@ -12,12 +12,6 @@ typedef enum
     TYPE_CALL
 } type_t;
 
-typedef struct
-{
-    type_t type;
-    void *unsafe;
-} literal_t;
-
 typedef enum
 {
     ERROR_UNKNOWN,
@@ -44,6 +38,5 @@ expression_t *parse_expressions(scanner_t *scanner);
 char *escape_string(char *string);
 char *unescape_string(char *string);
 void destroy_expression(expression_t *expression);
-void destroy_literal(literal_t *literal);
 
 #endif
