@@ -1,7 +1,7 @@
 #!/bin/sh
 . test/assert.sh
 
-hint 'expression'
+hint 'type/call'
 
 repeat()
 {

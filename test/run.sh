@@ -12,6 +12,7 @@ fi
 . test/suite/type/null.sh
 . test/suite/type/number.sh
 . test/suite/type/string.sh
+. test/suite/type/call.sh
 
 . test/suite/operator/value.sh
 . test/suite/operator/assign.sh
@@ -37,6 +38,5 @@ fi
 . test/suite/operator/length.sh
 
 . test/suite/whitespace.sh
-. test/suite/expression.sh
 
 conclude
