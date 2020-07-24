@@ -63,6 +63,20 @@ pass '("-->" "path" "none")
     )
     ?
 )' '"pass"'
+pass '("-->""string""word")("<--""string")' '"word"'
+pass ' ( "-->" "string" "word" ) ( "<--" "string" ) ' '"word"'
+pass '	(	"-->"	"string"	"word"	)	(	"<--"	"string"	)	' '"word"'
+pass '
+(
+"-->"
+"string"
+"word"
+)
+(
+"<--"
+"string"
+)
+' '"word"'
 fail '`' '#1#'
 fail '()' '#4#'
 pass '("+" #1# #2# #3#)' '#3#'

@@ -37,6 +37,4 @@ fi
 . test/suite/operator/hash.sh
 . test/suite/operator/length.sh
 
-. test/suite/whitespace.sh
-
 conclude
