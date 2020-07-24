@@ -292,6 +292,13 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                             break;
                     }
 
+                    if (expression->error == ERROR_SHORTAGE)
+                    {
+                        destroy_token(token);
+                        destroy_expression(expression);
+                        return NULL;
+                    }
+
                     if (expression->error != ERROR_UNKNOWN)
                     {
                         state = PARSER_STATE_ERROR;
