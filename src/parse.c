@@ -241,7 +241,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     expression_t *expression;
 
     state = PARSER_STATE_START;
-    expression = create_expression(ERROR_UNKNOWN, TYPE_UNKNOWN, NULL, NULL, 0, NULL);
+    expression = create_expression(ERROR_UNKNOWN, TYPE_UNSET, NULL, NULL, 0, NULL);
 
     if (depth > LIMIT_DEPTH)
     {

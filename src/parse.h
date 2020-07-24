@@ -5,7 +5,7 @@
 
 typedef enum
 {
-    TYPE_UNKNOWN,
+    TYPE_UNSET,
     TYPE_NULL,
     TYPE_NUMBER,
     TYPE_STRING,

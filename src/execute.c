@@ -51,7 +51,7 @@ static void rewind_argument(argument_iterator_t *iterator);
 
 object_t *empty_object()
 {
-    return create_object(NULL, TYPE_UNKNOWN, NULL, 0, NULL);
+    return create_object(NULL, TYPE_UNSET, NULL, 0, NULL);
 }
 
 handoff_t *execute_expression(expression_t *expressions, object_t *objects)
@@ -81,7 +81,7 @@ handoff_t *execute_expression(expression_t *expressions, object_t *objects)
             return NULL;
         }
 
-        if (handoff->type == TYPE_UNKNOWN)
+        if (handoff->type == TYPE_UNSET)
         {
             destroy_handoff(handoff);
         }
@@ -172,7 +172,7 @@ static handoff_t *create_error(error_t error)
 
 static handoff_t *create_unknown()
 {
-    return create_handoff(ERROR_UNKNOWN, TYPE_UNKNOWN, NULL, 0);
+    return create_handoff(ERROR_UNKNOWN, TYPE_UNSET, NULL, 0);
 }
 
 static handoff_t *create_null()
@@ -258,7 +258,7 @@ static handoff_t *apply_expression(expression_t *expression, object_t *objects)
 
     switch (expression->type)
     {
-        case TYPE_UNKNOWN:
+        case TYPE_UNSET:
             result = create_unknown();
             break;
         case TYPE_NULL:
