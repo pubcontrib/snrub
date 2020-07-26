@@ -2,27 +2,7 @@
 #define PARSE_H
 
 #include "lex.h"
-
-typedef enum
-{
-    TYPE_UNSET,
-    TYPE_NULL,
-    TYPE_NUMBER,
-    TYPE_STRING,
-    TYPE_CALL
-} type_t;
-
-typedef enum
-{
-    ERROR_UNSET,
-    ERROR_SYNTAX,
-    ERROR_BOUNDS,
-    ERROR_TYPE,
-    ERROR_ARGUMENT,
-    ERROR_ARITHMETIC,
-    ERROR_SHORTAGE,
-    ERROR_UNSUPPORTED
-} error_t;
+#include "value.h"
 
 typedef struct expression_t
 {
