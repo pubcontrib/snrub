@@ -216,17 +216,16 @@ static handoff_t *create_string(char *string)
 
 static handoff_t *create_copy(handoff_t *this)
 {
-    switch (this->type)
+    void *unsafe;
+
+    unsafe = copy_memory(this->unsafe, this->size);
+
+    if (!unsafe)
     {
-        case TYPE_NULL:
-            return create_null();
-        case TYPE_NUMBER:
-            return create_number(((int *) this->unsafe)[0]);
-        case TYPE_STRING:
-            return create_string(this->unsafe);
-        default:
-            return create_error(ERROR_TYPE);
+        return NULL;
     }
+
+    return create_handoff(ERROR_UNSET, this->type, unsafe, this->size);
 }
 
 static handoff_t *apply_expression(expression_t *expression, object_t *objects)
