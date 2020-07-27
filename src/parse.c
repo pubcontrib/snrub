@@ -288,6 +288,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                             break;
                         case TOKEN_NAME_CALL_START:
                             state = PARSER_STATE_ARGUMENTS;
+                            expression->value = new_call();
                             break;
                         default:
                             expression->value = new_error(ERROR_SYNTAX);
@@ -316,6 +317,8 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                         }
                         else
                         {
+                            destroy_value(expression->value);
+
                             state = PARSER_STATE_ERROR;
                             expression->value = new_error(ERROR_ARGUMENT);
                         }
@@ -333,13 +336,10 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
 
                             if (argument->value->type == TYPE_ERROR)
                             {
+                                destroy_value(expression->value);
+
                                 state = PARSER_STATE_ERROR;
                                 expression->value = copy_value(argument->value);
-                            }
-                            else
-                            {
-                                state = PARSER_STATE_ARGUMENTS;
-                                expression->value = new_call();
                             }
 
                             existing = expression->arguments;
