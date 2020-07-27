@@ -357,9 +357,9 @@ static value_t *operator_value(argument_iterator_t *arguments, object_t *objects
                 case TYPE_NULL:
                     return new_null();
                 case TYPE_NUMBER:
-                    return steal_number(object->unsafe, object->size);
+                    return new_number(((int *) object->unsafe)[0]);
                 case TYPE_STRING:
-                    return steal_string(object->unsafe, object->size);
+                    return new_string(object->unsafe);
                 default:
                     return new_error(ERROR_UNSUPPORTED);
             }
