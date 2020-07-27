@@ -288,7 +288,6 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                             break;
                         case TOKEN_NAME_CALL_START:
                             state = PARSER_STATE_ARGUMENTS;
-                            expression->value = new_call();
                             break;
                         default:
                             expression->value = new_error(ERROR_SYNTAX);
