@@ -97,7 +97,7 @@ value_t *copy_value(value_t *this)
 
 int view_number(value_t *value)
 {
-    switch(value->type)
+    switch (value->type)
     {
         case TYPE_NUMBER:
             return ((int *) value->data)[0];
@@ -108,7 +108,7 @@ int view_number(value_t *value)
 
 char *view_string(value_t *value)
 {
-    switch(value->type)
+    switch (value->type)
     {
         case TYPE_STRING:
             return (char *) value->data;
@@ -119,10 +119,10 @@ char *view_string(value_t *value)
 
 error_t view_error(value_t *value)
 {
-    switch(value->type)
+    switch (value->type)
     {
         case TYPE_ERROR:
-            return (error_t) value->data;
+            return ((error_t *) value->data)[0];
         default:
             return ERROR_UNSET;
     }

@@ -5,6 +5,7 @@
 #include "execute.h"
 #include "parse.h"
 #include "lex.h"
+#include "value.h"
 #include "common.h"
 
 #define PROGRAM_NAME "snrub"
@@ -16,7 +17,7 @@ static char *read_file(char *path);
 static void print_version();
 static void print_usage();
 static void print_error(error_t error);
-static int print_value(type_t type, void *unsafe);
+static int print_value(value_t *value);
 
 int main(int argc, char **argv)
 {
@@ -149,7 +150,8 @@ static int apply_script(char *document, object_t *objects)
 {
     scanner_t *scanner;
     expression_t *expressions;
-    handoff_t *handoff;
+    value_t *value;
+    int status;
 
     scanner = start_scanner(document);
 
@@ -168,28 +170,19 @@ static int apply_script(char *document, object_t *objects)
         return 1;
     }
 
-    handoff = execute_expression(expressions, objects);
+    value = execute_expression(expressions, objects);
     destroy_expression(expressions);
 
-    if (!handoff)
+    if (!value)
     {
         print_error(ERROR_SHORTAGE);
         return 1;
     }
 
-    if (handoff->error != ERROR_UNSET)
-    {
-        print_error(handoff->error);
-        destroy_handoff(handoff);
-        return 1;
-    }
-    else
-    {
-        int status;
-        status = print_value(handoff->type, handoff->unsafe);
-        destroy_handoff(handoff);
-        return status;
-    }
+    status = print_value(value);
+    destroy_value(value);
+
+    return status;
 }
 
 static char *read_file(char *path)
@@ -245,29 +238,27 @@ static void print_error(error_t error)
     printf("#%d#\n", error);
 }
 
-static int print_value(type_t type, void *unsafe)
+static int print_value(value_t *value)
 {
-    if (type == TYPE_NULL)
+    if (value->type == TYPE_NULL)
     {
         printf("%c\n", SYMBOL_NULL);
         return 0;
     }
-    else if (type == TYPE_NUMBER)
+    else if (value->type == TYPE_NUMBER)
     {
-        int number;
-        number = ((int *) unsafe)[0];
-        printf("#%d#\n", number);
+        printf("#%d#\n", view_number(value));
         return 0;
     }
-    else if (type == TYPE_STRING)
+    else if (value->type == TYPE_STRING)
     {
-        char *string;
-        string = unescape_string((char *) unsafe);
+        char *escaped;
+        escaped = unescape_string(view_string(value));
 
-        if (string)
+        if (escaped)
         {
-            printf("\"%s\"\n", string);
-            free(string);
+            printf("\"%s\"\n", escaped);
+            free(escaped);
             return 0;
         }
         else
@@ -275,6 +266,11 @@ static int print_value(type_t type, void *unsafe)
             print_error(ERROR_SHORTAGE);
             return 1;
         }
+    }
+    else if (value->type == TYPE_ERROR)
+    {
+        printf("#%d#\n", view_error(value));
+        return 1;
     }
 
     return 1;

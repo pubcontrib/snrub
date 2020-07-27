@@ -38,6 +38,7 @@ run_test()
         printf "Source: %s\n" "$text" 1>&2
         printf "Expected: %d\n" $expected_code 1>&2
         printf "Actual: %d\n" $actual_code 1>&2
+        printf "Extra: %s\n" "$actual_output" 1>&2
         exit 1
     fi
 
