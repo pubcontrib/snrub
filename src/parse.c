@@ -240,6 +240,11 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     state = PARSER_STATE_START;
     expression = create_expression(NULL, NULL, 0, NULL);
 
+    if (!expression)
+    {
+        return NULL;
+    }
+
     if (depth > LIMIT_DEPTH)
     {
         state = PARSER_STATE_ERROR;
