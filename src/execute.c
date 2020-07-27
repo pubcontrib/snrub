@@ -357,7 +357,7 @@ static value_t *operator_value(argument_iterator_t *arguments, object_t *objects
 
 static value_t *operator_assign(argument_iterator_t *arguments, object_t *objects)
 {
-    value_t *identifier, *handoff, *value;
+    value_t *identifier, *handoff;
     object_t *object, *last;
 
     if (!has_next_argument(arguments))
@@ -399,13 +399,6 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
         return copy_value(handoff);
     }
 
-    value = copy_value(handoff);
-
-    if (!value)
-    {
-        return NULL;
-    }
-
     last = NULL;
 
     for (object = objects; object != NULL; object = object->next)
@@ -414,6 +407,15 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
         {
             if (handoff->type != TYPE_NULL)
             {
+                value_t *value;
+
+                value = copy_value(handoff);
+
+                if (!value)
+                {
+                    return NULL;
+                }
+
                 destroy_value(object->value);
 
                 object->value = value;
@@ -438,11 +440,20 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
     if (handoff->type != TYPE_NULL)
     {
         char *name;
+        value_t *value;
 
         name = copy_string(view_string(identifier));
 
         if (!name)
         {
+            return NULL;
+        }
+
+        value = copy_value(handoff);
+
+        if (!value)
+        {
+            free(name);
             return NULL;
         }
 
