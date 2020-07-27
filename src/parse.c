@@ -13,8 +13,7 @@ typedef enum
     PARSER_STATE_SUCCESS,
     PARSER_STATE_ERROR,
     PARSER_STATE_START,
-    PARSER_STATE_ARGUMENTS,
-    PARSER_STATE_END
+    PARSER_STATE_ARGUMENTS
 } parser_state_t;
 
 static expression_t *create_expression(value_t *value, expression_t **arguments, size_t length, expression_t *next);
