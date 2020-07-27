@@ -65,24 +65,24 @@ value_t *execute_expression(expression_t *expressions, object_t *objects)
 
     for (expression = expressions; expression != NULL; expression = expression->next)
     {
-        value_t *handoff;
+        value_t *value;
 
-        handoff = apply_expression(expression, objects);
+        value = apply_expression(expression, objects);
 
-        if (!handoff)
+        if (!value)
         {
             destroy_value(last);
             return NULL;
         }
 
-        if (handoff->type == TYPE_UNSET)
+        if (value->type == TYPE_UNSET)
         {
-            destroy_value(handoff);
+            destroy_value(value);
         }
         else
         {
             destroy_value(last);
-            last = handoff;
+            last = value;
         }
 
         if (last->type == TYPE_ERROR)
@@ -177,13 +177,13 @@ static value_t *apply_expression(expression_t *expression, object_t *objects)
     {
         for (index = 0; index < arguments->index; index++)
         {
-            value_t *handoff;
+            value_t *value;
 
-            handoff = arguments->evaluated[index];
+            value = arguments->evaluated[index];
 
-            if (handoff)
+            if (value)
             {
-                destroy_value(handoff);
+                destroy_value(value);
             }
         }
 
@@ -356,7 +356,7 @@ static value_t *operator_value(argument_iterator_t *arguments, object_t *objects
 
 static value_t *operator_assign(argument_iterator_t *arguments, object_t *objects)
 {
-    value_t *identifier, *handoff;
+    value_t *identifier, *value;
     object_t *object, *last;
 
     if (!has_next_argument(arguments))
@@ -386,16 +386,16 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    handoff = next_argument(arguments, objects);
+    value = next_argument(arguments, objects);
 
-    if (!handoff)
+    if (!value)
     {
         return NULL;
     }
 
-    if (handoff->type == TYPE_ERROR)
+    if (value->type == TYPE_ERROR)
     {
-        return copy_value(handoff);
+        return copy_value(value);
     }
 
     last = NULL;
@@ -404,20 +404,20 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
     {
         if (object->identifier && strcmp(object->identifier, view_string(identifier)) == 0)
         {
-            if (handoff->type != TYPE_NULL)
+            if (value->type != TYPE_NULL)
             {
-                value_t *value;
+                value_t *copy;
 
-                value = copy_value(handoff);
+                copy = copy_value(value);
 
-                if (!value)
+                if (!copy)
                 {
                     return NULL;
                 }
 
                 destroy_value(object->value);
 
-                object->value = value;
+                object->value = copy;
             }
             else
             {
@@ -436,10 +436,10 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
         last = object;
     }
 
-    if (handoff->type != TYPE_NULL)
+    if (value->type != TYPE_NULL)
     {
         char *name;
-        value_t *value;
+        value_t *copy;
 
         name = copy_string(view_string(identifier));
 
@@ -448,15 +448,15 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
             return NULL;
         }
 
-        value = copy_value(handoff);
+        copy = copy_value(value);
 
-        if (!value)
+        if (!copy)
         {
             free(name);
             return NULL;
         }
 
-        last->next = create_object(name, value, NULL);
+        last->next = create_object(name, copy, NULL);
 
         if (!last->next)
         {
@@ -469,23 +469,23 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
 
 static value_t *operator_catch(argument_iterator_t *arguments, object_t *objects)
 {
-    value_t *handoff;
+    value_t *solo;
 
     if (!has_next_argument(arguments))
     {
         return new_null();
     }
 
-    handoff = next_argument(arguments, objects);
+    solo = next_argument(arguments, objects);
 
-    if (!handoff)
+    if (!solo)
     {
         return NULL;
     }
 
-    if (handoff->type == TYPE_ERROR)
+    if (solo->type == TYPE_ERROR)
     {
-        return new_number(view_error(handoff));
+        return new_number(view_error(solo));
     }
 
     return new_null();
@@ -882,31 +882,31 @@ static value_t *operator_or(argument_iterator_t *arguments, object_t *objects)
 
 static value_t *operator_not(argument_iterator_t *arguments, object_t *objects)
 {
-    value_t *left;
+    value_t *solo;
 
     if (!has_next_argument(arguments))
     {
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    solo = next_argument(arguments, objects);
 
-    if (!left)
+    if (!solo)
     {
         return NULL;
     }
 
-    if (left->type == TYPE_ERROR)
+    if (solo->type == TYPE_ERROR)
     {
-        return copy_value(left);
+        return copy_value(solo);
     }
 
-    if (left->type != TYPE_NUMBER)
+    if (solo->type != TYPE_NUMBER)
     {
         return new_error(ERROR_ARGUMENT);
     }
 
-    return new_number(!view_number(left));
+    return new_number(!view_number(solo));
 }
 
 static value_t *operator_conditional(argument_iterator_t *arguments, object_t *objects)
@@ -1250,36 +1250,36 @@ static value_t *operator_equal(argument_iterator_t *arguments, object_t *objects
 
 static value_t *operator_type(argument_iterator_t *arguments, object_t *objects)
 {
-    value_t *handoff;
+    value_t *solo;
 
     if (!has_next_argument(arguments))
     {
         return new_error(ERROR_ARGUMENT);
     }
 
-    handoff = next_argument(arguments, objects);
+    solo = next_argument(arguments, objects);
 
-    if (!handoff)
+    if (!solo)
     {
         return NULL;
     }
 
-    if (handoff->type == TYPE_ERROR)
+    if (solo->type == TYPE_ERROR)
     {
-        return copy_value(handoff);
+        return copy_value(solo);
     }
 
-    if (handoff->type == TYPE_NULL)
+    if (solo->type == TYPE_NULL)
     {
-        return copy_value(handoff);
+        return copy_value(solo);
     }
 
-    if (handoff->type == TYPE_NUMBER)
+    if (solo->type == TYPE_NUMBER)
     {
         return new_string("#");
     }
 
-    if (handoff->type == TYPE_STRING)
+    if (solo->type == TYPE_STRING)
     {
         return new_string("\"");
     }
@@ -1289,40 +1289,40 @@ static value_t *operator_type(argument_iterator_t *arguments, object_t *objects)
 
 static value_t *operator_number(argument_iterator_t *arguments, object_t *objects)
 {
-    value_t *handoff;
+    value_t *solo;
 
     if (!has_next_argument(arguments))
     {
         return new_error(ERROR_ARGUMENT);
     }
 
-    handoff = next_argument(arguments, objects);
+    solo = next_argument(arguments, objects);
 
-    if (!handoff)
+    if (!solo)
     {
         return NULL;
     }
 
-    if (handoff->type == TYPE_ERROR)
+    if (solo->type == TYPE_ERROR)
     {
-        return copy_value(handoff);
+        return copy_value(solo);
     }
 
-    if (handoff->type == TYPE_NULL)
+    if (solo->type == TYPE_NULL)
     {
-        return copy_value(handoff);
+        return copy_value(solo);
     }
 
-    if (handoff->type == TYPE_NUMBER)
+    if (solo->type == TYPE_NUMBER)
     {
-        return copy_value(handoff);
+        return copy_value(solo);
     }
 
-    if (handoff->type == TYPE_STRING)
+    if (solo->type == TYPE_STRING)
     {
-        if (is_integer(view_string(handoff)))
+        if (is_integer(view_string(solo)))
         {
-            return new_number(atoi(view_string(handoff)));
+            return new_number(atoi(view_string(solo)));
         }
         else
         {
@@ -1335,41 +1335,41 @@ static value_t *operator_number(argument_iterator_t *arguments, object_t *object
 
 static value_t *operator_string(argument_iterator_t *arguments, object_t *objects)
 {
-    value_t *handoff;
+    value_t *solo;
 
     if (!has_next_argument(arguments))
     {
         return new_error(ERROR_ARGUMENT);
     }
 
-    handoff = next_argument(arguments, objects);
+    solo = next_argument(arguments, objects);
 
-    if (!handoff)
+    if (!solo)
     {
         return NULL;
     }
 
-    if (handoff->type == TYPE_ERROR)
+    if (solo->type == TYPE_ERROR)
     {
-        return copy_value(handoff);
+        return copy_value(solo);
     }
 
-    if (handoff->type == TYPE_NULL)
+    if (solo->type == TYPE_NULL)
     {
-        return copy_value(handoff);
+        return copy_value(solo);
     }
 
-    if (handoff->type == TYPE_STRING)
+    if (solo->type == TYPE_STRING)
     {
-        return copy_value(handoff);
+        return copy_value(solo);
     }
 
-    if (handoff->type == TYPE_NUMBER)
+    if (solo->type == TYPE_NUMBER)
     {
         char *string;
         size_t size;
 
-        string = integer_to_string(view_number(handoff));
+        string = integer_to_string(view_number(solo));
 
         if (!string)
         {
@@ -1386,38 +1386,38 @@ static value_t *operator_string(argument_iterator_t *arguments, object_t *object
 
 static value_t *operator_hash(argument_iterator_t *arguments, object_t *objects)
 {
-    value_t *left;
+    value_t *solo;
 
     if (!has_next_argument(arguments))
     {
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    solo = next_argument(arguments, objects);
 
-    if (!left)
+    if (!solo)
     {
         return NULL;
     }
 
-    if (left->type == TYPE_ERROR)
+    if (solo->type == TYPE_ERROR)
     {
-        return copy_value(left);
+        return copy_value(solo);
     }
 
-    if (left->type == TYPE_NULL)
+    if (solo->type == TYPE_NULL)
     {
         return new_number(hash_null());
     }
 
-    if (left->type == TYPE_NUMBER)
+    if (solo->type == TYPE_NUMBER)
     {
-        return new_number(hash_integer(view_number(left)));
+        return new_number(hash_integer(view_number(solo)));
     }
 
-    if (left->type == TYPE_STRING)
+    if (solo->type == TYPE_STRING)
     {
-        return new_number(hash_string(view_string(left)));
+        return new_number(hash_string(view_string(solo)));
     }
 
     return new_error(ERROR_UNSUPPORTED);
@@ -1425,31 +1425,31 @@ static value_t *operator_hash(argument_iterator_t *arguments, object_t *objects)
 
 static value_t *operator_length(argument_iterator_t *arguments, object_t *objects)
 {
-    value_t *left;
+    value_t *solo;
 
     if (!has_next_argument(arguments))
     {
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    solo = next_argument(arguments, objects);
 
-    if (!left)
+    if (!solo)
     {
         return NULL;
     }
 
-    if (left->type == TYPE_ERROR)
+    if (solo->type == TYPE_ERROR)
     {
-        return copy_value(left);
+        return copy_value(solo);
     }
 
-    if (left->type != TYPE_STRING)
+    if (solo->type != TYPE_STRING)
     {
         return new_error(ERROR_ARGUMENT);
     }
 
-    return new_number(strlen(view_string(left)));
+    return new_number(strlen(view_string(solo)));
 }
 
 static int has_next_argument(argument_iterator_t *iterator)
