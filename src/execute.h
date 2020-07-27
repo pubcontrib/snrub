@@ -7,9 +7,7 @@
 typedef struct object_t
 {
     char *identifier;
-    type_t type;
-    void *unsafe;
-    size_t size;
+    value_t *value;
     struct object_t *next;
 } object_t;
 

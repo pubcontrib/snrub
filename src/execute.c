@@ -13,7 +13,7 @@ typedef struct
     size_t index;
 } argument_iterator_t;
 
-static object_t *create_object(char *identifier, type_t type, void *unsafe, size_t size, object_t *next);
+static object_t *create_object(char *identifier, value_t *value, object_t *next);
 static value_t *apply_expression(expression_t *expression, object_t *objects);
 static value_t *apply_call(argument_iterator_t *arguments, object_t *objects);
 static value_t *operator_value(argument_iterator_t *arguments, object_t *objects);
@@ -45,7 +45,7 @@ static void rewind_argument(argument_iterator_t *iterator);
 
 object_t *empty_object()
 {
-    return create_object(NULL, TYPE_UNSET, NULL, 0, NULL);
+    return create_object(NULL, NULL, NULL);
 }
 
 value_t *execute_expression(expression_t *expressions, object_t *objects)
@@ -101,9 +101,9 @@ void destroy_object(object_t *object)
         free(object->identifier);
     }
 
-    if (object->unsafe)
+    if (object->value)
     {
-        free(object->unsafe);
+        destroy_value(object->value);
     }
 
     if (object->next)
@@ -114,7 +114,7 @@ void destroy_object(object_t *object)
     free(object);
 }
 
-static object_t *create_object(char *identifier, type_t type, void *unsafe, size_t size, object_t *next)
+static object_t *create_object(char *identifier, value_t *value, object_t *next)
 {
     object_t *object;
 
@@ -123,9 +123,7 @@ static object_t *create_object(char *identifier, type_t type, void *unsafe, size
     if (object)
     {
         object->identifier = identifier;
-        object->type = type;
-        object->unsafe = unsafe;
-        object->size = size;
+        object->value = value;
         object->next = next;
     }
 
@@ -350,19 +348,7 @@ static value_t *operator_value(argument_iterator_t *arguments, object_t *objects
     {
         if (object->identifier && strcmp(object->identifier, view_string(identifier)) == 0)
         {
-            switch(object->type)
-            {
-                case TYPE_UNSET:
-                    return new_unset();
-                case TYPE_NULL:
-                    return new_null();
-                case TYPE_NUMBER:
-                    return new_number(((int *) object->unsafe)[0]);
-                case TYPE_STRING:
-                    return new_string(object->unsafe);
-                default:
-                    return new_error(ERROR_UNSUPPORTED);
-            }
+            return copy_value(object->value);
         }
     }
 
@@ -371,7 +357,7 @@ static value_t *operator_value(argument_iterator_t *arguments, object_t *objects
 
 static value_t *operator_assign(argument_iterator_t *arguments, object_t *objects)
 {
-    value_t *identifier, *handoff;
+    value_t *identifier, *handoff, *value;
     object_t *object, *last;
 
     if (!has_next_argument(arguments))
@@ -413,6 +399,13 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
         return copy_value(handoff);
     }
 
+    value = copy_value(handoff);
+
+    if (!value)
+    {
+        return NULL;
+    }
+
     last = NULL;
 
     for (object = objects; object != NULL; object = object->next)
@@ -421,16 +414,9 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
         {
             if (handoff->type != TYPE_NULL)
             {
-                if (object->unsafe)
-                {
-                    free(object->unsafe);
-                }
+                destroy_value(object->value);
 
-                object->type = handoff->type;
-                object->unsafe = handoff->data;
-                object->size = handoff->size;
-
-                handoff->data = NULL;
+                object->value = value;
             }
             else
             {
@@ -451,15 +437,21 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
 
     if (handoff->type != TYPE_NULL)
     {
-        last->next = create_object(identifier->data, handoff->type, handoff->data, handoff->size, NULL);
+        char *name;
+
+        name = copy_string(view_string(identifier));
+
+        if (!name)
+        {
+            return NULL;
+        }
+
+        last->next = create_object(name, value, NULL);
 
         if (!last->next)
         {
             return NULL;
         }
-
-        identifier->data = NULL;
-        handoff->data = NULL;
     }
 
     return new_null();
