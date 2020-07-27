@@ -55,9 +55,9 @@ value_t *execute_expression(expression_t *expressions, object_t *objects)
 
     for (expression = expressions; expression != NULL; expression = expression->next)
     {
-        if (expression->error != ERROR_UNSET)
+        if (expression->value->type == TYPE_ERROR)
         {
-            return new_error(expression->error);
+            return copy_value(expression->value);
         }
     }
 
@@ -157,19 +157,13 @@ static value_t *apply_expression(expression_t *expression, object_t *objects)
         }
     }
 
-    switch (expression->type)
+    switch (expression->value->type)
     {
         case TYPE_UNSET:
-            result = new_unset();
-            break;
         case TYPE_NULL:
-            result = new_null();
-            break;
         case TYPE_NUMBER:
-            result = new_number(((int *) expression->segment)[0]);
-            break;
         case TYPE_STRING:
-            result = new_string(expression->segment);
+            result = copy_value(expression->value);
             break;
         case TYPE_CALL:
             result = apply_call(arguments, objects);

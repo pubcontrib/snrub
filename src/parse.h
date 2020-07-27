@@ -6,9 +6,7 @@
 
 typedef struct expression_t
 {
-    error_t error;
-    type_t type;
-    void *segment;
+    value_t *value;
     struct expression_t **arguments;
     size_t length;
     struct expression_t *next;

@@ -17,11 +17,11 @@ typedef enum
     PARSER_STATE_END
 } parser_state_t;
 
-static expression_t *create_expression(error_t error, type_t type, void *segment, expression_t **arguments, size_t length, expression_t *next);
+static expression_t *create_expression(value_t *value, expression_t **arguments, size_t length, expression_t *next);
 static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth);
-static void set_null(expression_t *expression, char *value);
-static void set_number(expression_t *expression, char *value);
-static void set_string(expression_t *expression, char *value);
+static value_t *parse_null_literal(char *value);
+static value_t *parse_number_literal(char *value);
+static value_t *parse_string_literal(char *value);
 static int is_printable(char *value);
 
 expression_t *parse_expressions(scanner_t *scanner)
@@ -50,7 +50,7 @@ expression_t *parse_expressions(scanner_t *scanner)
                 tail = head;
             }
 
-            if (expression->error != ERROR_UNSET)
+            if (expression->value->type == TYPE_ERROR)
             {
                 return head;
             }
@@ -191,9 +191,9 @@ char *unescape_string(char *string)
 
 void destroy_expression(expression_t *expression)
 {
-    if (expression->segment)
+    if (expression->value)
     {
-        free(expression->segment);
+        destroy_value(expression->value);
     }
 
     if (expression->length > 0)
@@ -216,7 +216,7 @@ void destroy_expression(expression_t *expression)
     free(expression);
 }
 
-static expression_t *create_expression(error_t error, type_t type, void *segment, expression_t **arguments, size_t length, expression_t *next)
+static expression_t *create_expression(value_t *value, expression_t **arguments, size_t length, expression_t *next)
 {
     expression_t *expression;
 
@@ -224,9 +224,7 @@ static expression_t *create_expression(error_t error, type_t type, void *segment
 
     if (expression)
     {
-        expression->error = error;
-        expression->type = type;
-        expression->segment = segment;
+        expression->value = value;
         expression->arguments = arguments;
         expression->length = length;
         expression->next = next;
@@ -241,12 +239,12 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     expression_t *expression;
 
     state = PARSER_STATE_START;
-    expression = create_expression(ERROR_UNSET, TYPE_UNSET, NULL, NULL, 0, NULL);
+    expression = create_expression(NULL, NULL, 0, NULL);
 
     if (depth > LIMIT_DEPTH)
     {
         state = PARSER_STATE_ERROR;
-        expression->error = ERROR_BOUNDS;
+        expression->value = new_error(ERROR_BOUNDS);
     }
 
     while (!scanner->closed && state != PARSER_STATE_ERROR && state != PARSER_STATE_SUCCESS)
@@ -254,7 +252,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
         if (expression->length > LIMIT_BREADTH)
         {
             state = PARSER_STATE_ERROR;
-            expression->error = ERROR_BOUNDS;
+            expression->value = new_error(ERROR_BOUNDS);
             break;
         }
 
@@ -265,6 +263,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
             if (token->name == TOKEN_NAME_UNKNOWN)
             {
                 state = PARSER_STATE_ERROR;
+                expression->value = new_error(ERROR_SYNTAX);
             }
             else if (token->name != TOKEN_NAME_WHITESPACE && token->name != TOKEN_NAME_COMMENT)
             {
@@ -275,31 +274,31 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                     switch (token->name)
                     {
                         case TOKEN_NAME_NULL:
-                            set_null(expression, token->value);
+                            expression->value = parse_null_literal(token->value);
                             break;
                         case TOKEN_NAME_NUMBER:
-                            set_number(expression, token->value);
+                            expression->value = parse_number_literal(token->value);
                             break;
                         case TOKEN_NAME_STRING:
-                            set_string(expression, token->value);
+                            expression->value = parse_string_literal(token->value);
                             break;
                         case TOKEN_NAME_CALL_START:
                             state = PARSER_STATE_ARGUMENTS;
-                            expression->type = TYPE_CALL;
+                            expression->value = new_call();
                             break;
                         default:
-                            expression->error = ERROR_SYNTAX;
+                            expression->value = new_error(ERROR_SYNTAX);
                             break;
                     }
 
-                    if (expression->error == ERROR_SHORTAGE)
+                    if (!expression->value)
                     {
                         destroy_token(token);
                         destroy_expression(expression);
                         return NULL;
                     }
 
-                    if (expression->error != ERROR_UNSET)
+                    if (expression->value->type == TYPE_ERROR)
                     {
                         state = PARSER_STATE_ERROR;
                     }
@@ -314,8 +313,8 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                         }
                         else
                         {
-                            expression->error = ERROR_ARGUMENT;
                             state = PARSER_STATE_ERROR;
+                            expression->value = new_error(ERROR_ARGUMENT);
                         }
                     }
                     else
@@ -329,8 +328,15 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                         {
                             expression_t **existing;
 
-                            expression->error = argument->error;
-                            state = expression->error == ERROR_UNSET ? PARSER_STATE_ARGUMENTS : PARSER_STATE_ERROR;
+                            if (argument->value->type == TYPE_ERROR)
+                            {
+                                state = PARSER_STATE_ERROR;
+                                expression->value = copy_value(argument->value);
+                            }
+                            else
+                            {
+                                state = PARSER_STATE_ARGUMENTS;
+                            }
 
                             existing = expression->arguments;
                             expression->length += 1;
@@ -381,12 +387,21 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
         }
     }
 
-    if (state != PARSER_STATE_SUCCESS && state != PARSER_STATE_START)
+    if (state == PARSER_STATE_SUCCESS || state == PARSER_STATE_START)
     {
-        if (expression->error == ERROR_UNSET)
+        if (!expression->value)
         {
-            expression->error = ERROR_SYNTAX;
+            expression->value = new_unset();
         }
+    }
+    else if (state == PARSER_STATE_ARGUMENTS)
+    {
+        if (expression->value)
+        {
+            destroy_value(expression->value);
+        }
+
+        expression->value = new_error(ERROR_SYNTAX);
     }
 
     if (token)
@@ -394,76 +409,68 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
         destroy_token(token);
     }
 
+    if (!expression->value)
+    {
+        destroy_expression(expression);
+        return NULL;
+    }
+
     return expression;
 }
 
-static void set_null(expression_t *expression, char *value)
+static value_t *parse_null_literal(char *value)
 {
     if (strlen(value) != 1)
     {
-        expression->error = ERROR_TYPE;
-        return;
+        return new_error(ERROR_TYPE);
     }
 
     if (value[0] != SYMBOL_NULL)
     {
-        expression->error = ERROR_TYPE;
-        return;
+        return new_error(ERROR_TYPE);
     }
 
-    expression->type = TYPE_NULL;
-    expression->segment = NULL;
+    return new_null();
 }
 
-static void set_number(expression_t *expression, char *value)
+static value_t *parse_number_literal(char *value)
 {
     size_t length;
     char *trimmed;
-    int *numbered;
+    int numbered;
 
     length = strlen(value);
 
     if (length < 2)
     {
-        expression->error = ERROR_TYPE;
-        return;
+        return new_error(ERROR_TYPE);
     }
 
     if (value[0] != SYMBOL_NUMBER || value[length - 1] != SYMBOL_NUMBER)
     {
-        expression->error = ERROR_TYPE;
-        return;
+        return new_error(ERROR_TYPE);
     }
 
     trimmed = slice_string(value, 1, length - 1);
 
     if (!trimmed)
     {
-        expression->error = ERROR_SHORTAGE;
-        return;
+        return NULL;
     }
 
     if (!is_integer(trimmed))
     {
         free(trimmed);
-        expression->error = ERROR_TYPE;
-        return;
+        return new_error(ERROR_TYPE);
     }
 
-    numbered = integer_to_array(atoi(trimmed));
+    numbered = atoi(trimmed);
     free(trimmed);
 
-    if (!numbered)
-    {
-        expression->error = ERROR_SHORTAGE;
-        return;
-    }
-
-    expression->type = TYPE_NUMBER;
-    expression->segment = numbered;
+    return new_number(numbered);
 }
 
-static void set_string(expression_t *expression, char *value)
+static value_t *parse_string_literal(char *value)
 {
     size_t length;
     char *trimmed, *escaped;
@@ -472,29 +479,25 @@ static void set_string(expression_t *expression, char *value)
 
     if (length < 2)
     {
-        expression->error = ERROR_TYPE;
-        return;
+        return new_error(ERROR_TYPE);
     }
 
     if (value[0] != SYMBOL_STRING || value[length - 1] != SYMBOL_STRING)
     {
-        expression->error = ERROR_TYPE;
-        return;
+        return new_error(ERROR_TYPE);
     }
 
     trimmed = slice_string(value, 1, length - 1);
 
     if (!trimmed)
     {
-        expression->error = ERROR_SHORTAGE;
-        return;
+        return NULL;
     }
 
     if (!is_printable(trimmed))
     {
         free(trimmed);
-        expression->error = ERROR_TYPE;
-        return;
+        return new_error(ERROR_TYPE);
     }
 
     escaped = escape_string(trimmed);
@@ -502,12 +505,10 @@ static void set_string(expression_t *expression, char *value)
 
     if (!escaped)
     {
-        expression->error = ERROR_SHORTAGE;
-        return;
+        return NULL;
     }
 
-    expression->type = TYPE_STRING;
-    expression->segment = escaped;
+    return steal_string(escaped, sizeof(char) * (strlen(escaped) + 1));
 }
 
 static int is_printable(char *value)
