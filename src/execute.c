@@ -541,12 +541,7 @@ static value_t *operator_add(argument_iterator_t *arguments, object_t *objects)
 
     if (left->type == TYPE_NUMBER)
     {
-        int x, y;
-
-        x = view_number(left);
-        y = view_number(right);
-
-        return new_number(x + y);
+        return new_number(view_number(left) + view_number(right));
     }
 
     if (left->type == TYPE_STRING)
@@ -572,7 +567,6 @@ static value_t *operator_add(argument_iterator_t *arguments, object_t *objects)
 static value_t *operator_subtract(argument_iterator_t *arguments, object_t *objects)
 {
     value_t *left, *right;
-    int x, y;
 
     if (!has_next_argument(arguments))
     {
@@ -618,16 +612,12 @@ static value_t *operator_subtract(argument_iterator_t *arguments, object_t *obje
         return new_error(ERROR_ARGUMENT);
     }
 
-    x = view_number(left);
-    y = view_number(right);
-
-    return new_number(x - y);
+    return new_number(view_number(left) - view_number(right));
 }
 
 static value_t *operator_multiply(argument_iterator_t *arguments, object_t *objects)
 {
     value_t *left, *right;
-    int x, y;
 
     if (!has_next_argument(arguments))
     {
@@ -673,16 +663,12 @@ static value_t *operator_multiply(argument_iterator_t *arguments, object_t *obje
         return new_error(ERROR_ARGUMENT);
     }
 
-    x = view_number(left);
-    y = view_number(right);
-
-    return new_number(x * y);
+    return new_number(view_number(left) * view_number(right));
 }
 
 static value_t *operator_divide(argument_iterator_t *arguments, object_t *objects)
 {
     value_t *left, *right;
-    int x, y;
 
     if (!has_next_argument(arguments))
     {
@@ -728,21 +714,17 @@ static value_t *operator_divide(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    x = view_number(left);
-    y = view_number(right);
-
-    if (y == 0)
+    if (view_number(right) == 0)
     {
         return new_error(ERROR_ARITHMETIC);
     }
 
-    return new_number(div(x, y).quot);
+    return new_number(div(view_number(left), view_number(right)).quot);
 }
 
 static value_t *operator_modulo(argument_iterator_t *arguments, object_t *objects)
 {
     value_t *left, *right;
-    int x, y;
 
     if (!has_next_argument(arguments))
     {
@@ -788,21 +770,17 @@ static value_t *operator_modulo(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    x = view_number(left);
-    y = view_number(right);
-
-    if (y == 0)
+    if (view_number(right) == 0)
     {
         return new_error(ERROR_ARITHMETIC);
     }
 
-    return new_number(div(x, y).rem);
+    return new_number(div(view_number(left), view_number(right)).rem);
 }
 
 static value_t *operator_and(argument_iterator_t *arguments, object_t *objects)
 {
     value_t *left, *right;
-    int x, y;
 
     if (!has_next_argument(arguments))
     {
@@ -848,16 +826,12 @@ static value_t *operator_and(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    x = view_number(left);
-    y = view_number(right);
-
-    return new_number(x && y);
+    return new_number(view_number(left) && view_number(right));
 }
 
 static value_t *operator_or(argument_iterator_t *arguments, object_t *objects)
 {
     value_t *left, *right;
-    int x, y;
 
     if (!has_next_argument(arguments))
     {
@@ -903,16 +877,12 @@ static value_t *operator_or(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    x = view_number(left);
-    y = view_number(right);
-
-    return new_number(x || y);
+    return new_number(view_number(left) || view_number(right));
 }
 
 static value_t *operator_not(argument_iterator_t *arguments, object_t *objects)
 {
     value_t *left;
-    int x;
 
     if (!has_next_argument(arguments))
     {
@@ -936,15 +906,12 @@ static value_t *operator_not(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    x = view_number(left);
-
-    return new_number(!x);
+    return new_number(!view_number(left));
 }
 
 static value_t *operator_conditional(argument_iterator_t *arguments, object_t *objects)
 {
     value_t *condition;
-    int x;
 
     if (!has_next_argument(arguments))
     {
@@ -968,9 +935,7 @@ static value_t *operator_conditional(argument_iterator_t *arguments, object_t *o
         return new_error(ERROR_ARGUMENT);
     }
 
-    x = view_number(condition);
-
-    if (x)
+    if (view_number(condition))
     {
         value_t *pass;
 
@@ -1150,12 +1115,7 @@ static value_t *operator_less(argument_iterator_t *arguments, object_t *objects)
 
     if (left->type == TYPE_NUMBER)
     {
-        int x, y;
-
-        x = view_number(left);
-        y = view_number(right);
-
-        return new_number(x < y);
+        return new_number(view_number(left) < view_number(right));
     }
 
     if (left->type == TYPE_STRING)
@@ -1216,12 +1176,7 @@ static value_t *operator_greater(argument_iterator_t *arguments, object_t *objec
 
     if (left->type == TYPE_NUMBER)
     {
-        int x, y;
-
-        x = view_number(left);
-        y = view_number(right);
-
-        return new_number(x > y);
+        return new_number(view_number(left) > view_number(right));
     }
 
     if (left->type == TYPE_STRING)
@@ -1282,12 +1237,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, object_t *objects
 
     if (left->type == TYPE_NUMBER)
     {
-        int x, y;
-
-        x = view_number(left);
-        y = view_number(right);
-
-        return new_number(x == y);
+        return new_number(view_number(left) == view_number(right));
     }
 
     if (left->type == TYPE_STRING)
@@ -1476,7 +1426,6 @@ static value_t *operator_hash(argument_iterator_t *arguments, object_t *objects)
 static value_t *operator_length(argument_iterator_t *arguments, object_t *objects)
 {
     value_t *left;
-    int x;
 
     if (!has_next_argument(arguments))
     {
@@ -1500,9 +1449,7 @@ static value_t *operator_length(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    x = strlen(view_string(left));
-
-    return new_number(x);
+    return new_number(strlen(view_string(left)));
 }
 
 static int has_next_argument(argument_iterator_t *iterator)
