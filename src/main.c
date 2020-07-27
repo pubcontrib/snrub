@@ -273,5 +273,6 @@ static int print_value(value_t *value)
         return 1;
     }
 
+    printf("#%d#\n", ERROR_UNSUPPORTED);
     return 1;
 }
