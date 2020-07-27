@@ -85,6 +85,7 @@ fail '("+" #10# #5#' '#1#'
 fail '(?)' '#4#'
 fail '(#1#)' '#4#'
 fail '("unknown")' '#4#'
+fail '(("#" "text"))' '#3#'
 start=`repeat '("..."' 32`
 end=`repeat ')' 32`
 pass "$start$end" '?'

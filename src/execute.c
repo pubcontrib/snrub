@@ -218,6 +218,11 @@ static value_t *apply_call(argument_iterator_t *arguments, object_t *objects)
         return NULL;
     }
 
+    if (operator->type == TYPE_ERROR)
+    {
+        return copy_value(operator);
+    }
+
     if (operator->type != TYPE_STRING)
     {
         return new_error(ERROR_ARGUMENT);
