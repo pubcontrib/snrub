@@ -340,6 +340,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                             else
                             {
                                 state = PARSER_STATE_ARGUMENTS;
+                                expression->value = new_call();
                             }
 
                             existing = expression->arguments;
