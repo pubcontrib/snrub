@@ -173,6 +173,10 @@ static token_name_t match_name(char symbol)
 
     switch (symbol)
     {
+        case '[':
+            return TOKEN_NAME_LIST_START;
+        case ']':
+            return TOKEN_NAME_LIST_END;
         case '(':
             return TOKEN_NAME_CALL_START;
         case ')':
