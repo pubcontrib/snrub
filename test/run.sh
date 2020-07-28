@@ -12,6 +12,7 @@ fi
 . test/suite/type/null.sh
 . test/suite/type/number.sh
 . test/suite/type/string.sh
+. test/suite/type/list.sh
 . test/suite/type/call.sh
 
 . test/suite/operator/value.sh
