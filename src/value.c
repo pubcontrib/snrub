@@ -43,6 +43,11 @@ value_t *new_string(char *string)
     return create_value(TYPE_STRING, data, sizeof(char) * (strlen(string) + 1));
 }
 
+value_t *new_list()
+{
+    return create_value(TYPE_LIST, NULL, 0);
+}
+
 value_t *new_error(error_t error)
 {
     error_t *data;

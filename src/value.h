@@ -9,6 +9,7 @@ typedef enum
     TYPE_NULL,
     TYPE_NUMBER,
     TYPE_STRING,
+    TYPE_LIST,
     TYPE_ERROR,
     TYPE_CALL
 } type_t;
@@ -36,6 +37,7 @@ value_t *new_unset();
 value_t *new_null();
 value_t *new_number(int number);
 value_t *new_string(char *string);
+value_t *new_list();
 value_t *new_error(error_t error);
 value_t *new_call();
 value_t *steal_number(int *number, size_t size);

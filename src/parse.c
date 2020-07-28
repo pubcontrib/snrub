@@ -288,6 +288,10 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                         case TOKEN_NAME_STRING:
                             expression->value = parse_string_literal(token->value);
                             break;
+                        case TOKEN_NAME_LIST_START:
+                            state = PARSER_STATE_ARGUMENTS;
+                            expression->value = new_list();
+                            break;
                         case TOKEN_NAME_CALL_START:
                             state = PARSER_STATE_ARGUMENTS;
                             expression->value = new_call();
@@ -311,7 +315,11 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                 }
                 else if (state == PARSER_STATE_ARGUMENTS)
                 {
-                    if (token->name == TOKEN_NAME_CALL_END)
+                    if (expression->value->type == TYPE_LIST && token->name == TOKEN_NAME_LIST_END)
+                    {
+                        state = PARSER_STATE_SUCCESS;
+                    }
+                    else if (expression->value->type == TYPE_CALL && token->name == TOKEN_NAME_CALL_END)
                     {
                         if (expression->length > 0)
                         {
