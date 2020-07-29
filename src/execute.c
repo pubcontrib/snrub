@@ -1329,12 +1329,12 @@ static value_t *operator_type(argument_iterator_t *arguments, object_t *objects)
 
     if (solo->type == TYPE_NUMBER)
     {
-        return new_string("#");
+        return new_string("##");
     }
 
     if (solo->type == TYPE_STRING)
     {
-        return new_string("\"");
+        return new_string("\"\"");
     }
 
     if (solo->type == TYPE_LIST)
