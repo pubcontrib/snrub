@@ -88,16 +88,50 @@ value_t *steal_error(error_t *error, size_t size)
 
 value_t *copy_value(value_t *this)
 {
-    void *data;
-
-    data = copy_memory(this->data, this->size);
-
-    if (!data)
+    if (this->type == TYPE_LIST)
     {
-        return NULL;
-    }
+        value_t **items, **data;
+        size_t length, index;
 
-    return create_value(this->type, data, this->size);
+        items = this->data;
+        length = this->size;
+        data = malloc(sizeof(value_t *) * length);
+
+        if (!data)
+        {
+            return NULL;
+        }
+
+        for (index = 0; index < length; index++)
+        {
+            value_t *copy;
+
+            copy = copy_value(items[index]);
+
+            if (!copy)
+            {
+                free(data);
+                return NULL;
+            }
+
+            data[index] = copy;
+        }
+
+        return new_list(data, length);
+    }
+    else
+    {
+        void *data;
+
+        data = copy_memory(this->data, this->size);
+
+        if (!data)
+        {
+            return NULL;
+        }
+
+        return create_value(this->type, data, this->size);
+    }
 }
 
 int view_number(value_t *value)
