@@ -1337,6 +1337,11 @@ static value_t *operator_type(argument_iterator_t *arguments, object_t *objects)
         return new_string("\"");
     }
 
+    if (solo->type == TYPE_LIST)
+    {
+        return new_string("[]");
+    }
+
     return new_error(ERROR_UNSUPPORTED);
 }
 
