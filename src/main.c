@@ -289,11 +289,14 @@ static int print_value(value_t *value)
 
             item = items[index];
 
-            print_value(item);
+            if (print_value(item))
+            {
+                printf("]");
+                return 1;
+            }
         }
 
         printf("]");
-
         return 0;
     }
     else if (value->type == TYPE_ERROR)
