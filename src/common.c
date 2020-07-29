@@ -3,11 +3,6 @@
 #include <ctype.h>
 #include "common.h"
 
-int hash_null()
-{
-    return 0;
-}
-
 char *slice_string(char *string, size_t start, size_t end)
 {
     char *slice;
@@ -39,22 +34,6 @@ char *copy_string(char *string)
     }
 
     return copy;
-}
-
-int hash_string(char *string)
-{
-    int hash;
-    size_t length, index;
-
-    hash = 0;
-    length = strlen(string);
-
-    for (index = 0; index < length; index++)
-    {
-        hash += string[index];
-    }
-
-    return hash;
 }
 
 char *merge_strings(char *left, char *right)
@@ -102,11 +81,6 @@ void *copy_memory(void *memory, size_t size)
     }
 
     return copy;
-}
-
-int hash_integer(int integer)
-{
-    return integer;
 }
 
 int *integer_to_array(int integer)

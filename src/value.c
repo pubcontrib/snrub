@@ -167,35 +167,60 @@ value_t *copy_value(value_t *this)
 
 int hash_value(value_t *this)
 {
-    if (this->type == TYPE_LIST)
-    {
-        int hash;
-        value_t **items;
-        size_t length, index;
-
-        hash = 0;
-        items = this->data;
-        length = this->size;
-
-        for (index = 0; index < length; index++)
-        {
-            hash += hash_value(items[index]);
-        }
-
-        return hash;
-    }
-
     switch (this->type)
     {
         case TYPE_NULL:
             return hash_null();
         case TYPE_NUMBER:
-            return hash_integer(view_number(this));
+            return hash_number(view_number(this));
         case TYPE_STRING:
             return hash_string(view_string(this));
+        case TYPE_LIST:
+            return hash_list(this->data, this->size);
         default:
             return 0;
     }
+}
+
+int hash_null()
+{
+    return 0;
+}
+
+int hash_number(int number)
+{
+    return number;
+}
+
+int hash_string(char *string)
+{
+    int hash;
+    size_t length, index;
+
+    hash = 0;
+    length = strlen(string);
+
+    for (index = 0; index < length; index++)
+    {
+        hash += string[index];
+    }
+
+    return hash;
+}
+
+int hash_list(value_t **items, size_t length)
+{
+    int hash;
+    size_t index;
+
+    hash = 0;
+
+    for (index = 0; index < length; index++)
+    {
+        hash += hash_value(items[index]);
+    }
+
+    return hash;
 }
 
 int view_number(value_t *value)
