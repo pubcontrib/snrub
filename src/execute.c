@@ -1497,12 +1497,17 @@ static value_t *operator_length(argument_iterator_t *arguments, object_t *object
         return copy_value(solo);
     }
 
-    if (solo->type != TYPE_STRING)
+    if (solo->type == TYPE_STRING)
     {
-        return new_error(ERROR_ARGUMENT);
+        return new_number(strlen(view_string(solo)));
     }
 
-    return new_number(strlen(view_string(solo)));
+    if (solo->type == TYPE_LIST)
+    {
+        return new_number(solo->size);
+    }
+
+    return new_error(ERROR_ARGUMENT);
 }
 
 static int has_next_argument(argument_iterator_t *iterator)
