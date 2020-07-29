@@ -33,6 +33,7 @@ typedef enum
     ERROR_UNSUPPORTED
 } error_t;
 
+value_t *merge_lists(value_t *left, value_t *right);
 value_t *new_unset();
 value_t *new_null();
 value_t *new_number(int number);

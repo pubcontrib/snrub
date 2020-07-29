@@ -565,7 +565,7 @@ static value_t *operator_add(argument_iterator_t *arguments, object_t *objects)
         return copy_value(left);
     }
 
-    if (left->type != TYPE_NUMBER && left->type != TYPE_STRING)
+    if (left->type != TYPE_NUMBER && left->type != TYPE_STRING && left->type != TYPE_LIST)
     {
         return new_error(ERROR_ARGUMENT);
     }
@@ -612,6 +612,11 @@ static value_t *operator_add(argument_iterator_t *arguments, object_t *objects)
         size = sizeof(char) * (strlen(string) + 1);
 
         return steal_string(string, size);
+    }
+
+    if (left->type == TYPE_LIST)
+    {
+        return merge_lists(left, right);
     }
 
     return new_error(ERROR_UNSUPPORTED);

@@ -5,6 +5,37 @@
 
 static value_t *create_value(type_t type, void *data, size_t size);
 
+value_t *merge_lists(value_t *left, value_t *right)
+{
+    value_t **items;
+    size_t length, index;
+
+    length = left->size + right->size;
+    items = malloc(sizeof(value_t *) * length);
+
+    if (!items)
+    {
+        return NULL;
+    }
+
+    for (index = 0; index < length; index++)
+    {
+        value_t *copy;
+
+        copy = copy_value(index < left->size ? ((value_t **) left->data)[index] : ((value_t **) right->data)[index - left->size]);
+
+        if (!copy)
+        {
+            free(items);
+            return NULL;
+        }
+
+        items[index] = copy;
+    }
+
+    return new_list(items, length);
+}
+
 value_t *new_unset()
 {
     return create_value(TYPE_UNSET, NULL, 0);
