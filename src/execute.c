@@ -15,6 +15,7 @@ typedef struct
 
 static object_t *create_object(char *identifier, value_t *value, object_t *next);
 static value_t *apply_expression(expression_t *expression, object_t *objects);
+static value_t *apply_list(argument_iterator_t *arguments, object_t *objects);
 static value_t *apply_call(argument_iterator_t *arguments, object_t *objects);
 static value_t *operator_value(argument_iterator_t *arguments, object_t *objects);
 static value_t *operator_assign(argument_iterator_t *arguments, object_t *objects);
@@ -165,6 +166,9 @@ static value_t *apply_expression(expression_t *expression, object_t *objects)
         case TYPE_STRING:
             result = copy_value(expression->value);
             break;
+        case TYPE_LIST:
+            result = apply_list(arguments, objects);
+            break;
         case TYPE_CALL:
             result = apply_call(arguments, objects);
             break;
@@ -193,6 +197,55 @@ static value_t *apply_expression(expression_t *expression, object_t *objects)
     free(arguments);
 
     return result;
+}
+
+static value_t *apply_list(argument_iterator_t *arguments, object_t *objects)
+{
+    value_t *item, **items;
+    size_t length, index;
+
+    length = arguments->length;
+    items = malloc(sizeof(value_t *) * length);
+
+    if (!items)
+    {
+        return NULL;
+    }
+
+    for (index = 0; index < length; index++)
+    {
+        value_t *copy;
+
+        if (!has_next_argument(arguments))
+        {
+            return new_error(ERROR_ARGUMENT);
+        }
+
+        item = next_argument(arguments, objects);
+
+        if (!item)
+        {
+            free(items);
+            return NULL;
+        }
+
+        if (item->type == TYPE_ERROR)
+        {
+            return copy_value(item);
+        }
+
+        copy = copy_value(item);
+
+        if (!copy)
+        {
+            free(items);
+            return NULL;
+        }
+
+        items[index] = copy;
+    }
+
+    return new_list(items, length);
 }
 
 static value_t *apply_call(argument_iterator_t *arguments, object_t *objects)

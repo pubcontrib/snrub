@@ -180,6 +180,7 @@ static int apply_script(char *document, object_t *objects)
     }
 
     status = print_value(value);
+    printf("\n");
     destroy_value(value);
 
     return status;
@@ -242,12 +243,12 @@ static int print_value(value_t *value)
 {
     if (value->type == TYPE_NULL)
     {
-        printf("%c\n", SYMBOL_NULL);
+        printf("%c", SYMBOL_NULL);
         return 0;
     }
     else if (value->type == TYPE_NUMBER)
     {
-        printf("#%d#\n", view_number(value));
+        printf("#%d#", view_number(value));
         return 0;
     }
     else if (value->type == TYPE_STRING)
@@ -257,7 +258,7 @@ static int print_value(value_t *value)
 
         if (escaped)
         {
-            printf("\"%s\"\n", escaped);
+            printf("\"%s\"", escaped);
             free(escaped);
             return 0;
         }
@@ -267,12 +268,40 @@ static int print_value(value_t *value)
             return 1;
         }
     }
+    else if (value->type == TYPE_LIST)
+    {
+        value_t **items;
+        size_t length, index;
+
+        items = value->data;
+        length = value->size;
+
+        printf("[");
+
+        for (index = 0; index < length; index++)
+        {
+            value_t *item;
+
+            if (index > 0)
+            {
+                printf(" ");
+            }
+
+            item = items[index];
+
+            print_value(item);
+        }
+
+        printf("]");
+
+        return 0;
+    }
     else if (value->type == TYPE_ERROR)
     {
-        printf("#%d#\n", view_error(value));
+        printf("#%d#", view_error(value));
         return 1;
     }
 
-    printf("#%d#\n", ERROR_UNSUPPORTED);
+    printf("#%d#", ERROR_UNSUPPORTED);
     return 1;
 }

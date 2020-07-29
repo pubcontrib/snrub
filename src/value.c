@@ -43,9 +43,9 @@ value_t *new_string(char *string)
     return create_value(TYPE_STRING, data, sizeof(char) * (strlen(string) + 1));
 }
 
-value_t *new_list()
+value_t *new_list(value_t **items, size_t length)
 {
-    return create_value(TYPE_LIST, NULL, 0);
+    return create_value(TYPE_LIST, items, length);
 }
 
 value_t *new_error(error_t error)
@@ -137,6 +137,23 @@ void destroy_value(value_t *value)
 {
     if (value->data)
     {
+        if (value->type == TYPE_LIST)
+        {
+            size_t index;
+            value_t **items;
+
+            items = value->data;
+
+            for (index = 0; index < value->size; index++)
+            {
+                value_t *item;
+
+                item = items[index];
+
+                destroy_value(item);
+            }
+        }
+
         free(value->data);
     }
 
