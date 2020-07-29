@@ -45,6 +45,7 @@ value_t *steal_number(int *number, size_t size);
 value_t *steal_string(char *string, size_t size);
 value_t *steal_error(error_t *error, size_t size);
 value_t *copy_value(value_t *this);
+int hash_value(value_t *this);
 int view_number(value_t *value);
 char *view_string(value_t *value);
 error_t view_error(value_t *value);

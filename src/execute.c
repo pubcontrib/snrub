@@ -1468,22 +1468,7 @@ static value_t *operator_hash(argument_iterator_t *arguments, object_t *objects)
         return copy_value(solo);
     }
 
-    if (solo->type == TYPE_NULL)
-    {
-        return new_number(hash_null());
-    }
-
-    if (solo->type == TYPE_NUMBER)
-    {
-        return new_number(hash_integer(view_number(solo)));
-    }
-
-    if (solo->type == TYPE_STRING)
-    {
-        return new_number(hash_string(view_string(solo)));
-    }
-
-    return new_error(ERROR_UNSUPPORTED);
+    return new_number(hash_value(solo));
 }
 
 static value_t *operator_length(argument_iterator_t *arguments, object_t *objects)
