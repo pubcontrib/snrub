@@ -231,6 +231,7 @@ static value_t *apply_list(argument_iterator_t *arguments, object_t *objects)
 
         if (item->type == TYPE_ERROR)
         {
+            free(items);
             return copy_value(item);
         }
 
