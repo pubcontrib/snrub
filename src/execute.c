@@ -231,6 +231,13 @@ static value_t *apply_list(argument_iterator_t *arguments, object_t *objects)
 
         if (item->type == TYPE_ERROR)
         {
+            size_t reindex;
+
+            for (reindex = 0; reindex < index; reindex++)
+            {
+                destroy_value(items[reindex]);
+            }
+
             free(items);
             return copy_value(item);
         }
