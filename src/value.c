@@ -223,6 +223,46 @@ int hash_list(value_t **items, size_t length)
     return hash;
 }
 
+int equal_values(value_t *left, value_t *right)
+{
+    if (left->type != right->type)
+    {
+        return 0;
+    }
+
+    if (left->type == TYPE_LIST)
+    {
+        size_t index;
+
+        if (left->size != right->size)
+        {
+            return 0;
+        }
+
+        for (index = 0; index < left->size; index++)
+        {
+            if (!equal_values(((value_t **) left->data)[index], ((value_t **) right->data)[index]))
+            {
+                return 0;
+            }
+        }
+
+        return 1;
+    }
+
+    switch (left->type)
+    {
+        case TYPE_NULL:
+            return 1;
+        case TYPE_NUMBER:
+            return view_number(left) == view_number(right);
+        case TYPE_STRING:
+            return strcmp(view_string(left), view_string(right)) == 0;
+        default:
+            return 0;
+    }
+}
+
 int view_number(value_t *value)
 {
     switch (value->type)
