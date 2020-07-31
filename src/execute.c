@@ -39,6 +39,7 @@ static value_t *operator_number(argument_iterator_t *arguments, object_t *object
 static value_t *operator_string(argument_iterator_t *arguments, object_t *objects);
 static value_t *operator_hash(argument_iterator_t *arguments, object_t *objects);
 static value_t *operator_length(argument_iterator_t *arguments, object_t *objects);
+static value_t *operator_index(argument_iterator_t *arguments, object_t *objects);
 static int has_next_argument(argument_iterator_t *iterator);
 static value_t *next_argument(argument_iterator_t *iterator, object_t *objects);
 static void skip_argument(argument_iterator_t *iterator);
@@ -372,6 +373,10 @@ static value_t *apply_call(argument_iterator_t *arguments, object_t *objects)
     else if (strcmp(name, "| |") == 0)
     {
         return operator_length(arguments, objects);
+    }
+    else if (strcmp(name, "[#]") == 0)
+    {
+        return operator_index(arguments, objects);
     }
 
     return new_error(ERROR_ARGUMENT);
@@ -1491,6 +1496,94 @@ static value_t *operator_length(argument_iterator_t *arguments, object_t *object
     }
 
     return new_error(ERROR_ARGUMENT);
+}
+
+static value_t *operator_index(argument_iterator_t *arguments, object_t *objects)
+{
+    value_t *collection, *index;
+    int adjusted;
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    collection = next_argument(arguments, objects);
+
+    if (!collection)
+    {
+        return NULL;
+    }
+
+    if (collection->type == TYPE_ERROR)
+    {
+        return copy_value(collection);
+    }
+
+    if (collection->type != TYPE_STRING && collection->type != TYPE_LIST)
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    index = next_argument(arguments, objects);
+
+    if (!index)
+    {
+        return NULL;
+    }
+
+    if (index->type != TYPE_NUMBER)
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    if (index->type == TYPE_ERROR)
+    {
+        return copy_value(collection);
+    }
+
+    adjusted = view_number(index) - 1;
+
+    if (collection->type == TYPE_STRING)
+    {
+        char *string;
+        size_t size;
+
+        if (adjusted < 0 || adjusted >= strlen(view_string(collection)))
+        {
+            return new_null();
+        }
+
+        size = sizeof(char) * 2;
+        string = malloc(size);
+
+        if (!string)
+        {
+            return NULL;
+        }
+
+        string[0] = view_string(collection)[adjusted];
+        string[1] = '\0';
+
+        return steal_string(string, size);
+    }
+
+    if (collection->type == TYPE_LIST)
+    {
+        if (adjusted < 0 || adjusted >= collection->size)
+        {
+            return new_null();
+        }
+
+        return copy_value(((value_t **) collection->data)[adjusted]);
+    }
+
+    return new_error(ERROR_UNSUPPORTED);
 }
 
 static int has_next_argument(argument_iterator_t *iterator)

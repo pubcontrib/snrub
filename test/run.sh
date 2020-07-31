@@ -37,5 +37,6 @@ fi
 . test/suite/operator/string.sh
 . test/suite/operator/hash.sh
 . test/suite/operator/length.sh
+. test/suite/operator/index.sh
 
 conclude
