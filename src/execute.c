@@ -13,44 +13,44 @@ typedef struct
     size_t index;
 } argument_iterator_t;
 
-static object_t *create_object(char *identifier, value_t *value, object_t *next);
-static value_t *apply_expression(expression_t *expression, object_t *objects);
-static value_t *apply_list(argument_iterator_t *arguments, object_t *objects);
-static value_t *apply_call(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_value(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_assign(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_catch(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_add(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_subtract(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_multiply(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_divide(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_modulo(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_and(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_or(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_not(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_conditional(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_loop(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_chain(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_less(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_greater(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_equal(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_type(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_number(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_string(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_hash(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_length(argument_iterator_t *arguments, object_t *objects);
-static value_t *operator_index(argument_iterator_t *arguments, object_t *objects);
+static variable_t *create_variable(char *identifier, value_t *value, variable_t *next);
+static value_t *apply_expression(expression_t *expression, variable_t *variables);
+static value_t *apply_list(argument_iterator_t *arguments, variable_t *variables);
+static value_t *apply_call(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_value(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_assign(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_catch(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_add(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_subtract(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_multiply(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_divide(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_modulo(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_and(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_or(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_not(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_conditional(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_loop(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_chain(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_less(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_greater(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_equal(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_type(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_number(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_string(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_hash(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_length(argument_iterator_t *arguments, variable_t *variables);
+static value_t *operator_index(argument_iterator_t *arguments, variable_t *variables);
 static int has_next_argument(argument_iterator_t *iterator);
-static value_t *next_argument(argument_iterator_t *iterator, object_t *objects);
+static value_t *next_argument(argument_iterator_t *iterator, variable_t *variables);
 static void skip_argument(argument_iterator_t *iterator);
 static void rewind_argument(argument_iterator_t *iterator);
 
-object_t *empty_object()
+variable_t *empty_variable()
 {
-    return create_object(NULL, NULL, NULL);
+    return create_variable(NULL, NULL, NULL);
 }
 
-value_t *execute_expression(expression_t *expressions, object_t *objects)
+value_t *execute_expression(expression_t *expressions, variable_t *variables)
 {
     expression_t *expression;
     value_t *last;
@@ -69,7 +69,7 @@ value_t *execute_expression(expression_t *expressions, object_t *objects)
     {
         value_t *value;
 
-        value = apply_expression(expression, objects);
+        value = apply_expression(expression, variables);
 
         if (!value)
         {
@@ -96,43 +96,43 @@ value_t *execute_expression(expression_t *expressions, object_t *objects)
     return last;
 }
 
-void destroy_object(object_t *object)
+void destroy_variable(variable_t *variable)
 {
-    if (object->identifier)
+    if (variable->identifier)
     {
-        free(object->identifier);
+        free(variable->identifier);
     }
 
-    if (object->value)
+    if (variable->value)
     {
-        destroy_value(object->value);
+        destroy_value(variable->value);
     }
 
-    if (object->next)
+    if (variable->next)
     {
-        destroy_object(object->next);
+        destroy_variable(variable->next);
     }
 
-    free(object);
+    free(variable);
 }
 
-static object_t *create_object(char *identifier, value_t *value, object_t *next)
+static variable_t *create_variable(char *identifier, value_t *value, variable_t *next)
 {
-    object_t *object;
+    variable_t *variable;
 
-    object = malloc(sizeof(object_t));
+    variable = malloc(sizeof(variable_t));
 
-    if (object)
+    if (variable)
     {
-        object->identifier = identifier;
-        object->value = value;
-        object->next = next;
+        variable->identifier = identifier;
+        variable->value = value;
+        variable->next = next;
     }
 
-    return object;
+    return variable;
 }
 
-static value_t *apply_expression(expression_t *expression, object_t *objects)
+static value_t *apply_expression(expression_t *expression, variable_t *variables)
 {
     argument_iterator_t *arguments;
     value_t *result;
@@ -168,10 +168,10 @@ static value_t *apply_expression(expression_t *expression, object_t *objects)
             result = copy_value(expression->value);
             break;
         case TYPE_LIST:
-            result = apply_list(arguments, objects);
+            result = apply_list(arguments, variables);
             break;
         case TYPE_CALL:
-            result = apply_call(arguments, objects);
+            result = apply_call(arguments, variables);
             break;
         default:
             result = new_error(ERROR_UNSUPPORTED);
@@ -200,7 +200,7 @@ static value_t *apply_expression(expression_t *expression, object_t *objects)
     return result;
 }
 
-static value_t *apply_list(argument_iterator_t *arguments, object_t *objects)
+static value_t *apply_list(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *item, **items;
     size_t length, index;
@@ -222,7 +222,7 @@ static value_t *apply_list(argument_iterator_t *arguments, object_t *objects)
             return new_error(ERROR_ARGUMENT);
         }
 
-        item = next_argument(arguments, objects);
+        item = next_argument(arguments, variables);
 
         if (!item)
         {
@@ -257,7 +257,7 @@ static value_t *apply_list(argument_iterator_t *arguments, object_t *objects)
     return new_list(items, length);
 }
 
-static value_t *apply_call(argument_iterator_t *arguments, object_t *objects)
+static value_t *apply_call(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *operator;
     char *name;
@@ -267,7 +267,7 @@ static value_t *apply_call(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    operator = next_argument(arguments, objects);
+    operator = next_argument(arguments, variables);
 
     if (!operator)
     {
@@ -288,111 +288,111 @@ static value_t *apply_call(argument_iterator_t *arguments, object_t *objects)
 
     if (strcmp(name, "<--") == 0)
     {
-        return operator_value(arguments, objects);
+        return operator_value(arguments, variables);
     }
     else if (strcmp(name, "-->") == 0)
     {
-        return operator_assign(arguments, objects);
+        return operator_assign(arguments, variables);
     }
     else if (strcmp(name, "><") == 0)
     {
-        return operator_catch(arguments, objects);
+        return operator_catch(arguments, variables);
     }
     else if (strcmp(name, "+") == 0)
     {
-        return operator_add(arguments, objects);
+        return operator_add(arguments, variables);
     }
     else if (strcmp(name, "-") == 0)
     {
-        return operator_subtract(arguments, objects);
+        return operator_subtract(arguments, variables);
     }
     else if (strcmp(name, "*") == 0)
     {
-        return operator_multiply(arguments, objects);
+        return operator_multiply(arguments, variables);
     }
     else if (strcmp(name, "/") == 0)
     {
-        return operator_divide(arguments, objects);
+        return operator_divide(arguments, variables);
     }
     else if (strcmp(name, "%") == 0)
     {
-        return operator_modulo(arguments, objects);
+        return operator_modulo(arguments, variables);
     }
     else if (strcmp(name, "&") == 0)
     {
-        return operator_and(arguments, objects);
+        return operator_and(arguments, variables);
     }
     else if (strcmp(name, "|") == 0)
     {
-        return operator_or(arguments, objects);
+        return operator_or(arguments, variables);
     }
     else if (strcmp(name, "!") == 0)
     {
-        return operator_not(arguments, objects);
+        return operator_not(arguments, variables);
     }
     else if (strcmp(name, "?") == 0)
     {
-        return operator_conditional(arguments, objects);
+        return operator_conditional(arguments, variables);
     }
     else if (strcmp(name, "o") == 0)
     {
-        return operator_loop(arguments, objects);
+        return operator_loop(arguments, variables);
     }
     else if (strcmp(name, "...") == 0)
     {
-        return operator_chain(arguments, objects);
+        return operator_chain(arguments, variables);
     }
     else if (strcmp(name, "<") == 0)
     {
-        return operator_less(arguments, objects);
+        return operator_less(arguments, variables);
     }
     else if (strcmp(name, ">") == 0)
     {
-        return operator_greater(arguments, objects);
+        return operator_greater(arguments, variables);
     }
     else if (strcmp(name, "=") == 0)
     {
-        return operator_equal(arguments, objects);
+        return operator_equal(arguments, variables);
     }
     else if (strcmp(name, "_") == 0)
     {
-        return operator_type(arguments, objects);
+        return operator_type(arguments, variables);
     }
     else if (strcmp(name, "#") == 0)
     {
-        return operator_number(arguments, objects);
+        return operator_number(arguments, variables);
     }
     else if (strcmp(name, "\"") == 0)
     {
-        return operator_string(arguments, objects);
+        return operator_string(arguments, variables);
     }
     else if (strcmp(name, "::") == 0)
     {
-        return operator_hash(arguments, objects);
+        return operator_hash(arguments, variables);
     }
     else if (strcmp(name, "| |") == 0)
     {
-        return operator_length(arguments, objects);
+        return operator_length(arguments, variables);
     }
     else if (strcmp(name, "[#]") == 0)
     {
-        return operator_index(arguments, objects);
+        return operator_index(arguments, variables);
     }
 
     return new_error(ERROR_ARGUMENT);
 }
 
-static value_t *operator_value(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_value(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *identifier;
-    object_t *object;
+    variable_t *variable;
 
     if (!has_next_argument(arguments))
     {
         return new_error(ERROR_ARGUMENT);
     }
 
-    identifier = next_argument(arguments, objects);
+    identifier = next_argument(arguments, variables);
 
     if (!identifier)
     {
@@ -409,28 +409,28 @@ static value_t *operator_value(argument_iterator_t *arguments, object_t *objects
         return new_error(ERROR_ARGUMENT);
     }
 
-    for (object = objects; object != NULL; object = object->next)
+    for (variable = variables; variable != NULL; variable = variable->next)
     {
-        if (object->identifier && strcmp(object->identifier, view_string(identifier)) == 0)
+        if (variable->identifier && strcmp(variable->identifier, view_string(identifier)) == 0)
         {
-            return copy_value(object->value);
+            return copy_value(variable->value);
         }
     }
 
     return new_null();
 }
 
-static value_t *operator_assign(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_assign(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *identifier, *value;
-    object_t *object, *last;
+    variable_t *variable, *last;
 
     if (!has_next_argument(arguments))
     {
         return new_error(ERROR_ARGUMENT);
     }
 
-    identifier = next_argument(arguments, objects);
+    identifier = next_argument(arguments, variables);
 
     if (!identifier)
     {
@@ -452,7 +452,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    value = next_argument(arguments, objects);
+    value = next_argument(arguments, variables);
 
     if (!value)
     {
@@ -466,9 +466,9 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
 
     last = NULL;
 
-    for (object = objects; object != NULL; object = object->next)
+    for (variable = variables; variable != NULL; variable = variable->next)
     {
-        if (object->identifier && strcmp(object->identifier, view_string(identifier)) == 0)
+        if (variable->identifier && strcmp(variable->identifier, view_string(identifier)) == 0)
         {
             if (value->type != TYPE_NULL)
             {
@@ -481,25 +481,25 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
                     return NULL;
                 }
 
-                destroy_value(object->value);
+                destroy_value(variable->value);
 
-                object->value = copy;
+                variable->value = copy;
             }
             else
             {
                 if (last)
                 {
-                    last->next = object->next;
+                    last->next = variable->next;
                 }
 
-                object->next = NULL;
-                destroy_object(object);
+                variable->next = NULL;
+                destroy_variable(variable);
             }
 
             return new_null();
         }
 
-        last = object;
+        last = variable;
     }
 
     if (value->type != TYPE_NULL)
@@ -522,7 +522,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
             return NULL;
         }
 
-        last->next = create_object(name, copy, NULL);
+        last->next = create_variable(name, copy, NULL);
 
         if (!last->next)
         {
@@ -533,7 +533,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, object_t *object
     return new_null();
 }
 
-static value_t *operator_catch(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_catch(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *solo;
 
@@ -542,7 +542,7 @@ static value_t *operator_catch(argument_iterator_t *arguments, object_t *objects
         return new_null();
     }
 
-    solo = next_argument(arguments, objects);
+    solo = next_argument(arguments, variables);
 
     if (!solo)
     {
@@ -557,7 +557,7 @@ static value_t *operator_catch(argument_iterator_t *arguments, object_t *objects
     return new_null();
 }
 
-static value_t *operator_add(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_add(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *left, *right;
 
@@ -566,7 +566,7 @@ static value_t *operator_add(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    left = next_argument(arguments, variables);
 
     if (!left)
     {
@@ -588,7 +588,7 @@ static value_t *operator_add(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, objects);
+    right = next_argument(arguments, variables);
 
     if (!right)
     {
@@ -635,7 +635,7 @@ static value_t *operator_add(argument_iterator_t *arguments, object_t *objects)
     return new_error(ERROR_UNSUPPORTED);
 }
 
-static value_t *operator_subtract(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_subtract(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *left, *right;
 
@@ -644,7 +644,7 @@ static value_t *operator_subtract(argument_iterator_t *arguments, object_t *obje
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    left = next_argument(arguments, variables);
 
     if (!left)
     {
@@ -666,7 +666,7 @@ static value_t *operator_subtract(argument_iterator_t *arguments, object_t *obje
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, objects);
+    right = next_argument(arguments, variables);
 
     if (!right)
     {
@@ -686,7 +686,7 @@ static value_t *operator_subtract(argument_iterator_t *arguments, object_t *obje
     return new_number(view_number(left) - view_number(right));
 }
 
-static value_t *operator_multiply(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_multiply(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *left, *right;
 
@@ -695,7 +695,7 @@ static value_t *operator_multiply(argument_iterator_t *arguments, object_t *obje
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    left = next_argument(arguments, variables);
 
     if (!left)
     {
@@ -717,7 +717,7 @@ static value_t *operator_multiply(argument_iterator_t *arguments, object_t *obje
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, objects);
+    right = next_argument(arguments, variables);
 
     if (!right)
     {
@@ -737,7 +737,7 @@ static value_t *operator_multiply(argument_iterator_t *arguments, object_t *obje
     return new_number(view_number(left) * view_number(right));
 }
 
-static value_t *operator_divide(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_divide(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *left, *right;
 
@@ -746,7 +746,7 @@ static value_t *operator_divide(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    left = next_argument(arguments, variables);
 
     if (!left)
     {
@@ -768,7 +768,7 @@ static value_t *operator_divide(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, objects);
+    right = next_argument(arguments, variables);
 
     if (!right)
     {
@@ -793,7 +793,7 @@ static value_t *operator_divide(argument_iterator_t *arguments, object_t *object
     return new_number(div(view_number(left), view_number(right)).quot);
 }
 
-static value_t *operator_modulo(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_modulo(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *left, *right;
 
@@ -802,7 +802,7 @@ static value_t *operator_modulo(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    left = next_argument(arguments, variables);
 
     if (!left)
     {
@@ -824,7 +824,7 @@ static value_t *operator_modulo(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, objects);
+    right = next_argument(arguments, variables);
 
     if (!right)
     {
@@ -849,7 +849,7 @@ static value_t *operator_modulo(argument_iterator_t *arguments, object_t *object
     return new_number(div(view_number(left), view_number(right)).rem);
 }
 
-static value_t *operator_and(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_and(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *left, *right;
 
@@ -858,7 +858,7 @@ static value_t *operator_and(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    left = next_argument(arguments, variables);
 
     if (!left)
     {
@@ -880,7 +880,7 @@ static value_t *operator_and(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, objects);
+    right = next_argument(arguments, variables);
 
     if (!right)
     {
@@ -900,7 +900,7 @@ static value_t *operator_and(argument_iterator_t *arguments, object_t *objects)
     return new_number(view_number(left) && view_number(right));
 }
 
-static value_t *operator_or(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_or(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *left, *right;
 
@@ -909,7 +909,7 @@ static value_t *operator_or(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    left = next_argument(arguments, variables);
 
     if (!left)
     {
@@ -931,7 +931,7 @@ static value_t *operator_or(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, objects);
+    right = next_argument(arguments, variables);
 
     if (!right)
     {
@@ -951,7 +951,7 @@ static value_t *operator_or(argument_iterator_t *arguments, object_t *objects)
     return new_number(view_number(left) || view_number(right));
 }
 
-static value_t *operator_not(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_not(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *solo;
 
@@ -960,7 +960,7 @@ static value_t *operator_not(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, objects);
+    solo = next_argument(arguments, variables);
 
     if (!solo)
     {
@@ -980,7 +980,7 @@ static value_t *operator_not(argument_iterator_t *arguments, object_t *objects)
     return new_number(!view_number(solo));
 }
 
-static value_t *operator_conditional(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_conditional(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *condition;
 
@@ -989,7 +989,7 @@ static value_t *operator_conditional(argument_iterator_t *arguments, object_t *o
         return new_error(ERROR_ARGUMENT);
     }
 
-    condition = next_argument(arguments, objects);
+    condition = next_argument(arguments, variables);
 
     if (!condition)
     {
@@ -1015,7 +1015,7 @@ static value_t *operator_conditional(argument_iterator_t *arguments, object_t *o
             return new_error(ERROR_ARGUMENT);
         }
 
-        pass = next_argument(arguments, objects);
+        pass = next_argument(arguments, variables);
 
         if (!pass)
         {
@@ -1035,7 +1035,7 @@ static value_t *operator_conditional(argument_iterator_t *arguments, object_t *o
             return new_error(ERROR_ARGUMENT);
         }
 
-        fail = next_argument(arguments, objects);
+        fail = next_argument(arguments, variables);
 
         if (!fail)
         {
@@ -1046,7 +1046,7 @@ static value_t *operator_conditional(argument_iterator_t *arguments, object_t *o
     }
 }
 
-static value_t *operator_loop(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_loop(argument_iterator_t *arguments, variable_t *variables)
 {
     int proceed;
 
@@ -1061,7 +1061,7 @@ static value_t *operator_loop(argument_iterator_t *arguments, object_t *objects)
             return new_error(ERROR_ARGUMENT);
         }
 
-        condition = next_argument(arguments, objects);
+        condition = next_argument(arguments, variables);
 
         if (!condition)
         {
@@ -1089,7 +1089,7 @@ static value_t *operator_loop(argument_iterator_t *arguments, object_t *objects)
                 return new_error(ERROR_ARGUMENT);
             }
 
-            pass = next_argument(arguments, objects);
+            pass = next_argument(arguments, variables);
 
             if (!pass)
             {
@@ -1109,7 +1109,7 @@ static value_t *operator_loop(argument_iterator_t *arguments, object_t *objects)
     return new_null();
 }
 
-static value_t *operator_chain(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_chain(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *last;
 
@@ -1120,7 +1120,7 @@ static value_t *operator_chain(argument_iterator_t *arguments, object_t *objects
 
     while (has_next_argument(arguments))
     {
-        last = next_argument(arguments, objects);
+        last = next_argument(arguments, variables);
 
         if (!last)
         {
@@ -1136,7 +1136,7 @@ static value_t *operator_chain(argument_iterator_t *arguments, object_t *objects
     return copy_value(last);
 }
 
-static value_t *operator_less(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_less(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *left, *right;
 
@@ -1145,7 +1145,7 @@ static value_t *operator_less(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    left = next_argument(arguments, variables);
 
     if (!left)
     {
@@ -1162,7 +1162,7 @@ static value_t *operator_less(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, objects);
+    right = next_argument(arguments, variables);
 
     if (!right)
     {
@@ -1197,7 +1197,7 @@ static value_t *operator_less(argument_iterator_t *arguments, object_t *objects)
     return new_error(ERROR_UNSUPPORTED);
 }
 
-static value_t *operator_greater(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_greater(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *left, *right;
 
@@ -1206,7 +1206,7 @@ static value_t *operator_greater(argument_iterator_t *arguments, object_t *objec
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    left = next_argument(arguments, variables);
 
     if (!left)
     {
@@ -1223,7 +1223,7 @@ static value_t *operator_greater(argument_iterator_t *arguments, object_t *objec
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, objects);
+    right = next_argument(arguments, variables);
 
     if (!right)
     {
@@ -1258,7 +1258,7 @@ static value_t *operator_greater(argument_iterator_t *arguments, object_t *objec
     return new_error(ERROR_UNSUPPORTED);
 }
 
-static value_t *operator_equal(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_equal(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *left, *right;
 
@@ -1267,7 +1267,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, object_t *objects
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, objects);
+    left = next_argument(arguments, variables);
 
     if (!left)
     {
@@ -1284,7 +1284,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, object_t *objects
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, objects);
+    right = next_argument(arguments, variables);
 
     if (!right)
     {
@@ -1299,7 +1299,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, object_t *objects
     return new_number(equal_values(left, right));
 }
 
-static value_t *operator_type(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_type(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *solo;
 
@@ -1308,7 +1308,7 @@ static value_t *operator_type(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, objects);
+    solo = next_argument(arguments, variables);
 
     if (!solo)
     {
@@ -1343,7 +1343,7 @@ static value_t *operator_type(argument_iterator_t *arguments, object_t *objects)
     return new_error(ERROR_UNSUPPORTED);
 }
 
-static value_t *operator_number(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_number(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *solo;
 
@@ -1352,7 +1352,7 @@ static value_t *operator_number(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, objects);
+    solo = next_argument(arguments, variables);
 
     if (!solo)
     {
@@ -1389,7 +1389,7 @@ static value_t *operator_number(argument_iterator_t *arguments, object_t *object
     return new_error(ERROR_UNSUPPORTED);
 }
 
-static value_t *operator_string(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_string(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *solo;
 
@@ -1398,7 +1398,7 @@ static value_t *operator_string(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, objects);
+    solo = next_argument(arguments, variables);
 
     if (!solo)
     {
@@ -1440,7 +1440,7 @@ static value_t *operator_string(argument_iterator_t *arguments, object_t *object
     return new_error(ERROR_UNSUPPORTED);
 }
 
-static value_t *operator_hash(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_hash(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *solo;
 
@@ -1449,7 +1449,7 @@ static value_t *operator_hash(argument_iterator_t *arguments, object_t *objects)
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, objects);
+    solo = next_argument(arguments, variables);
 
     if (!solo)
     {
@@ -1464,7 +1464,7 @@ static value_t *operator_hash(argument_iterator_t *arguments, object_t *objects)
     return new_number(hash_value(solo));
 }
 
-static value_t *operator_length(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_length(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *solo;
 
@@ -1473,7 +1473,7 @@ static value_t *operator_length(argument_iterator_t *arguments, object_t *object
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, objects);
+    solo = next_argument(arguments, variables);
 
     if (!solo)
     {
@@ -1498,7 +1498,7 @@ static value_t *operator_length(argument_iterator_t *arguments, object_t *object
     return new_error(ERROR_ARGUMENT);
 }
 
-static value_t *operator_index(argument_iterator_t *arguments, object_t *objects)
+static value_t *operator_index(argument_iterator_t *arguments, variable_t *variables)
 {
     value_t *collection, *index;
     int adjusted;
@@ -1508,7 +1508,7 @@ static value_t *operator_index(argument_iterator_t *arguments, object_t *objects
         return new_error(ERROR_ARGUMENT);
     }
 
-    collection = next_argument(arguments, objects);
+    collection = next_argument(arguments, variables);
 
     if (!collection)
     {
@@ -1530,7 +1530,7 @@ static value_t *operator_index(argument_iterator_t *arguments, object_t *objects
         return new_error(ERROR_ARGUMENT);
     }
 
-    index = next_argument(arguments, objects);
+    index = next_argument(arguments, variables);
 
     if (!index)
     {
@@ -1591,11 +1591,11 @@ static int has_next_argument(argument_iterator_t *iterator)
     return iterator->index < iterator->length;
 }
 
-static value_t *next_argument(argument_iterator_t *iterator, object_t *objects)
+static value_t *next_argument(argument_iterator_t *iterator, variable_t *variables)
 {
     value_t *result;
 
-    result = apply_expression(iterator->candidates[iterator->index], objects);
+    result = apply_expression(iterator->candidates[iterator->index], variables);
     iterator->evaluated[iterator->index] = result;
     iterator->index += 1;
 

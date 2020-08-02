@@ -12,7 +12,7 @@
 #define PROGRAM_VERSION "v0.34.0"
 
 static int complete_script(char *document);
-static int apply_script(char *document, object_t *objects);
+static int apply_script(char *document, variable_t *variables);
 static char *read_file(char *path);
 static void print_version();
 static void print_usage();
@@ -75,11 +75,11 @@ int main(int argc, char **argv)
 
     if (get_flag(argc, argv, "--interactive") || get_flag(argc, argv, "-i"))
     {
-        object_t *objects;
+        variable_t *variables;
 
-        objects = empty_object();
+        variables = empty_variable();
 
-        if (!objects)
+        if (!variables)
         {
             print_error(ERROR_SHORTAGE);
             return 1;
@@ -95,14 +95,14 @@ int main(int argc, char **argv)
 
             if (!line)
             {
-                destroy_object(objects);
+                destroy_variable(variables);
                 print_error(ERROR_SHORTAGE);
                 return 1;
             }
 
             if (line->exit)
             {
-                destroy_object(objects);
+                destroy_variable(variables);
                 destroy_line(line);
                 return 0;
             }
@@ -110,9 +110,9 @@ int main(int argc, char **argv)
             document = line->string;
             line->string = NULL;
 
-            if (apply_script(document, objects))
+            if (apply_script(document, variables))
             {
-                destroy_object(objects);
+                destroy_variable(variables);
                 destroy_line(line);
                 return 1;
             }
@@ -128,25 +128,25 @@ int main(int argc, char **argv)
 
 static int complete_script(char *document)
 {
-    object_t *objects;
+    variable_t *variables;
     int status;
 
-    objects = empty_object();
+    variables = empty_variable();
 
-    if (!objects)
+    if (!variables)
     {
         print_error(ERROR_SHORTAGE);
         return 1;
     }
 
-    status = apply_script(document, objects);
+    status = apply_script(document, variables);
 
-    destroy_object(objects);
+    destroy_variable(variables);
 
     return status;
 }
 
-static int apply_script(char *document, object_t *objects)
+static int apply_script(char *document, variable_t *variables)
 {
     scanner_t *scanner;
     expression_t *expressions;
@@ -170,7 +170,7 @@ static int apply_script(char *document, object_t *objects)
         return 1;
     }
 
-    value = execute_expression(expressions, objects);
+    value = execute_expression(expressions, variables);
     destroy_expression(expressions);
 
     if (!value)

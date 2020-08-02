@@ -4,15 +4,15 @@
 #include "parse.h"
 #include "value.h"
 
-typedef struct object_t
+typedef struct variable_t
 {
     char *identifier;
     value_t *value;
-    struct object_t *next;
-} object_t;
+    struct variable_t *next;
+} variable_t;
 
-object_t *empty_object();
-value_t *execute_expression(expression_t *expressions, object_t *objects);
-void destroy_object(object_t *object);
+variable_t *empty_variable();
+value_t *execute_expression(expression_t *expressions, variable_t *variables);
+void destroy_variable(variable_t *variable);
 
 #endif
