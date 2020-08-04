@@ -12,7 +12,7 @@
 #define PROGRAM_VERSION "v0.34.1"
 
 static int complete_script(char *document);
-static int apply_script(char *document, variable_t *variables);
+static int apply_script(char *document, variable_map_t *variables);
 static char *read_file(char *path);
 static void print_version();
 static void print_usage();
@@ -75,9 +75,9 @@ int main(int argc, char **argv)
 
     if (get_flag(argc, argv, "--interactive") || get_flag(argc, argv, "-i"))
     {
-        variable_t *variables;
+        variable_map_t *variables;
 
-        variables = empty_variable();
+        variables = empty_variable_map();
 
         if (!variables)
         {
@@ -95,14 +95,14 @@ int main(int argc, char **argv)
 
             if (!line)
             {
-                destroy_variable(variables);
+                destroy_variable_map(variables);
                 print_error(ERROR_SHORTAGE);
                 return 1;
             }
 
             if (line->exit)
             {
-                destroy_variable(variables);
+                destroy_variable_map(variables);
                 destroy_line(line);
                 return 0;
             }
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 
             if (apply_script(document, variables))
             {
-                destroy_variable(variables);
+                destroy_variable_map(variables);
                 destroy_line(line);
                 return 1;
             }
@@ -128,10 +128,10 @@ int main(int argc, char **argv)
 
 static int complete_script(char *document)
 {
-    variable_t *variables;
+    variable_map_t *variables;
     int status;
 
-    variables = empty_variable();
+    variables = empty_variable_map();
 
     if (!variables)
     {
@@ -141,12 +141,12 @@ static int complete_script(char *document)
 
     status = apply_script(document, variables);
 
-    destroy_variable(variables);
+    destroy_variable_map(variables);
 
     return status;
 }
 
-static int apply_script(char *document, variable_t *variables)
+static int apply_script(char *document, variable_map_t *variables)
 {
     scanner_t *scanner;
     expression_t *expressions;
