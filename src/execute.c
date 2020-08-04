@@ -1655,6 +1655,8 @@ static int set_variable(variable_map_t *map, char *identifier, value_t *value)
         map->lists[index] = created;
     }
 
+    map->length += 1;
+
     return 1;
 }
 
