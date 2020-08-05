@@ -9,7 +9,7 @@
 #include "common.h"
 
 #define PROGRAM_NAME "snrub"
-#define PROGRAM_VERSION "v0.34.2"
+#define PROGRAM_VERSION "v0.34.3"
 
 static int complete_script(char *document);
 static int apply_script(char *document, variable_map_t *variables);
