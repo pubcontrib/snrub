@@ -1629,7 +1629,7 @@ static int set_variable(variable_map_t *map, char *identifier, value_t *value)
     variable_list_t *list, *last, *created;
     int hash, index;
 
-    hash = hash_string(identifier);
+    hash = abs(hash_string(identifier));
     index = div(hash, map->capacity).rem;
 
     for (list = map->lists[index], last = NULL; list != NULL; list = list->next)
@@ -1669,9 +1669,10 @@ static int set_variable(variable_map_t *map, char *identifier, value_t *value)
 static value_t *get_variable(variable_map_t *map, char *identifier)
 {
     variable_list_t *list;
-    int index;
+    int hash, index;
 
-    index = div(hash_string(identifier), map->capacity).rem;
+    hash = abs(hash_string(identifier));
+    index = div(hash, map->capacity).rem;
 
     for (list = map->lists[index]; list != NULL; list = list->next)
     {
@@ -1687,9 +1688,10 @@ static value_t *get_variable(variable_map_t *map, char *identifier)
 static int remove_variable(variable_map_t *map, char *identifier)
 {
     variable_list_t *list, *previous;
-    int index;
+    int hash, index;
 
-    index = div(hash_string(identifier), map->capacity).rem;
+    hash = abs(hash_string(identifier));
+    index = div(hash, map->capacity).rem;
 
     for (list = map->lists[index], previous = NULL; list != NULL; list = list->next)
     {
