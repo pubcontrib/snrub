@@ -48,6 +48,7 @@ static void rewind_argument(argument_iterator_t *iterator);
 static int set_variable(variable_map_t *map, char *identifier, value_t *value);
 static value_t *get_variable(variable_map_t *map, char *identifier);
 static int remove_variable(variable_map_t *map, char *identifier);
+static int resize_variable_map(variable_map_t *map);
 
 variable_map_t *empty_variable_map()
 {
@@ -528,6 +529,11 @@ static value_t *operator_assign(argument_iterator_t *arguments, variable_map_t *
         }
 
         if (set_variable(variables, name, copy) == -1)
+        {
+            return NULL;
+        }
+
+        if (resize_variable_map(variables) == -1)
         {
             return NULL;
         }
@@ -1704,6 +1710,60 @@ static int remove_variable(variable_map_t *map, char *identifier)
 
             return 1;
         }
+    }
+
+    return 0;
+}
+
+static int resize_variable_map(variable_map_t *map)
+{
+    if (map->length == map->capacity)
+    {
+        variable_list_t **existing, **lists;
+        variable_list_t *list;
+        size_t fill, index;
+
+        existing = map->lists;
+        fill = map->capacity;
+        map->capacity *= 2;
+        lists = calloc(map->capacity, sizeof(variable_list_t *));
+
+        if (!lists)
+        {
+            return -1;
+        }
+
+        map->length = 0;
+        map->lists = lists;
+
+        for (index = 0; index < fill; index++)
+        {
+            for (list = existing[index]; list != NULL; list = list->next)
+            {
+                if (set_variable(map, list->identifier, list->value) == -1)
+                {
+                    free(map->lists);
+                    return -1;
+                }
+
+                list->identifier = NULL;
+                list->value = NULL;
+            }
+        }
+
+        for (index = 0; index < fill; index++)
+        {
+            list = existing[index];
+
+            if (list)
+            {
+                destroy_variable_list(list);
+            }
+        }
+
+        free(existing);
+
+        return 1;
     }
 
     return 0;
