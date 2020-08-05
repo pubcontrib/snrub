@@ -6,7 +6,6 @@
 
 typedef struct variable_list_t
 {
-    int hash;
     char *identifier;
     value_t *value;
     struct variable_list_t *next;

@@ -13,7 +13,7 @@ typedef struct
     size_t index;
 } argument_iterator_t;
 
-static variable_list_t *create_variable_list(int hash, char *identifier, value_t *value, variable_list_t *next);
+static variable_list_t *create_variable_list(char *identifier, value_t *value, variable_list_t *next);
 static variable_map_t *create_variable_map(variable_list_t **lists, size_t length, size_t capacity);
 static value_t *apply_expression(expression_t *expression, variable_map_t *variables);
 static value_t *apply_list(argument_iterator_t *arguments, variable_map_t *variables);
@@ -147,7 +147,7 @@ void destroy_variable_list(variable_list_t *list)
     free(list);
 }
 
-static variable_list_t *create_variable_list(int hash, char *identifier, value_t *value, variable_list_t *next)
+static variable_list_t *create_variable_list(char *identifier, value_t *value, variable_list_t *next)
 {
     variable_list_t *list;
 
@@ -155,7 +155,6 @@ static variable_list_t *create_variable_list(int hash, char *identifier, value_t
 
     if (list)
     {
-        list->hash = hash;
         list->identifier = identifier;
         list->value = value;
         list->next = next;
@@ -1645,7 +1644,7 @@ static int set_variable(variable_map_t *map, char *identifier, value_t *value)
         last = list;
     }
 
-    created = create_variable_list(hash, identifier, value, NULL);
+    created = create_variable_list(identifier, value, NULL);
 
     if (!created)
     {
