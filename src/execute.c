@@ -50,7 +50,7 @@ static int set_variable(variable_map_t *map, char *identifier, value_t *value);
 static value_t *get_variable(variable_map_t *map, char *identifier);
 static int remove_variable(variable_map_t *map, char *identifier);
 static int resize_variable_map(variable_map_t *map);
-static int compare_string_values(const void *left, const void *right);
+static int compare_values_unsafe(const void *left, const void *right);
 
 variable_map_t *empty_variable_map()
 {
@@ -583,7 +583,7 @@ static value_t *operator_roster(argument_iterator_t *arguments, variable_map_t *
         }
     }
 
-    qsort(items, length, sizeof(value_t *), compare_string_values);
+    qsort(items, length, sizeof(value_t *), compare_values_unsafe);
 
     return new_list(items, length);
 }
@@ -1817,7 +1817,7 @@ static int resize_variable_map(variable_map_t *map)
     return 0;
 }
 
-static int compare_string_values(const void *left, const void *right)
+static int compare_values_unsafe(const void *left, const void *right)
 {
-    return strcmp(view_string(*(value_t **) left), view_string(*(value_t **) right));
+    return compare_values(*(value_t **) left, *(value_t **) right);
 }
