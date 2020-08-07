@@ -1351,7 +1351,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, variable_map_t *v
         return copy_value(right);
     }
 
-    return new_number(equal_values(left, right));
+    return new_number(compare_values(left, right) == 0);
 }
 
 static value_t *operator_type(argument_iterator_t *arguments, variable_map_t *variables)

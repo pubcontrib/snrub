@@ -50,7 +50,7 @@ int hash_null();
 int hash_number(int number);
 int hash_string(char *string);
 int hash_list(value_t **items, size_t length);
-int equal_values(value_t *left, value_t *right);
+int compare_values(value_t *left, value_t *right);
 int view_number(value_t *value);
 char *view_string(value_t *value);
 error_t view_error(value_t *value);

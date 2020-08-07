@@ -223,11 +223,11 @@ int hash_list(value_t **items, size_t length)
     return hash;
 }
 
-int equal_values(value_t *left, value_t *right)
+int compare_values(value_t *left, value_t *right)
 {
     if (left->type != right->type)
     {
-        return 0;
+        return left->type - right->type;
     }
 
     if (left->type == TYPE_LIST)
@@ -236,28 +236,32 @@ int equal_values(value_t *left, value_t *right)
 
         if (left->size != right->size)
         {
-            return 0;
+            return left->size - right->size;
         }
 
         for (index = 0; index < left->size; index++)
         {
-            if (!equal_values(((value_t **) left->data)[index], ((value_t **) right->data)[index]))
+            int equal;
+
+            equal = compare_values(((value_t **) left->data)[index], ((value_t **) right->data)[index]);
+
+            if (equal != 0)
             {
-                return 0;
+                return equal;
             }
         }
 
-        return 1;
+        return 0;
     }
 
     switch (left->type)
     {
         case TYPE_NULL:
-            return 1;
+            return 0;
         case TYPE_NUMBER:
-            return view_number(left) == view_number(right);
+            return view_number(left) - view_number(right);
         case TYPE_STRING:
-            return strcmp(view_string(left), view_string(right)) == 0;
+            return strcmp(view_string(left), view_string(right));
         default:
             return 0;
     }
