@@ -20,6 +20,7 @@ static value_t *apply_list(argument_iterator_t *arguments, variable_map_t *varia
 static value_t *apply_call(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_value(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_assign(argument_iterator_t *arguments, variable_map_t *variables);
+static value_t *operator_roster(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_catch(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_add(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_subtract(argument_iterator_t *arguments, variable_map_t *variables);
@@ -341,6 +342,10 @@ static value_t *apply_call(argument_iterator_t *arguments, variable_map_t *varia
     {
         return operator_assign(arguments, variables);
     }
+    else if (strcmp(name, "---") == 0)
+    {
+        return operator_roster(arguments, variables);
+    }
     else if (strcmp(name, "><") == 0)
     {
         return operator_catch(arguments, variables);
@@ -539,6 +544,45 @@ static value_t *operator_assign(argument_iterator_t *arguments, variable_map_t *
     }
 
     return new_null();
+}
+
+static value_t *operator_roster(argument_iterator_t *arguments, variable_map_t *variables)
+{
+    value_t **items;
+    size_t length, index, placement;
+
+    length = variables->length;
+    items = malloc(sizeof(value_t *) * length);
+
+    if (!items)
+    {
+        return NULL;
+    }
+
+    for (index = 0, placement = 0; index < variables->capacity; index++)
+    {
+        if (variables->lists[index])
+        {
+            variable_list_t *list;
+
+            for (list = variables->lists[index]; list != NULL; list = list->next)
+            {
+                value_t *item;
+
+                item = new_string(list->identifier);
+
+                if (!item)
+                {
+                    free(items);
+                    return NULL;
+                }
+
+                items[placement++] = item;
+            }
+        }
+    }
+
+    return new_list(items, length);
 }
 
 static value_t *operator_catch(argument_iterator_t *arguments, variable_map_t *variables)
