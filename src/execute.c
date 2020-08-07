@@ -1234,22 +1234,7 @@ static value_t *operator_less(argument_iterator_t *arguments, variable_map_t *va
         return new_number(0);
     }
 
-    if (left->type == TYPE_NULL)
-    {
-        return new_number(0);
-    }
-
-    if (left->type == TYPE_NUMBER)
-    {
-        return new_number(view_number(left) < view_number(right));
-    }
-
-    if (left->type == TYPE_STRING)
-    {
-        return new_number(strcmp(view_string(left), view_string(right)) < 0);
-    }
-
-    return new_error(ERROR_UNSUPPORTED);
+    return new_number(compare_values(left, right) < 0);
 }
 
 static value_t *operator_greater(argument_iterator_t *arguments, variable_map_t *variables)
@@ -1295,22 +1280,7 @@ static value_t *operator_greater(argument_iterator_t *arguments, variable_map_t 
         return new_number(0);
     }
 
-    if (left->type == TYPE_NULL)
-    {
-        return new_number(0);
-    }
-
-    if (left->type == TYPE_NUMBER)
-    {
-        return new_number(view_number(left) > view_number(right));
-    }
-
-    if (left->type == TYPE_STRING)
-    {
-        return new_number(strcmp(view_string(left), view_string(right)) > 0);
-    }
-
-    return new_error(ERROR_UNSUPPORTED);
+    return new_number(compare_values(left, right) > 0);
 }
 
 static value_t *operator_equal(argument_iterator_t *arguments, variable_map_t *variables)
