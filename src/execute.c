@@ -1234,6 +1234,11 @@ static value_t *operator_less(argument_iterator_t *arguments, variable_map_t *va
         return new_number(0);
     }
 
+    if (left->type == TYPE_LIST)
+    {
+        return new_error(ERROR_UNSUPPORTED);
+    }
+
     return new_number(compare_values(left, right) < 0);
 }
 
@@ -1278,6 +1283,11 @@ static value_t *operator_greater(argument_iterator_t *arguments, variable_map_t 
     if (left->type != right->type)
     {
         return new_number(0);
+    }
+
+    if (left->type == TYPE_LIST)
+    {
+        return new_error(ERROR_UNSUPPORTED);
     }
 
     return new_number(compare_values(left, right) > 0);
