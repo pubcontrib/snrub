@@ -36,6 +36,7 @@ static value_t *operator_chain(argument_iterator_t *arguments, variable_map_t *v
 static value_t *operator_less(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_greater(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_equal(argument_iterator_t *arguments, variable_map_t *variables);
+static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_type(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_number(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_string(argument_iterator_t *arguments, variable_map_t *variables);
@@ -406,6 +407,10 @@ static value_t *apply_call(argument_iterator_t *arguments, variable_map_t *varia
     else if (strcmp(name, "=") == 0)
     {
         return operator_equal(arguments, variables);
+    }
+    else if (strcmp(name, "<|>") == 0)
+    {
+        return operator_sort(arguments, variables);
     }
     else if (strcmp(name, "_") == 0)
     {
@@ -1332,6 +1337,62 @@ static value_t *operator_equal(argument_iterator_t *arguments, variable_map_t *v
     }
 
     return new_number(compare_values(left, right) == 0);
+}
+
+static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *variables)
+{
+    value_t *solo;
+    value_t **items;
+    size_t length, index;
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    solo = next_argument(arguments, variables);
+
+    if (!solo)
+    {
+        return NULL;
+    }
+
+    if (solo->type == TYPE_ERROR)
+    {
+        return copy_value(solo);
+    }
+
+    if (solo->type != TYPE_LIST)
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    length = solo->size;
+    items = malloc(sizeof(value_t *) * length);
+
+    if (!items)
+    {
+        return NULL;
+    }
+
+    for (index = 0; index < length; index++)
+    {
+        value_t *copy;
+
+        copy = copy_value(((value_t **) solo->data)[index]);
+
+        if (!copy)
+        {
+            free(items);
+            return NULL;
+        }
+
+        items[index] = copy;
+    }
+
+    qsort(items, length, sizeof(value_t *), compare_values_unsafe);
+
+    return new_list(items, length);
 }
 
 static value_t *operator_type(argument_iterator_t *arguments, variable_map_t *variables)
