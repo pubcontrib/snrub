@@ -1656,14 +1656,14 @@ static value_t *operator_index(argument_iterator_t *arguments, variable_map_t *v
         return NULL;
     }
 
+    if (index->type == TYPE_ERROR)
+    {
+        return copy_value(index);
+    }
+
     if (index->type != TYPE_NUMBER)
     {
         return new_error(ERROR_ARGUMENT);
-    }
-
-    if (index->type == TYPE_ERROR)
-    {
-        return copy_value(collection);
     }
 
     adjusted = view_number(index) - 1;
