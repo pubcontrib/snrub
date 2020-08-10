@@ -51,7 +51,8 @@ static int set_variable(variable_map_t *map, char *identifier, value_t *value);
 static value_t *get_variable(variable_map_t *map, char *identifier);
 static int remove_variable(variable_map_t *map, char *identifier);
 static int resize_variable_map(variable_map_t *map);
-static int compare_values_unsafe(const void *left, const void *right);
+static int compare_values_ascending(const void *left, const void *right);
+static int compare_values_descending(const void *left, const void *right);
 
 variable_map_t *empty_variable_map()
 {
@@ -588,7 +589,7 @@ static value_t *operator_roster(argument_iterator_t *arguments, variable_map_t *
         }
     }
 
-    qsort(items, length, sizeof(value_t *), compare_values_unsafe);
+    qsort(items, length, sizeof(value_t *), compare_values_ascending);
 
     return new_list(items, length);
 }
@@ -1341,7 +1342,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, variable_map_t *v
 
 static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *variables)
 {
-    value_t *solo;
+    value_t *solo, *reversed;
     value_t **items;
     size_t length, index;
 
@@ -1363,6 +1364,28 @@ static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *va
     }
 
     if (solo->type != TYPE_LIST)
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    reversed = next_argument(arguments, variables);
+
+    if (!reversed)
+    {
+        return NULL;
+    }
+
+    if (reversed->type == TYPE_ERROR)
+    {
+        return copy_value(reversed);
+    }
+
+    if (reversed->type != TYPE_NUMBER)
     {
         return new_error(ERROR_ARGUMENT);
     }
@@ -1390,7 +1413,7 @@ static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *va
         items[index] = copy;
     }
 
-    qsort(items, length, sizeof(value_t *), compare_values_unsafe);
+    qsort(items, length, sizeof(value_t *), view_number(reversed) ? compare_values_descending : compare_values_ascending);
 
     return new_list(items, length);
 }
@@ -1858,7 +1881,12 @@ static int resize_variable_map(variable_map_t *map)
     return 0;
 }
 
-static int compare_values_unsafe(const void *left, const void *right)
+static int compare_values_ascending(const void *left, const void *right)
 {
     return compare_values(*(value_t **) left, *(value_t **) right);
+}
+
+static int compare_values_descending(const void *left, const void *right)
+{
+    return compare_values(*(value_t **) left, *(value_t **) right) * -1;
 }
