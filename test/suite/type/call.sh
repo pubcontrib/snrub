@@ -79,6 +79,11 @@ pass '
 ' '"word"'
 pass '("+" #1# #2# #3#)' '#3#'
 
+# Syntax Error
+fail '`' '#1#'
+fail '"+" #10# #5#)' '#1#'
+fail '("+" #10# #5#' '#1#'
+
 # Bounds Error
 start=`repeat '("..."' 32`
 end=`repeat ')' 32`
@@ -99,8 +104,3 @@ fail '("unknown")' '#4#'
 
 # Error Propogation
 fail '(("#" "text"))' '#3#'
-
-# Syntax Error
-fail '`' '#1#'
-fail '"+" #10# #5#)' '#1#'
-fail '("+" #10# #5#' '#1#'
