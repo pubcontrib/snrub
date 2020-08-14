@@ -19,4 +19,3 @@ fail '("| |" #100#)' '#4#'
 
 # Error Propogation
 fail '("| |" ("#" "text"))' '#3#'
-fail '("| |" ("#" "text"))' '#3#'
