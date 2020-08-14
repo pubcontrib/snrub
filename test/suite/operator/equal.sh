@@ -2,6 +2,7 @@
 
 hint 'operator/equal'
 
+# Object Equality
 pass '("=" ? ?)' '#1#'
 pass '("=" #100# #100#)' '#1#'
 pass '("=" #100# #200#)' '#0#'
@@ -37,8 +38,10 @@ pass '("=" ? "?")' '#0#'
 pass '("=" #0# ?)' '#0#'
 pass '("=" ? #0#)' '#0#'
 
+# Argument Mistype
 fail '("=")' '#4#'
 fail '("=" #1#)' '#4#'
 
+# Error Propogation
 fail '("=" ("#" "text") ?)' '#3#'
 fail '("=" ? ("#" "text"))' '#3#'

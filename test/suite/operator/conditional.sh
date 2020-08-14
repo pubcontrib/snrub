@@ -2,6 +2,7 @@
 
 hint 'operator/conditional'
 
+# Conditional Branching
 pass '("?" #0# ? ?)' '?'
 pass '("?" #1# ? ?)' '?'
 pass '("?" #0# #100# #200#)' '#200#'
@@ -18,10 +19,12 @@ pass '("-->" "count" #0#)
 ("?" #1# ("-->" "count" ("+" ("<--" "count") #1#)) ("-->" "count" ("+" ("<--" "count") #1#)))
 ("<--" "count")' '#1#'
 
+# Argument Mistype
 fail '("?")' '#4#'
 fail '("?" ? ? ?)' '#4#'
 fail '("?" "word" ? ?)' '#4#'
 
+# Error Propogation
 fail '("?" ("#" "text") ? ?)' '#3#'
 fail '("?" #1# ("#" "text") ?)' '#3#'
 fail '("?" #0# ? ("#" "text"))' '#3#'

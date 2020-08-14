@@ -2,6 +2,7 @@
 
 hint 'operator/index'
 
+# Collection Indexing
 pass '("[#]" "abc" #0#)' '?'
 pass '("[#]" "abc" #1#)' '"a"'
 pass '("[#]" "abc" #2#)' '"b"'
@@ -17,6 +18,7 @@ pass '("[#]" [#10# #20# #30#] #2#)' '#20#'
 pass '("[#]" [#10# #20# #30#] #3#)' '#30#'
 pass '("[#]" [#10# #20# #30#] #4#)' '?'
 
+# Argument Mistype
 fail '("[#]")' '#4#'
 fail '("[#]" "abc")' '#4#'
 fail '("[#]" ? #1#)' '#4#'
@@ -25,5 +27,6 @@ fail '("[#]" "abc" ?)' '#4#'
 fail '("[#]" "abc" "def")' '#4#'
 fail '("[#]" "abc" [])' '#4#'
 
+# Error Propogation
 fail '("[#]" ("#" "text") #1#)' '#3#'
 fail '("[#]" "abc "("#" "text"))' '#3#'

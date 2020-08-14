@@ -2,6 +2,7 @@
 
 hint 'operator/value'
 
+# Variable Value
 pass '("<--" "key")' '?'
 pass '("-->" "null" ?) ("<--" "null")' '?'
 pass '("-->" "number" #1#) ("<--" "number")' '#1#'
@@ -11,6 +12,8 @@ pass '("-->" "key" "before") ("-->" "key" "after") ("<--" "key")' '"after"'
 pass '("-->" "key" "before") ("-->" "key" ?) ("<--" "key")' '?'
 pass '("-->" "key" "before") ("-->" "key" #1#) ("<--" "key")' '#1#'
 
+# Argument Mistype
 fail '("<--")' '#4#'
 
+# Error Propogation
 fail '("<--" ("#" "text"))' '#3#'

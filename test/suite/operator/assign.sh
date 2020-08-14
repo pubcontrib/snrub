@@ -2,6 +2,7 @@
 
 hint 'operator/assign'
 
+# Variable Assignment
 pass '("-->" "null" ?)' '?'
 pass '("-->" "number" #100#)' '?'
 pass '("-->" "string" "one hundred")' '?'
@@ -17,10 +18,12 @@ pass '("-->" "index" #0#)
 )
 ("<--" "variable-1023")' '#1023#'
 
+# Argument Mistype
 fail '("-->")' '#4#'
 fail '("-->" "key")' '#4#'
 fail '("-->" ? "value")' '#4#'
 fail '("-->" #1# "value")' '#4#'
 
+# Error Propogation
 fail '("-->" ("#" "text") #100#)' '#3#'
 fail '("-->" "key" ("#" "text"))' '#3#'

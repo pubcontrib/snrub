@@ -19,6 +19,7 @@ repeat()
     printf "%s" "$result"
 }
 
+# Call Expression
 pass '("-->" "number" #1#)
 ("-->" "number" ("+" ("<--" "number") ("<--" "number")))
 ("<--" "number")' '#2#'
@@ -78,6 +79,7 @@ pass '
 ' '"word"'
 pass '("+" #1# #2# #3#)' '#3#'
 
+# Bounds Error
 start=`repeat '("..."' 32`
 end=`repeat ')' 32`
 pass "$start$end" '?'
@@ -89,13 +91,16 @@ pass "(\"...\" $center)" '?'
 center=`repeat '?' 1024`
 fail "(\"...\" $center)" '#2#'
 
+# Argument Mistype
 fail '()' '#4#'
 fail '(?)' '#4#'
 fail '(#1#)' '#4#'
 fail '("unknown")' '#4#'
 
+# Error Propogation
 fail '(("#" "text"))' '#3#'
 
+# Syntax Error
 fail '`' '#1#'
 fail '"+" #10# #5#)' '#1#'
 fail '("+" #10# #5#' '#1#'

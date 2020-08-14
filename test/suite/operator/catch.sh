@@ -2,6 +2,7 @@
 
 hint 'operator/catch'
 
+# Error Catching
 pass '("><")' '?'
 pass '("><" ?)' '?'
 pass '("><" #100#)' '?'

@@ -2,6 +2,7 @@
 
 hint 'operator/greater'
 
+# Object Comparision
 pass '(">" ? ?)' '#0#'
 pass '(">" #100# #100#)' '#0#'
 pass '(">" #100# #200#)' '#0#'
@@ -23,8 +24,10 @@ pass '(">" ? "?")' '#0#'
 pass '(">" #0# ?)' '#0#'
 pass '(">" ? #0#)' '#0#'
 
+# Argument Mistype
 fail '(">")' '#4#'
 fail '(">" #1#)' '#4#'
 
+# Error Propogation
 fail '(">" ("#" "text") #100#)' '#3#'
 fail '(">" #100# ("#" "text"))' '#3#'

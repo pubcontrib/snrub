@@ -2,6 +2,7 @@
 
 hint 'operator/string'
 
+# String Casting
 pass '("\"" ?)' '?'
 pass '("\"" ##)' '"0"'
 pass '("\"" #1#)' '"1"'
@@ -10,6 +11,8 @@ pass '("\"" #100#)' '"100"'
 pass '("\"" #-100#)' '"-100"'
 pass '("\"" "word")' '"word"'
 
+# Argument Mistype
 fail '("\"")' '#4#'
 
+# Error Propogation
 fail '("\"" ("#" "text"))' '#3#'

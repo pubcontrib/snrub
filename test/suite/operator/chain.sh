@@ -2,6 +2,7 @@
 
 hint 'operator/chain'
 
+# Completed Chain
 pass '("...")' '?'
 pass '("..." ?)' '?'
 pass '("..." #100#)' '#100#'
@@ -17,6 +18,7 @@ pass '("-->" "count" #0#)
 )
 ("<--" "count")' '#3#'
 
+# Error Break Early
 fail '("..." ("#" "text") ("unknown" #1# #2#) ("/" #10# #0#))' '#3#'
 fail '("..." ("unknown" #1# #2#) ("/" #10# #0#) ("#" "text"))' '#4#'
 fail '("..." ("/" #10# #0#) ("#" "text") ("unknown" #1# #2#))' '#5#'
