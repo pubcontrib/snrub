@@ -1,4 +1,3 @@
-#!/bin/sh
 hint="unset"
 
 hint()

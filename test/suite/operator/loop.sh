@@ -1,4 +1,3 @@
-#!/bin/sh
 . test/assert.sh
 
 hint 'operator/loop'
