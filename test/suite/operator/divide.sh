@@ -14,7 +14,7 @@ pass '("/" #6# #10#)' '#0#'
 # Arithmetic Error
 fail '("/" #1# #0#)' '#5#'
 
-# Argument Mistype
+# Argument Error
 fail '("/")' '#4#'
 fail '("/" #5#)' '#4#'
 fail '("/" ? ?)' '#4#'

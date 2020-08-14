@@ -25,7 +25,7 @@ pass '("=" ("::" ##) ("::" ##))' '#1#'
 pass '("=" ("::" "") ("::" ""))' '#1#'
 pass '("=" ("::" []) ("::" []))' '#1#'
 
-# Argument Mistype
+# Argument Error
 fail '("::")' '#4#'
 
 # Error Propogation

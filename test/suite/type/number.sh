@@ -2,7 +2,7 @@
 
 hint 'type/number'
 
-# Number Numeric
+# Number Literal
 pass '##' '#0#'
 pass '#0#' '#0#'
 pass '#1#' '#1#'

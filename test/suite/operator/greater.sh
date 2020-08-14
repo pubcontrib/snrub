@@ -24,7 +24,7 @@ pass '(">" ? "?")' '#0#'
 pass '(">" #0# ?)' '#0#'
 pass '(">" ? #0#)' '#0#'
 
-# Argument Mistype
+# Argument Error
 fail '(">")' '#4#'
 fail '(">" #1#)' '#4#'
 

@@ -15,7 +15,7 @@ pass '("-->" "count" #0#)
 )
 ("<--" "count")' '#10#'
 
-# Argument Mistype
+# Argument Error
 fail '("o")' '#4#'
 fail '("o" #1#)' '#4#'
 

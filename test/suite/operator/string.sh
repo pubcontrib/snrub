@@ -11,7 +11,7 @@ pass '("\"" #100#)' '"100"'
 pass '("\"" #-100#)' '"-100"'
 pass '("\"" "word")' '"word"'
 
-# Argument Mistype
+# Argument Error
 fail '("\"")' '#4#'
 
 # Error Propogation

@@ -15,11 +15,11 @@ pass '("#" "-1")' '#-1#'
 pass '("#" "100")' '#100#'
 pass '("#" "-100")' '#-100#'
 
-# Type Conversion Error
+# Type Error
 fail '("#" "-")' '#3#'
 fail '("#" "word")' '#3#'
 
-# Argument Mistype
+# Argument Error
 fail '("#")' '#4#'
 
 # Error Propogation

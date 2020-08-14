@@ -12,7 +12,7 @@ pass '("-->" "key" "before") ("-->" "key" "after") ("<--" "key")' '"after"'
 pass '("-->" "key" "before") ("-->" "key" ?) ("<--" "key")' '?'
 pass '("-->" "key" "before") ("-->" "key" #1#) ("<--" "key")' '#1#'
 
-# Argument Mistype
+# Argument Error
 fail '("<--")' '#4#'
 
 # Error Propogation

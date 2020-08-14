@@ -18,7 +18,7 @@ pass '("-->" "index" #0#)
 )
 ("<--" "variable-1023")' '#1023#'
 
-# Argument Mistype
+# Argument Error
 fail '("-->")' '#4#'
 fail '("-->" "key")' '#4#'
 fail '("-->" ? "value")' '#4#'

@@ -19,7 +19,7 @@ pass '("-->" "count" #0#)
 ("?" #1# ("-->" "count" ("+" ("<--" "count") #1#)) ("-->" "count" ("+" ("<--" "count") #1#)))
 ("<--" "count")' '#1#'
 
-# Argument Mistype
+# Argument Error
 fail '("?")' '#4#'
 fail '("?" ? ? ?)' '#4#'
 fail '("?" "word" ? ?)' '#4#'

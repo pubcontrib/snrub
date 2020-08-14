@@ -2,13 +2,13 @@
 
 hint 'operator/type'
 
-# Object Typing
+# Object Type
 pass '("_" ?)' '?'
 pass '("_" #100#)' '"##"'
 pass '("_" "text")' '"\"\""'
 pass '("_" [#1# #0# #0#])' '"[]"'
 
-# Argument Mistype
+# Argument Error
 fail '("_")' '#4#'
 
 # Error Propogation

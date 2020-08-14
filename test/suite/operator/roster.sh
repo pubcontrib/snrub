@@ -2,7 +2,7 @@
 
 hint 'operator/roster'
 
-# List Variable Roster
+# Variable Roster
 pass '("---")' '[]'
 pass '("-->" "a" ?) ("---")' '[]'
 pass '("-->" "a" #1#) ("---")' '["a"]'

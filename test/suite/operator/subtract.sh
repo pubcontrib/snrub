@@ -5,7 +5,7 @@ hint 'operator/subtract'
 # Numeric Subtraction
 pass '("-" #10# #5#)' '#5#'
 
-# Argument Mistype
+# Argument Error
 fail '("-")' '#4#'
 fail '("-" #5#)' '#4#'
 fail '("-" ? ?)' '#4#'

@@ -91,7 +91,7 @@ pass "(\"...\" $center)" '?'
 center=`repeat '?' 1024`
 fail "(\"...\" $center)" '#2#'
 
-# Argument Mistype
+# Argument Error
 fail '()' '#4#'
 fail '(?)' '#4#'
 fail '(#1#)' '#4#'

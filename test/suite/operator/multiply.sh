@@ -5,7 +5,7 @@ hint 'operator/multiply'
 # Numeric Multiplication
 pass '("*" #10# #5#)' '#50#'
 
-# Argument Mistype
+# Argument Error
 fail '("*")' '#4#'
 fail '("*" #5#)' '#4#'
 fail '("*" ? ?)' '#4#'
