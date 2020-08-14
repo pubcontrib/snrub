@@ -76,15 +76,8 @@ pass '
 "string"
 )
 ' '"word"'
-fail '`' '#1#'
-fail '()' '#4#'
 pass '("+" #1# #2# #3#)' '#3#'
-fail '"+" #10# #5#)' '#1#'
-fail '("+" #10# #5#' '#1#'
-fail '(?)' '#4#'
-fail '(#1#)' '#4#'
-fail '("unknown")' '#4#'
-fail '(("#" "text"))' '#3#'
+
 start=`repeat '("..."' 32`
 end=`repeat ')' 32`
 pass "$start$end" '?'
@@ -95,3 +88,14 @@ center=`repeat '?' 1023`
 pass "(\"...\" $center)" '?'
 center=`repeat '?' 1024`
 fail "(\"...\" $center)" '#2#'
+
+fail '()' '#4#'
+fail '(?)' '#4#'
+fail '(#1#)' '#4#'
+fail '("unknown")' '#4#'
+
+fail '(("#" "text"))' '#3#'
+
+fail '`' '#1#'
+fail '"+" #10# #5#)' '#1#'
+fail '("+" #10# #5#' '#1#'
