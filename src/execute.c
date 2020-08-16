@@ -1713,7 +1713,7 @@ static value_t *operator_index(argument_iterator_t *arguments, variable_map_t *v
 static value_t *operator_range(argument_iterator_t *arguments, variable_map_t *variables)
 {
     value_t *collection, *start, *end;
-    int astart, aend;
+    int adjustedstart, adjustedend;
     size_t limit, length;
 
     if (!has_next_argument(arguments))
@@ -1782,37 +1782,37 @@ static value_t *operator_range(argument_iterator_t *arguments, variable_map_t *v
         return new_error(ERROR_ARGUMENT);
     }
 
-    astart = view_number(start) - 1;
-    aend = view_number(end) - 1;
+    adjustedstart = view_number(start) - 1;
+    adjustedend = view_number(end) - 1;
     limit = collection->type == TYPE_STRING ? collection->size - 1 : collection->size;
 
-    if (astart > aend)
+    if (adjustedstart > adjustedend)
     {
         int swap;
 
-        swap = astart;
-        astart = aend;
-        aend = swap;
+        swap = adjustedstart;
+        adjustedstart = adjustedend;
+        adjustedend = swap;
     }
 
-    if (astart < 0)
+    if (adjustedstart < 0)
     {
-        astart = 0;
+        adjustedstart = 0;
     }
 
-    if (aend >= limit)
+    if (adjustedend >= limit)
     {
-        aend = limit - 1;
+        adjustedend = limit - 1;
     }
 
-    aend += 1;
-    length = aend - astart;
+    adjustedend += 1;
+    length = adjustedend - adjustedstart;
 
     if (collection->type == TYPE_STRING)
     {
         char *slice;
 
-        slice = slice_string(view_string(collection), astart, aend);
+        slice = slice_string(view_string(collection), adjustedstart, adjustedend);
 
         if (!slice)
         {
@@ -1834,7 +1834,7 @@ static value_t *operator_range(argument_iterator_t *arguments, variable_map_t *v
             return NULL;
         }
 
-        for (index = astart, placement = 0; index < aend; index++, placement++)
+        for (index = adjustedstart, placement = 0; index < adjustedend; index++, placement++)
         {
             value_t *item;
 
