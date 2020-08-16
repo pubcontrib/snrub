@@ -40,5 +40,6 @@ fi
 . test/suite/operator/hash.sh
 . test/suite/operator/length.sh
 . test/suite/operator/index.sh
+. test/suite/operator/range.sh
 
 conclude

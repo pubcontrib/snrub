@@ -43,6 +43,7 @@ static value_t *operator_string(argument_iterator_t *arguments, variable_map_t *
 static value_t *operator_hash(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_length(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_index(argument_iterator_t *arguments, variable_map_t *variables);
+static value_t *operator_range(argument_iterator_t *arguments, variable_map_t *variables);
 static int has_next_argument(argument_iterator_t *iterator);
 static value_t *next_argument(argument_iterator_t *iterator, variable_map_t *variables);
 static void skip_argument(argument_iterator_t *iterator);
@@ -436,6 +437,10 @@ static value_t *apply_call(argument_iterator_t *arguments, variable_map_t *varia
     else if (strcmp(name, "[#]") == 0)
     {
         return operator_index(arguments, variables);
+    }
+    else if (strcmp(name, "[# #]") == 0)
+    {
+        return operator_range(arguments, variables);
     }
 
     return new_error(ERROR_ARGUMENT);
@@ -1700,6 +1705,151 @@ static value_t *operator_index(argument_iterator_t *arguments, variable_map_t *v
         }
 
         return copy_value(((value_t **) collection->data)[adjusted]);
+    }
+
+    return new_error(ERROR_UNSUPPORTED);
+}
+
+static value_t *operator_range(argument_iterator_t *arguments, variable_map_t *variables)
+{
+    value_t *collection, *start, *end;
+    int astart, aend;
+    size_t limit, length;
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    collection = next_argument(arguments, variables);
+
+    if (!collection)
+    {
+        return NULL;
+    }
+
+    if (collection->type == TYPE_ERROR)
+    {
+        return copy_value(collection);
+    }
+
+    if (collection->type != TYPE_STRING && collection->type != TYPE_LIST)
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    start = next_argument(arguments, variables);
+
+    if (!start)
+    {
+        return NULL;
+    }
+
+    if (start->type == TYPE_ERROR)
+    {
+        return copy_value(start);
+    }
+
+    if (start->type != TYPE_NUMBER)
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    end = next_argument(arguments, variables);
+
+    if (!end)
+    {
+        return NULL;
+    }
+
+    if (end->type == TYPE_ERROR)
+    {
+        return copy_value(end);
+    }
+
+    if (end->type != TYPE_NUMBER)
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    astart = view_number(start) - 1;
+    aend = view_number(end) - 1;
+    limit = collection->type == TYPE_STRING ? collection->size - 1 : collection->size;
+
+    if (astart < 0)
+    {
+        astart = 0;
+    }
+
+    if (aend >= limit)
+    {
+        aend = limit - 1;
+    }
+
+    if (astart > aend)
+    {
+        int swap;
+
+        swap = astart;
+        astart = aend;
+        aend = swap;
+    }
+
+    aend += 1;
+    length = aend - astart;
+
+    if (collection->type == TYPE_STRING)
+    {
+        char *slice;
+
+        slice = slice_string(view_string(collection), astart, aend);
+
+        if (!slice)
+        {
+            return NULL;
+        }
+
+        return steal_string(slice, length + 1);
+    }
+
+    if (collection->type == TYPE_LIST)
+    {
+        value_t **items;
+        size_t index, placement;
+
+        items = malloc(sizeof(value_t *) * length);
+
+        if (!items)
+        {
+            return NULL;
+        }
+
+        for (index = astart, placement = 0; index < aend; index++, placement++)
+        {
+            value_t *item;
+
+            item = copy_value(((value_t **) collection->data)[index]);
+
+            if (!item)
+            {
+                free(items);
+                return NULL;
+            }
+
+            items[placement] = item;
+        }
+
+        return new_list(items, length);
     }
 
     return new_error(ERROR_UNSUPPORTED);
