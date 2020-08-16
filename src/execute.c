@@ -1786,6 +1786,15 @@ static value_t *operator_range(argument_iterator_t *arguments, variable_map_t *v
     aend = view_number(end) - 1;
     limit = collection->type == TYPE_STRING ? collection->size - 1 : collection->size;
 
+    if (astart > aend)
+    {
+        int swap;
+
+        swap = astart;
+        astart = aend;
+        aend = swap;
+    }
+
     if (astart < 0)
     {
         astart = 0;
@@ -1794,15 +1803,6 @@ static value_t *operator_range(argument_iterator_t *arguments, variable_map_t *v
     if (aend >= limit)
     {
         aend = limit - 1;
-    }
-
-    if (astart > aend)
-    {
-        int swap;
-
-        swap = astart;
-        astart = aend;
-        aend = swap;
     }
 
     aend += 1;
