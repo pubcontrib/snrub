@@ -267,6 +267,19 @@ int compare_values(value_t *left, value_t *right)
     }
 }
 
+size_t length_value(value_t *value)
+{
+    switch (value->type)
+    {
+        case TYPE_STRING:
+            return strlen(view_string(value));
+        case TYPE_LIST:
+            return value->size;
+        default:
+            return 0;
+    }
+}
+
 int view_number(value_t *value)
 {
     switch (value->type)

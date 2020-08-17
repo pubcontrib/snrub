@@ -51,6 +51,7 @@ int hash_number(int number);
 int hash_string(char *string);
 int hash_list(value_t **items, size_t length);
 int compare_values(value_t *left, value_t *right);
+size_t length_value(value_t *value);
 int view_number(value_t *value);
 char *view_string(value_t *value);
 error_t view_error(value_t *value);

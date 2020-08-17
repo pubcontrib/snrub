@@ -1609,17 +1609,12 @@ static value_t *operator_length(argument_iterator_t *arguments, variable_map_t *
         return copy_value(solo);
     }
 
-    if (solo->type == TYPE_STRING)
+    if (solo->type != TYPE_STRING && solo->type != TYPE_LIST)
     {
-        return new_number(strlen(view_string(solo)));
+        return new_error(ERROR_ARGUMENT);
     }
 
-    if (solo->type == TYPE_LIST)
-    {
-        return new_number(solo->size);
-    }
-
-    return new_error(ERROR_ARGUMENT);
+    return new_number(length_value(solo));
 }
 
 static value_t *operator_index(argument_iterator_t *arguments, variable_map_t *variables)
