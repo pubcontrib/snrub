@@ -1395,7 +1395,7 @@ static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *va
         return new_error(ERROR_ARGUMENT);
     }
 
-    length = solo->size;
+    length = length_value(solo);
     items = malloc(sizeof(value_t *) * length);
 
     if (!items)
@@ -1668,15 +1668,15 @@ static value_t *operator_index(argument_iterator_t *arguments, variable_map_t *v
 
     adjusted = view_number(index) - 1;
 
+    if (adjusted < 0 || adjusted >= length_value(collection))
+    {
+        return new_null();
+    }
+
     if (collection->type == TYPE_STRING)
     {
         char *string;
         size_t size;
-
-        if (adjusted < 0 || adjusted >= strlen(view_string(collection)))
-        {
-            return new_null();
-        }
 
         size = sizeof(char) * 2;
         string = malloc(size);
@@ -1694,11 +1694,6 @@ static value_t *operator_index(argument_iterator_t *arguments, variable_map_t *v
 
     if (collection->type == TYPE_LIST)
     {
-        if (adjusted < 0 || adjusted >= collection->size)
-        {
-            return new_null();
-        }
-
         return copy_value(((value_t **) collection->data)[adjusted]);
     }
 
@@ -1779,7 +1774,7 @@ static value_t *operator_range(argument_iterator_t *arguments, variable_map_t *v
 
     adjustedstart = view_number(start) - 1;
     adjustedend = view_number(end) - 1;
-    limit = collection->type == TYPE_STRING ? collection->size - 1 : collection->size;
+    limit = length_value(collection);
 
     if (adjustedstart > adjustedend)
     {
