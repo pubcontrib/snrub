@@ -1347,7 +1347,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, variable_map_t *v
 
 static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *variables)
 {
-    value_t *solo, *reversed;
+    value_t *collection, *reversed;
     value_t **items;
     size_t length, index;
 
@@ -1356,19 +1356,19 @@ static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *va
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, variables);
+    collection = next_argument(arguments, variables);
 
-    if (!solo)
+    if (!collection)
     {
         return NULL;
     }
 
-    if (solo->type == TYPE_ERROR)
+    if (collection->type == TYPE_ERROR)
     {
-        return copy_value(solo);
+        return copy_value(collection);
     }
 
-    if (solo->type != TYPE_LIST)
+    if (collection->type != TYPE_LIST)
     {
         return new_error(ERROR_ARGUMENT);
     }
@@ -1395,7 +1395,7 @@ static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *va
         return new_error(ERROR_ARGUMENT);
     }
 
-    length = length_value(solo);
+    length = length_value(collection);
     items = malloc(sizeof(value_t *) * length);
 
     if (!items)
@@ -1407,7 +1407,7 @@ static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *va
     {
         value_t *copy;
 
-        copy = copy_value(((value_t **) solo->data)[index]);
+        copy = copy_value(((value_t **) collection->data)[index]);
 
         if (!copy)
         {
