@@ -21,6 +21,7 @@ fail '("#" "word")' '#3#'
 
 # Argument Error
 fail '("#")' '#4#'
+fail '("#" [#1# #2# #3#])' '#7#'
 
 # Error Propogation
 fail '("#" ("#" "text"))' '#3#'

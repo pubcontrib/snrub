@@ -14,6 +14,9 @@ pass '("-->" "key" "before") ("-->" "key" #1#) ("<--" "key")' '#1#'
 
 # Argument Error
 fail '("<--")' '#4#'
+fail '("<--" ?)' '#4#'
+fail '("<--" #100#)' '#4#'
+fail '("<--" [#1# #2# #3#])' '#4#'
 
 # Error Propogation
 fail '("<--" ("#" "text"))' '#3#'
