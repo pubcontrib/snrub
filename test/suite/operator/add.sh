@@ -3,7 +3,16 @@
 hint 'operator/add'
 
 # Numeric Addition
+pass '("+" #1# #5#)' '#6#'
+pass '("+" #0# #5#)' '#5#'
+pass '("+" #5# #10#)' '#15#'
+pass '("+" #-5# #10#)' '#5#'
+pass '("+" #5# #-10#)' '#-5#'
+pass '("+" #-5# #-10#)' '#-15#'
 pass '("+" #10# #5#)' '#15#'
+pass '("+" #-10# #5#)' '#-5#'
+pass '("+" #10# #-5#)' '#5#'
+pass '("+" #-10# #-5#)' '#-15#'
 
 # String Concatenation
 pass '("+" "left" "right")' '"leftright"'
