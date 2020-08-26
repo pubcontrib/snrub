@@ -1240,16 +1240,6 @@ static value_t *operator_less(argument_iterator_t *arguments, variable_map_t *va
         return copy_value(right);
     }
 
-    if (left->type != right->type)
-    {
-        return new_number(0);
-    }
-
-    if (left->type == TYPE_LIST)
-    {
-        return new_error(ERROR_UNSUPPORTED);
-    }
-
     return new_number(compare_values(left, right) < 0);
 }
 
@@ -1289,16 +1279,6 @@ static value_t *operator_greater(argument_iterator_t *arguments, variable_map_t 
     if (right->type == TYPE_ERROR)
     {
         return copy_value(right);
-    }
-
-    if (left->type != right->type)
-    {
-        return new_number(0);
-    }
-
-    if (left->type == TYPE_LIST)
-    {
-        return new_error(ERROR_UNSUPPORTED);
     }
 
     return new_number(compare_values(left, right) > 0);
