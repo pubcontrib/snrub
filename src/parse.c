@@ -56,7 +56,11 @@ expression_t *parse_expressions(scanner_t *scanner)
         }
         else
         {
-            destroy_expression(head);
+            if (head)
+            {
+                destroy_expression(head);
+            }
+
             return NULL;
         }
     } while (!scanner->closed);
