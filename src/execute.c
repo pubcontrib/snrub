@@ -121,19 +121,23 @@ void destroy_variable_map(variable_map_t *map)
 {
     size_t index;
 
-    for (index = 0; index < map->capacity; index++)
+    if (map->lists)
     {
-        variable_list_t *list;
-
-        list = map->lists[index];
-
-        if (list)
+        for (index = 0; index < map->capacity; index++)
         {
-            destroy_variable_list(list);
+            variable_list_t *list;
+
+            list = map->lists[index];
+
+            if (list)
+            {
+                destroy_variable_list(list);
+            }
         }
+
+        free(map->lists);
     }
 
-    free(map->lists);
     free(map);
 }
 
