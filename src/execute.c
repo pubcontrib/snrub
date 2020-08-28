@@ -119,10 +119,10 @@ value_t *execute_expression(expression_t *expressions, variable_map_t *variables
 
 void destroy_variable_map(variable_map_t *map)
 {
-    size_t index;
-
     if (map->lists)
     {
+        size_t index;
+
         for (index = 0; index < map->capacity; index++)
         {
             variable_list_t *list;
