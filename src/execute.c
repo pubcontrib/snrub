@@ -63,6 +63,11 @@ variable_map_t *empty_variable_map()
     capacity = 64;
     lists = calloc(capacity, sizeof(variable_map_t *));
 
+    if (!lists)
+    {
+        return NULL;
+    }
+
     return create_variable_map(lists, 0, capacity);
 }
 
