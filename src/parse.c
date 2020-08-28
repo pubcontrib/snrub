@@ -199,7 +199,7 @@ void destroy_expression(expression_t *expression)
         destroy_value(expression->value);
     }
 
-    if (expression->length > 0)
+    if (expression->arguments)
     {
         size_t index;
 
