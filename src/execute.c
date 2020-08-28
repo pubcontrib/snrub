@@ -1962,18 +1962,19 @@ static int resize_variable_map(variable_map_t *map)
     {
         variable_list_t **existing, **lists;
         variable_list_t *list;
-        size_t fill, index;
+        size_t expand, fill, index;
 
         existing = map->lists;
+        expand = map->capacity * 2;
         fill = map->capacity;
-        map->capacity *= 2;
-        lists = calloc(map->capacity, sizeof(variable_list_t *));
+        lists = calloc(expand, sizeof(variable_list_t *));
 
         if (!lists)
         {
             return -1;
         }
 
+        map->capacity = expand;
         map->length = 0;
         map->lists = lists;
 
