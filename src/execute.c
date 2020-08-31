@@ -22,6 +22,7 @@ static value_t *operator_value(argument_iterator_t *arguments, variable_map_t *v
 static value_t *operator_assign(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_roster(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_catch(argument_iterator_t *arguments, variable_map_t *variables);
+static value_t *operator_throw(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_add(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_subtract(argument_iterator_t *arguments, variable_map_t *variables);
 static value_t *operator_multiply(argument_iterator_t *arguments, variable_map_t *variables);
@@ -363,6 +364,10 @@ static value_t *apply_call(argument_iterator_t *arguments, variable_map_t *varia
     {
         return operator_catch(arguments, variables);
     }
+    else if (strcmp(name, "<>") == 0)
+    {
+        return operator_throw(arguments, variables);
+    }
     else if (strcmp(name, "+") == 0)
     {
         return operator_add(arguments, variables);
@@ -630,6 +635,35 @@ static value_t *operator_catch(argument_iterator_t *arguments, variable_map_t *v
     }
 
     return new_null();
+}
+
+static value_t *operator_throw(argument_iterator_t *arguments, variable_map_t *variables)
+{
+    value_t *solo;
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    solo = next_argument(arguments, variables);
+
+    if (!solo)
+    {
+        return NULL;
+    }
+
+    if (solo->type == TYPE_ERROR)
+    {
+        return copy_value(solo);
+    }
+
+    if (solo->type != TYPE_NUMBER)
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    return new_error(view_number(solo));
 }
 
 static value_t *operator_add(argument_iterator_t *arguments, variable_map_t *variables)

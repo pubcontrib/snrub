@@ -19,6 +19,7 @@ fi
 . test/suite/operator/assign.sh
 . test/suite/operator/roster.sh
 . test/suite/operator/catch.sh
+. test/suite/operator/throw.sh
 . test/suite/operator/add.sh
 . test/suite/operator/subtract.sh
 . test/suite/operator/multiply.sh
