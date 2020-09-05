@@ -7,12 +7,10 @@ static map_chain_t *create_map_chain(char *key, void *value, map_chain_t *next);
 static map_t *create_map(int (*hash)(char *), void (*destroy)(void *), size_t length, size_t capacity, map_chain_t **chains);
 static int resize_map(map_t *map);
 
-map_t *empty_map(int (*hash)(char *), void (*destroy)(void *))
+map_t *empty_map(int (*hash)(char *), void (*destroy)(void *), size_t capacity)
 {
     map_chain_t **chains;
-    size_t capacity;
 
-    capacity = 64;
     chains = calloc(capacity, sizeof(map_t *));
 
     if (!chains)
