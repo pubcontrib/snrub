@@ -6,18 +6,21 @@
 #include "parse.h"
 #include "lex.h"
 #include "value.h"
+#include "map.h"
 #include "common.h"
 
 #define PROGRAM_NAME "snrub"
 #define PROGRAM_VERSION "v0.39.0"
 
 static int complete_script(char *document);
-static int apply_script(char *document, variable_map_t *variables);
+static int apply_script(char *document, map_t *variables);
 static char *read_file(char *path);
 static void print_version();
 static void print_usage();
 static void print_error(error_t error);
 static int print_value(value_t *value);
+static map_t *empty_variables();
+static void destroy_value_unsafe(void *value);
 
 int main(int argc, char **argv)
 {
@@ -75,9 +78,9 @@ int main(int argc, char **argv)
 
     if (get_flag(argc, argv, "--interactive") || get_flag(argc, argv, "-i"))
     {
-        variable_map_t *variables;
+        map_t *variables;
 
-        variables = empty_variable_map();
+        variables = empty_variables();
 
         if (!variables)
         {
@@ -95,14 +98,14 @@ int main(int argc, char **argv)
 
             if (!line)
             {
-                destroy_variable_map(variables);
+                destroy_map(variables);
                 print_error(ERROR_SHORTAGE);
                 return 1;
             }
 
             if (line->exit)
             {
-                destroy_variable_map(variables);
+                destroy_map(variables);
                 destroy_line(line);
                 return 0;
             }
@@ -112,7 +115,7 @@ int main(int argc, char **argv)
 
             if (apply_script(document, variables))
             {
-                destroy_variable_map(variables);
+                destroy_map(variables);
                 destroy_line(line);
                 return 1;
             }
@@ -128,10 +131,10 @@ int main(int argc, char **argv)
 
 static int complete_script(char *document)
 {
-    variable_map_t *variables;
+    map_t *variables;
     int status;
 
-    variables = empty_variable_map();
+    variables = empty_variables();
 
     if (!variables)
     {
@@ -141,12 +144,12 @@ static int complete_script(char *document)
 
     status = apply_script(document, variables);
 
-    destroy_variable_map(variables);
+    destroy_map(variables);
 
     return status;
 }
 
-static int apply_script(char *document, variable_map_t *variables)
+static int apply_script(char *document, map_t *variables)
 {
     scanner_t *scanner;
     expression_t *expressions;
@@ -307,4 +310,14 @@ static int print_value(value_t *value)
 
     printf("#%d#", ERROR_UNSUPPORTED);
     return 1;
+}
+
+static map_t *empty_variables()
+{
+    return empty_map(hash_string, destroy_value_unsafe, sizeof(value_t));
+}
+
+static void destroy_value_unsafe(void *value)
+{
+    destroy_value((value_t *) value);
 }

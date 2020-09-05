@@ -18,6 +18,7 @@ OBJS = $(OBJ)/main.o \
 	$(OBJ)/parse.o \
 	$(OBJ)/lex.o \
 	$(OBJ)/value.o \
+	$(OBJ)/map.o \
 	$(OBJ)/common.o
 
 .PHONY: all clean check install uninstall

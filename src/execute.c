@@ -3,6 +3,7 @@
 #include "execute.h"
 #include "parse.h"
 #include "value.h"
+#include "map.h"
 #include "common.h"
 
 typedef struct
@@ -13,66 +14,44 @@ typedef struct
     size_t index;
 } argument_iterator_t;
 
-static variable_list_t *create_variable_list(char *identifier, value_t *value, variable_list_t *next);
-static variable_map_t *create_variable_map(variable_list_t **lists, size_t length, size_t capacity);
-static value_t *apply_expression(expression_t *expression, variable_map_t *variables);
-static value_t *apply_list(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *apply_call(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_value(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_assign(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_roster(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_catch(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_throw(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_add(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_subtract(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_multiply(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_divide(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_modulo(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_and(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_or(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_not(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_conditional(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_loop(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_chain(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_less(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_greater(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_equal(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_type(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_number(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_string(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_hash(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_length(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_index(argument_iterator_t *arguments, variable_map_t *variables);
-static value_t *operator_range(argument_iterator_t *arguments, variable_map_t *variables);
+static value_t *apply_expression(expression_t *expression, map_t *variables);
+static value_t *apply_list(argument_iterator_t *arguments, map_t *variables);
+static value_t *apply_call(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_value(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_roster(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_catch(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_throw(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_add(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_subtract(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_multiply(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_divide(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_modulo(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_and(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_or(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_not(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_conditional(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_chain(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_less(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_greater(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_equal(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_type(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_number(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_string(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_length(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_index(argument_iterator_t *arguments, map_t *variables);
+static value_t *operator_range(argument_iterator_t *arguments, map_t *variables);
 static int has_next_argument(argument_iterator_t *iterator);
-static value_t *next_argument(argument_iterator_t *iterator, variable_map_t *variables);
+static value_t *next_argument(argument_iterator_t *iterator, map_t *variables);
 static void skip_argument(argument_iterator_t *iterator);
 static void rewind_argument(argument_iterator_t *iterator);
-static int set_variable(variable_map_t *map, char *identifier, value_t *value);
-static value_t *get_variable(variable_map_t *map, char *identifier);
-static int remove_variable(variable_map_t *map, char *identifier);
-static int resize_variable_map(variable_map_t *map);
 static int compare_values_ascending(const void *left, const void *right);
 static int compare_values_descending(const void *left, const void *right);
 
-variable_map_t *empty_variable_map()
-{
-    variable_list_t **lists;
-    size_t capacity;
-
-    capacity = 64;
-    lists = calloc(capacity, sizeof(variable_map_t *));
-
-    if (!lists)
-    {
-        return NULL;
-    }
-
-    return create_variable_map(lists, 0, capacity);
-}
-
-value_t *execute_expression(expression_t *expressions, variable_map_t *variables)
+value_t *execute_expression(expression_t *expressions, map_t *variables)
 {
     expression_t *expression;
     value_t *last;
@@ -118,83 +97,7 @@ value_t *execute_expression(expression_t *expressions, variable_map_t *variables
     return last;
 }
 
-void destroy_variable_map(variable_map_t *map)
-{
-    if (map->lists)
-    {
-        size_t index;
-
-        for (index = 0; index < map->capacity; index++)
-        {
-            variable_list_t *list;
-
-            list = map->lists[index];
-
-            if (list)
-            {
-                destroy_variable_list(list);
-            }
-        }
-
-        free(map->lists);
-    }
-
-    free(map);
-}
-
-void destroy_variable_list(variable_list_t *list)
-{
-    if (list->identifier)
-    {
-        free(list->identifier);
-    }
-
-    if (list->value)
-    {
-        destroy_value(list->value);
-    }
-
-    if (list->next)
-    {
-        destroy_variable_list(list->next);
-    }
-
-    free(list);
-}
-
-static variable_list_t *create_variable_list(char *identifier, value_t *value, variable_list_t *next)
-{
-    variable_list_t *list;
-
-    list = malloc(sizeof(variable_list_t));
-
-    if (list)
-    {
-        list->identifier = identifier;
-        list->value = value;
-        list->next = next;
-    }
-
-    return list;
-}
-
-static variable_map_t *create_variable_map(variable_list_t **lists, size_t length, size_t capacity)
-{
-    variable_map_t *map;
-
-    map = malloc(sizeof(variable_map_t));
-
-    if (map)
-    {
-        map->lists = lists;
-        map->length = length;
-        map->capacity = capacity;
-    }
-
-    return map;
-}
-
-static value_t *apply_expression(expression_t *expression, variable_map_t *variables)
+static value_t *apply_expression(expression_t *expression, map_t *variables)
 {
     argument_iterator_t *arguments;
     value_t *result;
@@ -262,7 +165,7 @@ static value_t *apply_expression(expression_t *expression, variable_map_t *varia
     return result;
 }
 
-static value_t *apply_list(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *apply_list(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *item, **items;
     size_t length, index;
@@ -319,7 +222,7 @@ static value_t *apply_list(argument_iterator_t *arguments, variable_map_t *varia
     return new_list(items, length);
 }
 
-static value_t *apply_call(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *apply_call(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *operator;
     char *name;
@@ -460,7 +363,7 @@ static value_t *apply_call(argument_iterator_t *arguments, variable_map_t *varia
     return new_error(ERROR_ARGUMENT);
 }
 
-static value_t *operator_value(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_value(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *identifier, *value;
 
@@ -486,12 +389,12 @@ static value_t *operator_value(argument_iterator_t *arguments, variable_map_t *v
         return new_error(ERROR_ARGUMENT);
     }
 
-    value = get_variable(variables, view_string(identifier));
+    value = get_map_item(variables, view_string(identifier));
 
     return value ? copy_value(value) : new_null();
 }
 
-static value_t *operator_assign(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *identifier, *value;
 
@@ -536,7 +439,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, variable_map_t *
 
     if (value->type == TYPE_NULL)
     {
-        remove_variable(variables, view_string(identifier));
+        remove_map_item(variables, view_string(identifier));
     }
     else
     {
@@ -558,12 +461,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, variable_map_t *
             return NULL;
         }
 
-        if (set_variable(variables, name, copy) == -1)
-        {
-            return NULL;
-        }
-
-        if (resize_variable_map(variables) == -1)
+        if (!set_map_item(variables, name, copy))
         {
             return NULL;
         }
@@ -572,7 +470,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, variable_map_t *
     return new_null();
 }
 
-static value_t *operator_roster(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_roster(argument_iterator_t *arguments, map_t *variables)
 {
     value_t **items;
     size_t length, index, placement;
@@ -587,15 +485,15 @@ static value_t *operator_roster(argument_iterator_t *arguments, variable_map_t *
 
     for (index = 0, placement = 0; index < variables->capacity; index++)
     {
-        if (variables->lists[index])
+        if (variables->chains[index])
         {
-            variable_list_t *list;
+            map_chain_t *chain;
 
-            for (list = variables->lists[index]; list != NULL; list = list->next)
+            for (chain = variables->chains[index]; chain != NULL; chain = chain->next)
             {
                 value_t *item;
 
-                item = new_string(list->identifier);
+                item = new_string(chain->key);
 
                 if (!item)
                 {
@@ -613,7 +511,7 @@ static value_t *operator_roster(argument_iterator_t *arguments, variable_map_t *
     return new_list(items, length);
 }
 
-static value_t *operator_catch(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_catch(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *solo;
 
@@ -637,7 +535,7 @@ static value_t *operator_catch(argument_iterator_t *arguments, variable_map_t *v
     return new_null();
 }
 
-static value_t *operator_throw(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_throw(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *solo;
 
@@ -666,7 +564,7 @@ static value_t *operator_throw(argument_iterator_t *arguments, variable_map_t *v
     return new_error(view_number(solo));
 }
 
-static value_t *operator_add(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_add(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *left, *right;
 
@@ -744,7 +642,7 @@ static value_t *operator_add(argument_iterator_t *arguments, variable_map_t *var
     return new_error(ERROR_UNSUPPORTED);
 }
 
-static value_t *operator_subtract(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_subtract(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *left, *right;
 
@@ -795,7 +693,7 @@ static value_t *operator_subtract(argument_iterator_t *arguments, variable_map_t
     return new_number(view_number(left) - view_number(right));
 }
 
-static value_t *operator_multiply(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_multiply(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *left, *right;
 
@@ -846,7 +744,7 @@ static value_t *operator_multiply(argument_iterator_t *arguments, variable_map_t
     return new_number(view_number(left) * view_number(right));
 }
 
-static value_t *operator_divide(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_divide(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *left, *right;
 
@@ -902,7 +800,7 @@ static value_t *operator_divide(argument_iterator_t *arguments, variable_map_t *
     return new_number(div(view_number(left), view_number(right)).quot);
 }
 
-static value_t *operator_modulo(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_modulo(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *left, *right;
 
@@ -958,7 +856,7 @@ static value_t *operator_modulo(argument_iterator_t *arguments, variable_map_t *
     return new_number(div(view_number(left), view_number(right)).rem);
 }
 
-static value_t *operator_and(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_and(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *left, *right;
 
@@ -1009,7 +907,7 @@ static value_t *operator_and(argument_iterator_t *arguments, variable_map_t *var
     return new_number(view_number(left) && view_number(right));
 }
 
-static value_t *operator_or(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_or(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *left, *right;
 
@@ -1060,7 +958,7 @@ static value_t *operator_or(argument_iterator_t *arguments, variable_map_t *vari
     return new_number(view_number(left) || view_number(right));
 }
 
-static value_t *operator_not(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_not(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *solo;
 
@@ -1089,7 +987,7 @@ static value_t *operator_not(argument_iterator_t *arguments, variable_map_t *var
     return new_number(!view_number(solo));
 }
 
-static value_t *operator_conditional(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_conditional(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *condition;
 
@@ -1155,7 +1053,7 @@ static value_t *operator_conditional(argument_iterator_t *arguments, variable_ma
     }
 }
 
-static value_t *operator_loop(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables)
 {
     int proceed;
 
@@ -1218,7 +1116,7 @@ static value_t *operator_loop(argument_iterator_t *arguments, variable_map_t *va
     return new_null();
 }
 
-static value_t *operator_chain(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_chain(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *last;
 
@@ -1245,7 +1143,7 @@ static value_t *operator_chain(argument_iterator_t *arguments, variable_map_t *v
     return copy_value(last);
 }
 
-static value_t *operator_less(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_less(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *left, *right;
 
@@ -1286,7 +1184,7 @@ static value_t *operator_less(argument_iterator_t *arguments, variable_map_t *va
     return new_number(compare_values(left, right) < 0);
 }
 
-static value_t *operator_greater(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_greater(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *left, *right;
 
@@ -1327,7 +1225,7 @@ static value_t *operator_greater(argument_iterator_t *arguments, variable_map_t 
     return new_number(compare_values(left, right) > 0);
 }
 
-static value_t *operator_equal(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_equal(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *left, *right;
 
@@ -1368,7 +1266,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, variable_map_t *v
     return new_number(compare_values(left, right) == 0);
 }
 
-static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *collection, *reversed;
     value_t **items;
@@ -1446,7 +1344,7 @@ static value_t *operator_sort(argument_iterator_t *arguments, variable_map_t *va
     return new_list(items, length);
 }
 
-static value_t *operator_type(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_type(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *solo;
 
@@ -1490,7 +1388,7 @@ static value_t *operator_type(argument_iterator_t *arguments, variable_map_t *va
     return new_error(ERROR_UNSUPPORTED);
 }
 
-static value_t *operator_number(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_number(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *solo;
 
@@ -1536,7 +1434,7 @@ static value_t *operator_number(argument_iterator_t *arguments, variable_map_t *
     return new_error(ERROR_UNSUPPORTED);
 }
 
-static value_t *operator_string(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_string(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *solo;
 
@@ -1587,7 +1485,7 @@ static value_t *operator_string(argument_iterator_t *arguments, variable_map_t *
     return new_error(ERROR_UNSUPPORTED);
 }
 
-static value_t *operator_hash(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *solo;
 
@@ -1611,7 +1509,7 @@ static value_t *operator_hash(argument_iterator_t *arguments, variable_map_t *va
     return new_number(hash_value(solo));
 }
 
-static value_t *operator_length(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_length(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *solo;
 
@@ -1640,7 +1538,7 @@ static value_t *operator_length(argument_iterator_t *arguments, variable_map_t *
     return new_number(length_value(solo));
 }
 
-static value_t *operator_index(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_index(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *collection, *index;
     int adjusted;
@@ -1723,7 +1621,7 @@ static value_t *operator_index(argument_iterator_t *arguments, variable_map_t *v
     return new_error(ERROR_UNSUPPORTED);
 }
 
-static value_t *operator_range(argument_iterator_t *arguments, variable_map_t *variables)
+static value_t *operator_range(argument_iterator_t *arguments, map_t *variables)
 {
     value_t *collection, *start, *end;
     int adjustedstart, adjustedend;
@@ -1873,7 +1771,7 @@ static int has_next_argument(argument_iterator_t *iterator)
     return iterator->index < iterator->length;
 }
 
-static value_t *next_argument(argument_iterator_t *iterator, variable_map_t *variables)
+static value_t *next_argument(argument_iterator_t *iterator, map_t *variables)
 {
     value_t *result;
 
@@ -1895,154 +1793,6 @@ static void rewind_argument(argument_iterator_t *iterator)
     iterator->index -= 1;
     destroy_value(iterator->evaluated[iterator->index]);
     iterator->evaluated[iterator->index] = NULL;
-}
-
-static int set_variable(variable_map_t *map, char *identifier, value_t *value)
-{
-    variable_list_t *list, *last, *created;
-    int hash, index;
-
-    hash = abs(hash_string(identifier));
-    index = div(hash, map->capacity).rem;
-
-    for (list = map->lists[index], last = NULL; list != NULL; list = list->next)
-    {
-        if (strcmp(identifier, list->identifier) == 0)
-        {
-            free(identifier);
-            destroy_value(list->value);
-            list->value = value;
-            return 2;
-        }
-
-        last = list;
-    }
-
-    created = create_variable_list(identifier, value, NULL);
-
-    if (!created)
-    {
-        return -1;
-    }
-
-    if (last)
-    {
-        last->next = created;
-    }
-    else
-    {
-        map->lists[index] = created;
-    }
-
-    map->length += 1;
-
-    return 1;
-}
-
-static value_t *get_variable(variable_map_t *map, char *identifier)
-{
-    variable_list_t *list;
-    int hash, index;
-
-    hash = abs(hash_string(identifier));
-    index = div(hash, map->capacity).rem;
-
-    for (list = map->lists[index]; list != NULL; list = list->next)
-    {
-        if (strcmp(identifier, list->identifier) == 0)
-        {
-            return list->value;
-        }
-    }
-
-    return NULL;
-}
-
-static int remove_variable(variable_map_t *map, char *identifier)
-{
-    variable_list_t *list, *previous;
-    int hash, index;
-
-    hash = abs(hash_string(identifier));
-    index = div(hash, map->capacity).rem;
-
-    for (list = map->lists[index], previous = NULL; list != NULL; list = list->next)
-    {
-        if (strcmp(identifier, list->identifier) == 0)
-        {
-            if (previous)
-            {
-                previous->next = list->next;
-            }
-            else
-            {
-                map->lists[index] = list->next;
-            }
-
-            list->next = NULL;
-            destroy_variable_list(list);
-            map->length -= 1;
-
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-static int resize_variable_map(variable_map_t *map)
-{
-    if (map->length == map->capacity)
-    {
-        variable_list_t **existing, **lists;
-        variable_list_t *list;
-        size_t expand, fill, index;
-
-        existing = map->lists;
-        expand = map->capacity * 2;
-        fill = map->capacity;
-        lists = calloc(expand, sizeof(variable_list_t *));
-
-        if (!lists)
-        {
-            return -1;
-        }
-
-        map->capacity = expand;
-        map->length = 0;
-        map->lists = lists;
-
-        for (index = 0; index < fill; index++)
-        {
-            for (list = existing[index]; list != NULL; list = list->next)
-            {
-                if (set_variable(map, list->identifier, list->value) == -1)
-                {
-                    free(map->lists);
-                    return -1;
-                }
-
-                list->identifier = NULL;
-                list->value = NULL;
-            }
-        }
-
-        for (index = 0; index < fill; index++)
-        {
-            list = existing[index];
-
-            if (list)
-            {
-                destroy_variable_list(list);
-            }
-        }
-
-        free(existing);
-
-        return 1;
-    }
-
-    return 0;
 }
 
 static int compare_values_ascending(const void *left, const void *right)
