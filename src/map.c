@@ -4,10 +4,10 @@
 
 static void destroy_chain(map_chain_t *chain, void (*destroy)(void *));
 static map_chain_t *create_map_chain(char *key, void *value, map_chain_t *next);
-static map_t *create_map(int (*hash)(char *), void (*destroy)(void *), size_t size, size_t length, size_t capacity, map_chain_t **chains);
+static map_t *create_map(int (*hash)(char *), void (*destroy)(void *), size_t length, size_t capacity, map_chain_t **chains);
 static int resize_map(map_t *map);
 
-map_t *empty_map(int (*hash)(char *), void (*destroy)(void *), size_t size)
+map_t *empty_map(int (*hash)(char *), void (*destroy)(void *))
 {
     map_chain_t **chains;
     size_t capacity;
@@ -20,7 +20,7 @@ map_t *empty_map(int (*hash)(char *), void (*destroy)(void *), size_t size)
         return NULL;
     }
 
-    return create_map(hash, destroy, size, 0, capacity, chains);
+    return create_map(hash, destroy, 0, capacity, chains);
 }
 
 void *get_map_item(map_t *map, char *key)
@@ -179,7 +179,7 @@ static map_chain_t *create_map_chain(char *key, void *value, map_chain_t *next)
     return chain;
 }
 
-static map_t *create_map(int (*hash)(char *), void (*destroy)(void *), size_t size, size_t length, size_t capacity, map_chain_t **chains)
+static map_t *create_map(int (*hash)(char *), void (*destroy)(void *), size_t length, size_t capacity, map_chain_t **chains)
 {
     map_t *map;
 
@@ -189,7 +189,6 @@ static map_t *create_map(int (*hash)(char *), void (*destroy)(void *), size_t si
     {
         map->hash = hash;
         map->destroy = destroy;
-        map->size = size;
         map->length = length;
         map->capacity = capacity;
         map->chains = chains;

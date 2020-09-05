@@ -314,7 +314,7 @@ static int print_value(value_t *value)
 
 static map_t *empty_variables()
 {
-    return empty_map(hash_string, destroy_value_unsafe, sizeof(value_t));
+    return empty_map(hash_string, destroy_value_unsafe);
 }
 
 static void destroy_value_unsafe(void *value)
