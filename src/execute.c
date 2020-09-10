@@ -4,13 +4,14 @@
 #include "parse.h"
 #include "value.h"
 #include "map.h"
+#include "list.h"
 #include "common.h"
 
 typedef struct
 {
-    expression_t **candidates;
+    list_t *expressions;
+    list_node_t *current;
     value_t **evaluated;
-    size_t length;
     size_t index;
 } argument_iterator_t;
 
@@ -54,13 +55,13 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
 static int has_next_argument(argument_iterator_t *iterator);
 static value_t *next_argument(argument_iterator_t *iterator, map_t *variables, map_t *operators);
 static void skip_argument(argument_iterator_t *iterator);
-static void rewind_argument(argument_iterator_t *iterator);
+static void reset_arguments(argument_iterator_t *iterator);
 static int compare_values_ascending(const void *left, const void *right);
 static int compare_values_descending(const void *left, const void *right);
 
-value_t *execute_expression(expression_t *expressions, map_t *variables)
+value_t *execute_expression(list_t *expressions, map_t *variables)
 {
-    expression_t *expression;
+    list_node_t *node;
     value_t *last;
     map_t *operators;
 
@@ -71,8 +72,12 @@ value_t *execute_expression(expression_t *expressions, map_t *variables)
         return NULL;
     }
 
-    for (expression = expressions; expression != NULL; expression = expression->next)
+    for (node = expressions->head; node != NULL; node = node->next)
     {
+        expression_t *expression;
+
+        expression = node->value;
+
         if (expression->value->type == TYPE_ERROR)
         {
             return copy_value(expression->value);
@@ -81,10 +86,12 @@ value_t *execute_expression(expression_t *expressions, map_t *variables)
 
     last = new_null();
 
-    for (expression = expressions; expression != NULL; expression = expression->next)
+    for (node = expressions->head; node != NULL; node = node->next)
     {
+        expression_t *expression;
         value_t *value;
 
+        expression = node->value;
         value = apply_expression(expression, variables, operators);
 
         if (!value)
@@ -127,18 +134,14 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
         return NULL;
     }
 
-    arguments->candidates = expression->arguments;
-    arguments->length = expression->length;
+    arguments->expressions = expression->arguments;
+    arguments->current = expression->arguments->head;
     arguments->index = 0;
+    arguments->evaluated = malloc(sizeof(value_t *) * arguments->expressions->length);
 
-    if (expression->length > 0)
+    if (!arguments->evaluated)
     {
-        arguments->evaluated = malloc(sizeof(value_t *) * expression->length);
-
-        if (!arguments->evaluated)
-        {
-            return NULL;
-        }
+        return NULL;
     }
 
     switch (expression->value->type)
@@ -160,23 +163,19 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
             break;
     }
 
-    if (arguments->length > 0)
+    for (index = 0; index < arguments->index; index++)
     {
-        for (index = 0; index < arguments->index; index++)
+        value_t *value;
+
+        value = arguments->evaluated[index];
+
+        if (value)
         {
-            value_t *value;
-
-            value = arguments->evaluated[index];
-
-            if (value)
-            {
-                destroy_value(value);
-            }
+            destroy_value(value);
         }
-
-        free(arguments->evaluated);
     }
 
+    free(arguments->evaluated);
     free(arguments);
 
     return result;
@@ -187,7 +186,7 @@ static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map
     value_t *item, **items;
     size_t length, index;
 
-    length = arguments->length;
+    length = arguments->expressions->length;
     items = malloc(sizeof(value_t *) * length);
 
     if (!items)
@@ -1092,8 +1091,8 @@ static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables, 
                 return copy_value(pass);
             }
 
-            rewind_argument(arguments);
-            rewind_argument(arguments);
+            reset_arguments(arguments);
+            skip_argument(arguments);
         }
     }
 
@@ -1752,14 +1751,15 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
 
 static int has_next_argument(argument_iterator_t *iterator)
 {
-    return iterator->index < iterator->length;
+    return iterator->index < iterator->expressions->length;
 }
 
 static value_t *next_argument(argument_iterator_t *iterator, map_t *variables, map_t *operators)
 {
     value_t *result;
 
-    result = apply_expression(iterator->candidates[iterator->index], variables, operators);
+    result = apply_expression(iterator->current->value, variables, operators);
+    iterator->current = iterator->current->next;
     iterator->evaluated[iterator->index] = result;
     iterator->index += 1;
 
@@ -1768,15 +1768,26 @@ static value_t *next_argument(argument_iterator_t *iterator, map_t *variables, m
 
 static void skip_argument(argument_iterator_t *iterator)
 {
+    iterator->current = iterator->current->next;
     iterator->evaluated[iterator->index] = NULL;
     iterator->index += 1;
 }
 
-static void rewind_argument(argument_iterator_t *iterator)
+static void reset_arguments(argument_iterator_t *iterator)
 {
-    iterator->index -= 1;
-    destroy_value(iterator->evaluated[iterator->index]);
-    iterator->evaluated[iterator->index] = NULL;
+    size_t index;
+
+    for (index = 0; index < iterator->index; index++)
+    {
+        if (iterator->evaluated[index])
+        {
+            destroy_value(iterator->evaluated[index]);
+            iterator->evaluated[index] = NULL;
+        }
+    }
+
+    iterator->current = iterator->expressions->head;
+    iterator->index = 0;
 }
 
 static int compare_values_ascending(const void *left, const void *right)

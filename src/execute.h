@@ -5,6 +5,6 @@
 #include "value.h"
 #include "map.h"
 
-value_t *execute_expression(expression_t *expressions, map_t *variables);
+value_t *execute_expression(list_t *expressions, map_t *variables);
 
 #endif

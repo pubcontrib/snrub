@@ -3,16 +3,15 @@
 
 #include "lex.h"
 #include "value.h"
+#include "list.h"
 
-typedef struct expression_t
+typedef struct
 {
     value_t *value;
-    struct expression_t **arguments;
-    size_t length;
-    struct expression_t *next;
+    list_t *arguments;
 } expression_t;
 
-expression_t *parse_expressions(scanner_t *scanner);
+list_t *parse_expressions(scanner_t *scanner);
 char *escape_string(char *string);
 char *unescape_string(char *string);
 void destroy_expression(expression_t *expression);

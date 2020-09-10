@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include "parse.h"
 #include "lex.h"
+#include "list.h"
 #include "common.h"
 
 static const int LIMIT_DEPTH = 32;
@@ -16,19 +17,24 @@ typedef enum
     PARSER_STATE_ARGUMENTS
 } parser_state_t;
 
-static expression_t *create_expression(value_t *value, expression_t **arguments, size_t length, expression_t *next);
+static void destroy_expression_unsafe(void *expression);
+static expression_t *create_expression(value_t *value, list_t *arguments);
 static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth);
 static value_t *parse_null_literal(char *value);
 static value_t *parse_number_literal(char *value);
 static value_t *parse_string_literal(char *value);
 static int is_printable(char *value);
 
-expression_t *parse_expressions(scanner_t *scanner)
+list_t *parse_expressions(scanner_t *scanner)
 {
-    expression_t *head, *tail;
+    list_t *expressions;
 
-    head = NULL;
-    tail = NULL;
+    expressions = empty_list(destroy_expression_unsafe);
+
+    if (!expressions)
+    {
+        return NULL;
+    }
 
     do
     {
@@ -38,34 +44,26 @@ expression_t *parse_expressions(scanner_t *scanner)
 
         if (expression)
         {
-            if (head)
+            if (!add_list_item(expressions, expression))
             {
-                tail->next = expression;
-                tail = tail->next;
-            }
-            else
-            {
-                head = expression;
-                tail = head;
+                destroy_expression(expression);
+                destroy_list(expressions);
+                return NULL;
             }
 
             if (expression->value->type == TYPE_ERROR)
             {
-                return head;
+                return expressions;
             }
         }
         else
         {
-            if (head)
-            {
-                destroy_expression(head);
-            }
-
+            destroy_list(expressions);
             return NULL;
         }
     } while (!scanner->closed);
 
-    return head;
+    return expressions;
 }
 
 char *escape_string(char *string)
@@ -201,25 +199,18 @@ void destroy_expression(expression_t *expression)
 
     if (expression->arguments)
     {
-        size_t index;
-
-        for (index = 0; index < expression->length; index++)
-        {
-            destroy_expression(expression->arguments[index]);
-        }
-
-        free(expression->arguments);
-    }
-
-    if (expression->next)
-    {
-        destroy_expression(expression->next);
+        destroy_list(expression->arguments);
     }
 
     free(expression);
 }
 
-static expression_t *create_expression(value_t *value, expression_t **arguments, size_t length, expression_t *next)
+static void destroy_expression_unsafe(void *expression)
+{
+    destroy_expression((expression_t *) expression);
+}
+
+static expression_t *create_expression(value_t *value, list_t *arguments)
 {
     expression_t *expression;
 
@@ -229,8 +220,6 @@ static expression_t *create_expression(value_t *value, expression_t **arguments,
     {
         expression->value = value;
         expression->arguments = arguments;
-        expression->length = length;
-        expression->next = next;
     }
 
     return expression;
@@ -239,13 +228,23 @@ static expression_t *create_expression(value_t *value, expression_t **arguments,
 static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth)
 {
     parser_state_t state;
+    list_t *arguments;
     expression_t *expression;
 
     state = PARSER_STATE_START;
-    expression = create_expression(NULL, NULL, 0, NULL);
+
+    arguments = empty_list(destroy_expression_unsafe);
+
+    if (!arguments)
+    {
+        return NULL;
+    }
+
+    expression = create_expression(NULL, arguments);
 
     if (!expression)
     {
+        destroy_list(arguments);
         return NULL;
     }
 
@@ -257,7 +256,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
 
     while (!scanner->closed && state != PARSER_STATE_ERROR && state != PARSER_STATE_SUCCESS)
     {
-        if (expression->length > LIMIT_BREADTH)
+        if (arguments->length > LIMIT_BREADTH)
         {
             destroy_value(expression->value);
 
@@ -325,7 +324,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                     }
                     else if (expression->value->type == TYPE_CALL && token->name == TOKEN_NAME_CALL_END)
                     {
-                        if (expression->length > 0)
+                        if (arguments->length > 0)
                         {
                             state = PARSER_STATE_SUCCESS;
                         }
@@ -346,8 +345,6 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
 
                         if (argument)
                         {
-                            expression_t **existing;
-
                             if (argument->value->type == TYPE_ERROR)
                             {
                                 destroy_value(expression->value);
@@ -356,27 +353,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                                 expression->value = copy_value(argument->value);
                             }
 
-                            existing = expression->arguments;
-                            expression->length += 1;
-                            expression->arguments = malloc(sizeof(expression_t *) * expression->length);
-
-                            if (expression->arguments)
-                            {
-                                if (expression->length > 1)
-                                {
-                                    size_t index;
-
-                                    for (index = 0; index < expression->length - 1; index++)
-                                    {
-                                        expression->arguments[index] = existing[index];
-                                    }
-
-                                    free(existing);
-                                }
-
-                                expression->arguments[expression->length - 1] = argument;
-                            }
-                            else
+                            if (!add_list_item(arguments, argument))
                             {
                                 destroy_expression(argument);
                                 destroy_expression(expression);

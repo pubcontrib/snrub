@@ -152,7 +152,7 @@ static int complete_script(char *document)
 static int apply_script(char *document, map_t *variables)
 {
     scanner_t *scanner;
-    expression_t *expressions;
+    list_t *expressions;
     value_t *value;
     int status;
 
@@ -174,7 +174,7 @@ static int apply_script(char *document, map_t *variables)
     }
 
     value = execute_expression(expressions, variables);
-    destroy_expression(expressions);
+    destroy_list(expressions);
 
     if (!value)
     {
