@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include "list.h"
 
-static void destroy_list_node(list_node_t *node, void (*destroy)(void *));
 static list_t *create_list(void (*destroy)(void *), size_t length, list_node_t *head, list_node_t *tail);
 static list_node_t *create_list_node(void *value, list_node_t *next);
 
@@ -41,25 +40,22 @@ void destroy_list(list_t *list)
 {
     if (list->head)
     {
-        destroy_list_node(list->head, list->destroy);
+        list_node_t *node, *next;
+
+        for (node = list->head; node != NULL; node = next)
+        {
+            next = node->next;
+
+            if (node->value)
+            {
+                list->destroy(node->value);
+            }
+
+            free(node);
+        }
     }
 
     free(list);
-}
-
-static void destroy_list_node(list_node_t *node, void (*destroy)(void *))
-{
-    if (node->value)
-    {
-        destroy(node->value);
-    }
-
-    if (node->next)
-    {
-        destroy_list_node(node->next, destroy);
-    }
-
-    free(node);
 }
 
 static list_t *create_list(void (*destroy)(void *), size_t length, list_node_t *head, list_node_t *tail)
