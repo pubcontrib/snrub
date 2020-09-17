@@ -27,7 +27,7 @@ static map_t *default_operators();
 static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, map_t *, map_t *));
 static value_t *operator_value(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_roster(argument_iterator_t *arguments, map_t *variables, map_t *operators);
+static value_t *operator_variables(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *operator_catch(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *operator_throw(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *operator_add(argument_iterator_t *arguments, map_t *variables, map_t *operators);
@@ -288,7 +288,7 @@ static map_t *default_operators()
 
     if (!set_operator(operators, "<--", operator_value)
         || !set_operator(operators, "-->", operator_assign)
-        || !set_operator(operators, "---", operator_roster)
+        || !set_operator(operators, "---", operator_variables)
         || !set_operator(operators, "><", operator_catch)
         || !set_operator(operators, "<>", operator_throw)
         || !set_operator(operators, "+", operator_add)
@@ -453,7 +453,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables
     return new_null();
 }
 
-static value_t *operator_roster(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_variables(argument_iterator_t *arguments, map_t *variables, map_t *operators)
 {
     value_t **items;
     size_t length, index, placement;

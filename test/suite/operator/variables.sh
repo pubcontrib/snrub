@@ -1,6 +1,6 @@
 . test/assert.sh
 
-hint 'operator/roster'
+hint 'operator/variables'
 
 # Variable Roster
 pass '("---")' '[]'

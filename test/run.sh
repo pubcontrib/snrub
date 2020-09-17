@@ -17,7 +17,7 @@ fi
 
 . test/suite/operator/value.sh
 . test/suite/operator/assign.sh
-. test/suite/operator/roster.sh
+. test/suite/operator/variables.sh
 . test/suite/operator/catch.sh
 . test/suite/operator/throw.sh
 . test/suite/operator/add.sh
