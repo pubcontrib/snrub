@@ -53,6 +53,7 @@ static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, 
 static value_t *operator_length(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *operator_index(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *operator_range(argument_iterator_t *arguments, map_t *variables, map_t *operators);
+static value_t *list_map_keys(map_t *map);
 static int has_next_argument(argument_iterator_t *iterator);
 static value_t *next_argument(argument_iterator_t *iterator, map_t *variables, map_t *operators);
 static void skip_argument(argument_iterator_t *iterator);
@@ -457,84 +458,12 @@ static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables
 
 static value_t *operator_variables(argument_iterator_t *arguments, map_t *variables, map_t *operators)
 {
-    value_t **items;
-    size_t length, index, placement;
-
-    length = variables->length;
-    items = malloc(sizeof(value_t *) * length);
-
-    if (!items)
-    {
-        return NULL;
-    }
-
-    for (index = 0, placement = 0; index < variables->capacity; index++)
-    {
-        if (variables->chains[index])
-        {
-            map_chain_t *chain;
-
-            for (chain = variables->chains[index]; chain != NULL; chain = chain->next)
-            {
-                value_t *item;
-
-                item = new_string(chain->key);
-
-                if (!item)
-                {
-                    free(items);
-                    return NULL;
-                }
-
-                items[placement++] = item;
-            }
-        }
-    }
-
-    qsort(items, length, sizeof(value_t *), compare_values_ascending);
-
-    return new_list(items, length);
+    return list_map_keys(variables);
 }
 
 static value_t *operator_operators(argument_iterator_t *arguments, map_t *variables, map_t *operators)
 {
-    value_t **items;
-    size_t length, index, placement;
-
-    length = operators->length;
-    items = malloc(sizeof(value_t *) * length);
-
-    if (!items)
-    {
-        return NULL;
-    }
-
-    for (index = 0, placement = 0; index < operators->capacity; index++)
-    {
-        if (operators->chains[index])
-        {
-            map_chain_t *chain;
-
-            for (chain = operators->chains[index]; chain != NULL; chain = chain->next)
-            {
-                value_t *item;
-
-                item = new_string(chain->key);
-
-                if (!item)
-                {
-                    free(items);
-                    return NULL;
-                }
-
-                items[placement++] = item;
-            }
-        }
-    }
-
-    qsort(items, length, sizeof(value_t *), compare_values_ascending);
-
-    return new_list(items, length);
+    return list_map_keys(operators);
 }
 
 static value_t *operator_catch(argument_iterator_t *arguments, map_t *variables, map_t *operators)
@@ -1790,6 +1719,47 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
     }
 
     return new_error(ERROR_UNSUPPORTED);
+}
+
+static value_t *list_map_keys(map_t *map)
+{
+    value_t **items;
+    size_t length, index, placement;
+
+    length = map->length;
+    items = malloc(sizeof(value_t *) * length);
+
+    if (!items)
+    {
+        return NULL;
+    }
+
+    for (index = 0, placement = 0; index < map->capacity; index++)
+    {
+        if (map->chains[index])
+        {
+            map_chain_t *chain;
+
+            for (chain = map->chains[index]; chain != NULL; chain = chain->next)
+            {
+                value_t *item;
+
+                item = new_string(chain->key);
+
+                if (!item)
+                {
+                    free(items);
+                    return NULL;
+                }
+
+                items[placement++] = item;
+            }
+        }
+    }
+
+    qsort(items, length, sizeof(value_t *), compare_values_ascending);
+
+    return new_list(items, length);
 }
 
 static int has_next_argument(argument_iterator_t *iterator)
