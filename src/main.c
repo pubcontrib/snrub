@@ -239,77 +239,33 @@ static void print_usage()
 
 static void print_error(error_t error)
 {
-    printf("#%d#\n", error);
+    value_t *adapter;
+
+    adapter = new_error(error);
+
+    if (adapter)
+    {
+        print_value(adapter);
+        destroy_value(adapter);
+    }
 }
 
 static int print_value(value_t *value)
 {
-    if (value->type == TYPE_NULL)
+    char *represent;
+
+    represent = represent_value(value);
+
+    if (represent)
     {
-        printf("%c", SYMBOL_NULL);
-        return 0;
+        printf("%s", represent);
+        free(represent);
+        return value->type == TYPE_ERROR;
     }
-    else if (value->type == TYPE_NUMBER)
+    else
     {
-        printf("#%d#", view_number(value));
-        return 0;
-    }
-    else if (value->type == TYPE_STRING)
-    {
-        char *escaped;
-        escaped = unescape_string(view_string(value));
-
-        if (escaped)
-        {
-            printf("\"%s\"", escaped);
-            free(escaped);
-            return 0;
-        }
-        else
-        {
-            print_error(ERROR_SHORTAGE);
-            return 1;
-        }
-    }
-    else if (value->type == TYPE_LIST)
-    {
-        value_t **items;
-        size_t length, index;
-
-        items = value->data;
-        length = value->size;
-
-        printf("[");
-
-        for (index = 0; index < length; index++)
-        {
-            value_t *item;
-
-            if (index > 0)
-            {
-                printf(" ");
-            }
-
-            item = items[index];
-
-            if (print_value(item))
-            {
-                printf("]");
-                return 1;
-            }
-        }
-
-        printf("]");
-        return 0;
-    }
-    else if (value->type == TYPE_ERROR)
-    {
-        printf("#%d#", view_error(value));
         return 1;
     }
-
-    printf("#%d#", ERROR_UNSUPPORTED);
-    return 1;
 }
 
 static map_t *empty_variables()

@@ -4,6 +4,7 @@
 #include "common.h"
 
 static value_t *create_value(type_t type, void *data, size_t size);
+static char *quote_string(char *body, char qualifier);
 
 value_t *merge_lists(value_t *left, value_t *right)
 {
@@ -223,6 +224,241 @@ int hash_list(value_t **items, size_t length)
     return hash;
 }
 
+char *represent_value(value_t *this)
+{
+    switch (this->type)
+    {
+        case TYPE_NULL:
+            return represent_null();
+        case TYPE_NUMBER:
+            return represent_number(view_number(this));
+        case TYPE_STRING:
+            return represent_string(view_string(this));
+        case TYPE_LIST:
+            return represent_list(this->data, this->size);
+        case TYPE_ERROR:
+            return represent_error(view_error(this));
+        default:
+            return NULL;
+    }
+}
+
+char *represent_null()
+{
+    return copy_string("?");
+}
+
+char *represent_number(int number)
+{
+    char *body;
+
+    body = integer_to_string(number);
+
+    if (!body)
+    {
+        return NULL;
+    }
+
+    return quote_string(body, '#');
+}
+
+char *represent_string(char *string)
+{
+    char *body;
+
+    body = unescape_string(string);
+
+    if (!body)
+    {
+        return NULL;
+    }
+
+    return quote_string(body, '\"');
+}
+
+char *represent_list(value_t **items, size_t length)
+{
+    char *body, *swap;
+    size_t index;
+
+    body = copy_string("[");
+
+    if (!body)
+    {
+        return NULL;
+    }
+
+    for (index = 0; index < length; index++)
+    {
+        value_t *item;
+        char *represent;
+
+        if (index > 0)
+        {
+            swap = merge_strings(body, " ");
+
+            if (!swap)
+            {
+                free(body);
+                return NULL;
+            }
+
+            body = swap;
+        }
+
+        item = items[index];
+        represent = represent_value(item);
+
+        if (!represent)
+        {
+            free(body);
+            return NULL;
+        }
+
+        swap = merge_strings(body, represent);
+
+        if (!swap)
+        {
+            free(body);
+            free(represent);
+            return NULL;
+        }
+
+        body = swap;
+    }
+
+    return merge_strings(body, "]");
+}
+
+char *represent_error(error_t error)
+{
+    return represent_number(error);
+}
+
+char *escape_string(char *string)
+{
+    char *escape;
+    size_t length;
+
+    length = strlen(string);
+    escape = malloc(sizeof(char) * (length + 1));
+
+    if (escape)
+    {
+        size_t left, right;
+        int escaping;
+
+        escaping = 0;
+        right = 0;
+
+        for (left = 0; left < length; left++)
+        {
+            char current;
+
+            current = string[left];
+
+            if (escaping)
+            {
+                switch (current)
+                {
+                    case '\\':
+                        escape[right++] = '\\';
+                        break;
+                    case '"':
+                        escape[right++] = '"';
+                        break;
+                    case 't':
+                        escape[right++] = '\t';
+                        break;
+                    case 'n':
+                        escape[right++] = '\n';
+                        break;
+                    case 'r':
+                        escape[right++] = '\r';
+                        break;
+                }
+
+                escaping = 0;
+            }
+            else
+            {
+                if (current == '\\')
+                {
+                    escaping = 1;
+                }
+                else
+                {
+                    escape[right++] = current;
+                }
+            }
+        }
+
+        escape[right] = '\0';
+    }
+
+    return escape;
+}
+
+char *unescape_string(char *string)
+{
+    char *unescape;
+    size_t length;
+
+    length = strlen(string)
+        + characters_in_string(string, '\\')
+        + characters_in_string(string, '"')
+        + characters_in_string(string, '\t')
+        + characters_in_string(string, '\n')
+        + characters_in_string(string, '\r');
+    unescape = malloc(sizeof(char) * (length + 1));
+
+    if (unescape)
+    {
+        size_t left, right;
+
+        for (left = 0, right = 0; left < length; right++)
+        {
+            char symbol;
+
+            symbol = string[right];
+
+            if (symbol == '\\')
+            {
+                unescape[left++] = '\\';
+                unescape[left++] = '\\';
+            }
+            else if (symbol == '"')
+            {
+                unescape[left++] = '\\';
+                unescape[left++] = '"';
+            }
+            else if (symbol == '\t')
+            {
+                unescape[left++] = '\\';
+                unescape[left++] = 't';
+            }
+            else if (symbol == '\n')
+            {
+                unescape[left++] = '\\';
+                unescape[left++] = 'n';
+            }
+            else if (symbol == '\r')
+            {
+                unescape[left++] = '\\';
+                unescape[left++] = 'r';
+            }
+            else
+            {
+                unescape[left++] = symbol;
+            }
+        }
+
+        unescape[length] = '\0';
+    }
+
+    return unescape;
+}
+
 int compare_values(value_t *left, value_t *right)
 {
     if (left->type != right->type)
@@ -354,4 +590,30 @@ static value_t *create_value(type_t type, void *data, size_t size)
     }
 
     return value;
+}
+
+static char *quote_string(char *body, char qualifier)
+{
+    char *represent;
+    size_t length, index;
+
+    length = strlen(body);
+    represent = realloc(body, sizeof(char) * (length + 2 + 1));
+
+    if (!represent)
+    {
+        free(body);
+        return NULL;
+    }
+
+    for (index = length; index > 0; index--)
+    {
+        represent[index] = represent[index - 1];
+    }
+
+    represent[index] = qualifier;
+    represent[length + 1] = qualifier;
+    represent[length + 2] = '\0';
+
+    return represent;
 }
