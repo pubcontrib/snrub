@@ -37,12 +37,12 @@ value_t *merge_lists(value_t *left, value_t *right)
     return new_list(items, length);
 }
 
-value_t *new_unset()
+value_t *new_unset(void)
 {
     return create_value(TYPE_UNSET, NULL, 0);
 }
 
-value_t *new_null()
+value_t *new_null(void)
 {
     return create_value(TYPE_NULL, NULL, 0);
 }
@@ -98,7 +98,7 @@ value_t *new_error(error_t error)
     return create_value(TYPE_ERROR, data, size);
 }
 
-value_t *new_call()
+value_t *new_call(void)
 {
     return create_value(TYPE_CALL, NULL, 0);
 }
@@ -183,7 +183,7 @@ int hash_value(value_t *this)
     }
 }
 
-int hash_null()
+int hash_null(void)
 {
     return 0;
 }
@@ -243,7 +243,7 @@ char *represent_value(value_t *this)
     }
 }
 
-char *represent_null()
+char *represent_null(void)
 {
     return copy_string("?");
 }

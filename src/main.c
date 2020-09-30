@@ -15,11 +15,11 @@
 static int complete_script(char *document);
 static int apply_script(char *document, map_t *variables);
 static char *read_file(char *path);
-static void print_version();
-static void print_usage();
+static void print_version(void);
+static void print_usage(void);
 static void print_error(error_t error);
 static int print_value(value_t *value);
-static map_t *empty_variables();
+static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
 
 int main(int argc, char **argv)
@@ -220,12 +220,12 @@ static char *read_file(char *path)
     return NULL;
 }
 
-static void print_version()
+static void print_version(void)
 {
     printf("%s\n", PROGRAM_VERSION);
 }
 
-static void print_usage()
+static void print_usage(void)
 {
     printf("Usage:\n");
     printf("  %s [options]\n", PROGRAM_NAME);
@@ -268,7 +268,7 @@ static int print_value(value_t *value)
     }
 }
 
-static map_t *empty_variables()
+static map_t *empty_variables(void)
 {
     return empty_map(hash_string, destroy_value_unsafe, 64);
 }

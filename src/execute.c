@@ -23,7 +23,7 @@ typedef struct
 static value_t *apply_expression(expression_t *expression, map_t *variables, map_t *operators);
 static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static map_t *default_operators();
+static map_t *default_operators(void);
 static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, map_t *, map_t *));
 static value_t *operator_value(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables, map_t *operators);
@@ -277,7 +277,7 @@ static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map
     return operator->call(arguments, variables, operators);
 }
 
-static map_t *default_operators()
+static map_t *default_operators(void)
 {
     map_t *operators;
 

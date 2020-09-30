@@ -4,7 +4,7 @@
 #include "cli.h"
 
 static line_t *create_line(char *document, size_t size, size_t capacity, int exit);
-static line_t *empty_line();
+static line_t *empty_line(void);
 
 int get_flag(int argc, char **argv, char *name)
 {
@@ -43,7 +43,7 @@ char *get_option(int argc, char **argv, char *name)
     return NULL;
 }
 
-line_t *next_line()
+line_t *next_line(void)
 {
     line_t* line;
 
@@ -115,7 +115,7 @@ static line_t *create_line(char *string, size_t length, size_t capacity, int exi
     return line;
 }
 
-static line_t *empty_line()
+static line_t *empty_line(void)
 {
     char *string;
     size_t capacity;
