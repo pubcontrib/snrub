@@ -3,11 +3,11 @@
 
 #include <stdlib.h>
 
-static const char SYMBOL_COMMENT = '`';
-static const char SYMBOL_NULL = '?';
-static const char SYMBOL_NUMBER = '#';
-static const char SYMBOL_STRING = '"';
-static const char SYMBOL_ESCAPE = '\\';
+#define SYMBOL_COMMENT '`'
+#define SYMBOL_NULL '?'
+#define SYMBOL_NUMBER '#'
+#define SYMBOL_STRING '"'
+#define SYMBOL_ESCAPE '\\'
 
 typedef struct
 {

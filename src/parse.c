@@ -6,8 +6,8 @@
 #include "list.h"
 #include "common.h"
 
-static const int LIMIT_DEPTH = 32;
-static const int LIMIT_BREADTH = 1024;
+#define LIMIT_DEPTH 32
+#define LIMIT_BREADTH 1024
 
 typedef enum
 {
