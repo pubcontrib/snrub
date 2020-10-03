@@ -12,7 +12,9 @@ int get_flag(int argc, char **argv, char *name)
 
     for (index = 0; index < argc; index++)
     {
-        char *arg = argv[index];
+        char *arg;
+
+        arg = argv[index];
 
         if (strcmp(arg, name) == 0)
         {
@@ -29,7 +31,9 @@ char *get_option(int argc, char **argv, char *name)
 
     for (index = 0; index < argc; index++)
     {
-        char *arg = argv[index];
+        char *arg;
+
+        arg = argv[index];
 
         if (strcmp(arg, name) == 0)
         {
