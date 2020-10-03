@@ -127,7 +127,6 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
 {
     argument_iterator_t *arguments;
     value_t *result;
-    size_t index;
 
     arguments = malloc(sizeof(argument_iterator_t));
 
@@ -139,11 +138,19 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
     arguments->expressions = expression->arguments;
     arguments->current = expression->arguments->head;
     arguments->index = 0;
-    arguments->evaluated = malloc(sizeof(value_t *) * arguments->expressions->length);
 
-    if (!arguments->evaluated)
+    if (arguments->expressions->length > 0)
     {
-        return NULL;
+        arguments->evaluated = malloc(sizeof(value_t *) * arguments->expressions->length);
+
+        if (!arguments->evaluated)
+        {
+            return NULL;
+        }
+    }
+    else
+    {
+        arguments->evaluated = NULL;
     }
 
     switch (expression->value->type)
@@ -165,19 +172,25 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
             break;
     }
 
-    for (index = 0; index < arguments->index; index++)
+    if (arguments->evaluated)
     {
-        value_t *value;
+        size_t index;
 
-        value = arguments->evaluated[index];
-
-        if (value)
+        for (index = 0; index < arguments->index; index++)
         {
-            destroy_value(value);
+            value_t *value;
+
+            value = arguments->evaluated[index];
+
+            if (value)
+            {
+                destroy_value(value);
+            }
         }
+
+        free(arguments->evaluated);
     }
 
-    free(arguments->evaluated);
     free(arguments);
 
     return result;
@@ -185,56 +198,67 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
 
 static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map_t *operators)
 {
-    value_t *item, **items;
-    size_t length, index;
+    value_t **items;
+    size_t length;
 
     length = arguments->expressions->length;
-    items = malloc(sizeof(value_t *) * length);
 
-    if (!items)
+    if (length > 0)
     {
-        return NULL;
-    }
+        value_t *item;
+        size_t index;
 
-    for (index = 0; index < length; index++)
-    {
-        value_t *copy;
+        items = malloc(sizeof(value_t *) * length);
 
-        if (!has_next_argument(arguments))
+        if (!items)
         {
-            return new_error(ERROR_ARGUMENT);
-        }
-
-        item = next_argument(arguments, variables, operators);
-
-        if (!item)
-        {
-            free(items);
             return NULL;
         }
 
-        if (item->type == TYPE_ERROR)
+        for (index = 0; index < length; index++)
         {
-            size_t reindex;
+            value_t *copy;
 
-            for (reindex = 0; reindex < index; reindex++)
+            if (!has_next_argument(arguments))
             {
-                destroy_value(items[reindex]);
+                return new_error(ERROR_ARGUMENT);
             }
 
-            free(items);
-            return copy_value(item);
+            item = next_argument(arguments, variables, operators);
+
+            if (!item)
+            {
+                free(items);
+                return NULL;
+            }
+
+            if (item->type == TYPE_ERROR)
+            {
+                size_t reindex;
+
+                for (reindex = 0; reindex < index; reindex++)
+                {
+                    destroy_value(items[reindex]);
+                }
+
+                free(items);
+                return copy_value(item);
+            }
+
+            copy = copy_value(item);
+
+            if (!copy)
+            {
+                free(items);
+                return NULL;
+            }
+
+            items[index] = copy;
         }
-
-        copy = copy_value(item);
-
-        if (!copy)
-        {
-            free(items);
-            return NULL;
-        }
-
-        items[index] = copy;
+    }
+    else
+    {
+        items = NULL;
     }
 
     return new_list(items, length);
@@ -1225,7 +1249,7 @@ static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables, 
 {
     value_t *collection, *reversed;
     value_t **items;
-    size_t length, index;
+    size_t length;
 
     if (!has_next_argument(arguments))
     {
@@ -1272,29 +1296,39 @@ static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables, 
     }
 
     length = length_value(collection);
-    items = malloc(sizeof(value_t *) * length);
 
-    if (!items)
+    if (length > 0)
     {
-        return NULL;
-    }
+        size_t index;
 
-    for (index = 0; index < length; index++)
-    {
-        value_t *copy;
+        items = malloc(sizeof(value_t *) * length);
 
-        copy = copy_value(((value_t **) collection->data)[index]);
-
-        if (!copy)
+        if (!items)
         {
-            free(items);
             return NULL;
         }
 
-        items[index] = copy;
-    }
+        for (index = 0; index < length; index++)
+        {
+            value_t *copy;
 
-    qsort(items, length, sizeof(value_t *), view_number(reversed) ? compare_values_descending : compare_values_ascending);
+            copy = copy_value(((value_t **) collection->data)[index]);
+
+            if (!copy)
+            {
+                free(items);
+                return NULL;
+            }
+
+            items[index] = copy;
+        }
+
+        qsort(items, length, sizeof(value_t *), view_number(reversed) ? compare_values_descending : compare_values_ascending);
+    }
+    else
+    {
+        items = NULL;
+    }
 
     return new_list(items, length);
 }
@@ -1691,28 +1725,36 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
     if (collection->type == TYPE_LIST)
     {
         value_t **items;
-        size_t index, placement;
 
-        items = malloc(sizeof(value_t *) * length);
-
-        if (!items)
+        if (length > 0)
         {
-            return NULL;
-        }
+            size_t index, placement;
 
-        for (index = adjustedstart, placement = 0; index < adjustedend; index++, placement++)
-        {
-            value_t *item;
+            items = malloc(sizeof(value_t *) * length);
 
-            item = copy_value(((value_t **) collection->data)[index]);
-
-            if (!item)
+            if (!items)
             {
-                free(items);
                 return NULL;
             }
 
-            items[placement] = item;
+            for (index = adjustedstart, placement = 0; index < adjustedend; index++, placement++)
+            {
+                value_t *item;
+
+                item = copy_value(((value_t **) collection->data)[index]);
+
+                if (!item)
+                {
+                    free(items);
+                    return NULL;
+                }
+
+                items[placement] = item;
+            }
+        }
+        else
+        {
+            items = NULL;
         }
 
         return new_list(items, length);
@@ -1724,40 +1766,50 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
 static value_t *list_map_keys(map_t *map)
 {
     value_t **items;
-    size_t length, index, placement;
+    size_t length;
 
     length = map->length;
-    items = malloc(sizeof(value_t *) * length);
 
-    if (!items)
+    if (length > 0)
     {
-        return NULL;
-    }
+        size_t index, placement;
 
-    for (index = 0, placement = 0; index < map->capacity; index++)
-    {
-        if (map->chains[index])
+        items = malloc(sizeof(value_t *) * length);
+
+        if (!items)
         {
-            map_chain_t *chain;
+            return NULL;
+        }
 
-            for (chain = map->chains[index]; chain != NULL; chain = chain->next)
+        for (index = 0, placement = 0; index < map->capacity; index++)
+        {
+            if (map->chains[index])
             {
-                value_t *item;
+                map_chain_t *chain;
 
-                item = new_string(chain->key);
-
-                if (!item)
+                for (chain = map->chains[index]; chain != NULL; chain = chain->next)
                 {
-                    free(items);
-                    return NULL;
-                }
+                    value_t *item;
 
-                items[placement++] = item;
+                    item = new_string(chain->key);
+
+                    if (!item)
+                    {
+                        free(items);
+                        return NULL;
+                    }
+
+                    items[placement++] = item;
+                }
             }
         }
-    }
 
-    qsort(items, length, sizeof(value_t *), compare_values_ascending);
+        qsort(items, length, sizeof(value_t *), compare_values_ascending);
+    }
+    else
+    {
+        items = NULL;
+    }
 
     return new_list(items, length);
 }

@@ -12,26 +12,34 @@ value_t *merge_lists(value_t *left, value_t *right)
     size_t length, index;
 
     length = left->size + right->size;
-    items = malloc(sizeof(value_t *) * length);
 
-    if (!items)
+    if (length > 0)
     {
-        return NULL;
-    }
+        items = malloc(sizeof(value_t *) * length);
 
-    for (index = 0; index < length; index++)
-    {
-        value_t *copy;
-
-        copy = copy_value(index < left->size ? ((value_t **) left->data)[index] : ((value_t **) right->data)[index - left->size]);
-
-        if (!copy)
+        if (!items)
         {
-            free(items);
             return NULL;
         }
 
-        items[index] = copy;
+        for (index = 0; index < length; index++)
+        {
+            value_t *copy;
+
+            copy = copy_value(index < left->size ? ((value_t **) left->data)[index] : ((value_t **) right->data)[index - left->size]);
+
+            if (!copy)
+            {
+                free(items);
+                return NULL;
+            }
+
+            items[index] = copy;
+        }
+    }
+    else
+    {
+        items = NULL;
     }
 
     return new_list(items, length);
@@ -122,31 +130,42 @@ value_t *copy_value(value_t *this)
 {
     if (this->type == TYPE_LIST)
     {
-        value_t **items, **data;
-        size_t length, index;
+        value_t **data;
+        size_t length;
 
-        items = this->data;
         length = this->size;
-        data = malloc(sizeof(value_t *) * length);
 
-        if (!data)
+        if (length > 0)
         {
-            return NULL;
-        }
+            value_t **items;
+            size_t index;
 
-        for (index = 0; index < length; index++)
-        {
-            value_t *copy;
+            items = this->data;
+            data = malloc(sizeof(value_t *) * length);
 
-            copy = copy_value(items[index]);
-
-            if (!copy)
+            if (!data)
             {
-                free(data);
                 return NULL;
             }
 
-            data[index] = copy;
+            for (index = 0; index < length; index++)
+            {
+                value_t *copy;
+
+                copy = copy_value(items[index]);
+
+                if (!copy)
+                {
+                    free(data);
+                    return NULL;
+                }
+
+                data[index] = copy;
+            }
+        }
+        else
+        {
+            data = NULL;
         }
 
         return new_list(data, length);
@@ -155,11 +174,18 @@ value_t *copy_value(value_t *this)
     {
         void *data;
 
-        data = copy_memory(this->data, this->size);
-
-        if (!data)
+        if (this->size > 0)
         {
-            return NULL;
+            data = copy_memory(this->data, this->size);
+
+            if (!data)
+            {
+                return NULL;
+            }
+        }
+        else
+        {
+            data = NULL;
         }
 
         return create_value(this->type, data, this->size);
