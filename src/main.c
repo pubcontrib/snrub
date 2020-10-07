@@ -17,10 +17,10 @@ static int apply_script(char *document, map_t *variables);
 static char *read_file(char *path);
 static void print_version(void);
 static void print_usage(void);
-static void print_error(error_t error);
-static int print_value(value_t *value);
+static void print_value(value_t *value);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
+static void crash();
 
 int main(int argc, char **argv)
 {
@@ -47,8 +47,7 @@ int main(int argc, char **argv)
 
         if (!document)
         {
-            print_error(ERROR_SHORTAGE);
-            return 1;
+            crash();
         }
 
         return complete_script(document);
@@ -69,8 +68,7 @@ int main(int argc, char **argv)
 
         if (!document)
         {
-            print_error(ERROR_SHORTAGE);
-            return 1;
+            crash();
         }
 
         return complete_script(document);
@@ -84,8 +82,7 @@ int main(int argc, char **argv)
 
         if (!variables)
         {
-            print_error(ERROR_SHORTAGE);
-            return 1;
+            crash();
         }
 
         while (1)
@@ -98,9 +95,7 @@ int main(int argc, char **argv)
 
             if (!line)
             {
-                destroy_map(variables);
-                print_error(ERROR_SHORTAGE);
-                return 1;
+                crash();
             }
 
             if (line->exit)
@@ -115,9 +110,7 @@ int main(int argc, char **argv)
 
             if (apply_script(document, variables))
             {
-                destroy_map(variables);
-                destroy_line(line);
-                return 1;
+                crash();
             }
 
             fflush(stdout);
@@ -138,8 +131,7 @@ static int complete_script(char *document)
 
     if (!variables)
     {
-        print_error(ERROR_SHORTAGE);
-        return 1;
+        crash();
     }
 
     status = apply_script(document, variables);
@@ -160,8 +152,7 @@ static int apply_script(char *document, map_t *variables)
 
     if (!scanner)
     {
-        print_error(ERROR_SHORTAGE);
-        return 1;
+        crash();
     }
 
     expressions = parse_expressions(scanner);
@@ -169,8 +160,7 @@ static int apply_script(char *document, map_t *variables)
 
     if (!expressions)
     {
-        print_error(ERROR_SHORTAGE);
-        return 1;
+        crash();
     }
 
     value = execute_expression(expressions, variables);
@@ -178,12 +168,11 @@ static int apply_script(char *document, map_t *variables)
 
     if (!value)
     {
-        print_error(ERROR_SHORTAGE);
-        return 1;
+        crash();
     }
 
-    status = print_value(value);
-    printf("\n");
+    status = value->type == TYPE_ERROR;
+    print_value(value);
     destroy_value(value);
 
     return status;
@@ -237,20 +226,7 @@ static void print_usage(void)
     printf("  -t --text         Execute script text.\n");
 }
 
-static void print_error(error_t error)
-{
-    value_t *adapter;
-
-    adapter = new_error(error);
-
-    if (adapter)
-    {
-        print_value(adapter);
-        destroy_value(adapter);
-    }
-}
-
-static int print_value(value_t *value)
+static void print_value(value_t *value)
 {
     char *represent;
 
@@ -258,13 +234,12 @@ static int print_value(value_t *value)
 
     if (represent)
     {
-        printf("%s", represent);
+        printf("%s\n", represent);
         free(represent);
-        return value->type == TYPE_ERROR;
     }
     else
     {
-        return 1;
+        crash();
     }
 }
 
@@ -276,4 +251,9 @@ static map_t *empty_variables(void)
 static void destroy_value_unsafe(void *value)
 {
     destroy_value((value_t *) value);
+}
+
+static void crash()
+{
+    exit(1);
 }
