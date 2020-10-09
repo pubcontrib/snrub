@@ -168,7 +168,7 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
             result = apply_call(arguments, variables, operators);
             break;
         default:
-            result = new_error(ERROR_TYPE);
+            result = NULL;
             break;
     }
 
