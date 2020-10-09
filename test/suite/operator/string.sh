@@ -13,7 +13,7 @@ pass '("\"" "word")' '"word"'
 
 # Argument Error
 fail '("\"")' '#4#'
-fail '("\"" [#1# #2# #3#])' '#7#'
+fail '("\"" [#1# #2# #3#])' '#4#'
 
 # Error Propogation
 fail '("\"" ("#" "text"))' '#3#'

@@ -168,7 +168,7 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
             result = apply_call(arguments, variables, operators);
             break;
         default:
-            result = new_error(ERROR_UNSUPPORTED);
+            result = new_error(ERROR_TYPE);
             break;
     }
 
@@ -618,7 +618,7 @@ static value_t *operator_add(argument_iterator_t *arguments, map_t *variables, m
         return merge_lists(left, right);
     }
 
-    return new_error(ERROR_UNSUPPORTED);
+    return new_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_subtract(argument_iterator_t *arguments, map_t *variables, map_t *operators)
@@ -1374,7 +1374,7 @@ static value_t *operator_type(argument_iterator_t *arguments, map_t *variables, 
         return new_string("[]");
     }
 
-    return new_error(ERROR_UNSUPPORTED);
+    return new_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_number(argument_iterator_t *arguments, map_t *variables, map_t *operators)
@@ -1420,7 +1420,7 @@ static value_t *operator_number(argument_iterator_t *arguments, map_t *variables
         }
     }
 
-    return new_error(ERROR_UNSUPPORTED);
+    return new_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_string(argument_iterator_t *arguments, map_t *variables, map_t *operators)
@@ -1471,7 +1471,7 @@ static value_t *operator_string(argument_iterator_t *arguments, map_t *variables
         return steal_string(string, size);
     }
 
-    return new_error(ERROR_UNSUPPORTED);
+    return new_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, map_t *operators)
@@ -1607,7 +1607,7 @@ static value_t *operator_index(argument_iterator_t *arguments, map_t *variables,
         return copy_value(((value_t **) collection->data)[adjusted]);
     }
 
-    return new_error(ERROR_UNSUPPORTED);
+    return new_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_range(argument_iterator_t *arguments, map_t *variables, map_t *operators)
@@ -1760,7 +1760,7 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
         return new_list(items, length);
     }
 
-    return new_error(ERROR_UNSUPPORTED);
+    return new_error(ERROR_ARGUMENT);
 }
 
 static value_t *list_map_keys(map_t *map)
