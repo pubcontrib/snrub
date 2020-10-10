@@ -19,7 +19,7 @@ static int run_text(char *text);
 static int run_interactive();
 static int run_version();
 static int run_help();
-static int evaluate_script(char *document, map_t *variables);
+static int record_script(char *document, map_t *variables);
 static value_t *apply_script(char *document, map_t *variables);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
@@ -86,7 +86,7 @@ static int run_file(char *file)
         crash();
     }
 
-    success = evaluate_script(document, variables);
+    success = record_script(document, variables);
     destroy_map(variables);
 
     return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
@@ -112,7 +112,7 @@ static int run_text(char *text)
         crash();
     }
 
-    success = evaluate_script(document, variables);
+    success = record_script(document, variables);
     destroy_map(variables);
 
     return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
@@ -154,7 +154,7 @@ static int run_interactive()
         line->string = NULL;
         destroy_line(line);
 
-        success = evaluate_script(document, variables);
+        success = record_script(document, variables);
 
         if (!success)
         {
@@ -185,7 +185,7 @@ static int run_help()
     return PROGRAM_SUCCESS;
 }
 
-static int evaluate_script(char *document, map_t *variables)
+static int record_script(char *document, map_t *variables)
 {
     value_t *value;
     char *represent;
