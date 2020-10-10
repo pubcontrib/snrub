@@ -17,8 +17,7 @@ static int run_text(char *text);
 static int run_interactive();
 static int run_version();
 static int run_help();
-static int complete_script(char *document);
-static int apply_script(char *document, map_t *variables);
+static value_t *apply_script(char *document, map_t *variables);
 static void print_value(value_t *value);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
@@ -68,6 +67,9 @@ int main(int argc, char **argv)
 static int run_file(char *file)
 {
     char *document;
+    map_t *variables;
+    value_t *result;
+    int status;
 
     document = read_file(file);
 
@@ -76,12 +78,34 @@ static int run_file(char *file)
         crash();
     }
 
-    return complete_script(document);
+    variables = empty_variables();
+
+    if (!variables)
+    {
+        crash();
+    }
+
+    result = apply_script(document, variables);
+
+    if (!result)
+    {
+        crash();
+    }
+
+    print_value(result);
+    status = result->type == TYPE_ERROR;
+    destroy_value(result);
+    destroy_map(variables);
+
+    return status;
 }
 
 static int run_text(char *text)
 {
     char *document;
+    map_t *variables;
+    value_t *result;
+    int status;
 
     document = copy_string(text);
 
@@ -90,7 +114,26 @@ static int run_text(char *text)
         crash();
     }
 
-    return complete_script(document);
+    variables = empty_variables();
+
+    if (!variables)
+    {
+        crash();
+    }
+
+    result = apply_script(document, variables);
+
+    if (!result)
+    {
+        crash();
+    }
+
+    print_value(result);
+    status = result->type == TYPE_ERROR;
+    destroy_value(result);
+    destroy_map(variables);
+
+    return status;
 }
 
 static int run_interactive()
@@ -108,6 +151,8 @@ static int run_interactive()
     {
         line_t *line;
         char *document;
+        value_t *result;
+        int status;
 
         printf("> ");
         line = next_line();
@@ -126,14 +171,26 @@ static int run_interactive()
 
         document = line->string;
         line->string = NULL;
+        destroy_line(line);
 
-        if (apply_script(document, variables))
+        result = apply_script(document, variables);
+
+        if (!result)
         {
             crash();
         }
 
+        print_value(result);
+        status = result->type == TYPE_ERROR;
+        destroy_value(result);
+
+        if (status)
+        {
+            destroy_map(variables);
+            return status;
+        }
+
         fflush(stdout);
-        destroy_line(line);
     }
 }
 
@@ -156,31 +213,11 @@ static int run_help()
     return 0;
 }
 
-static int complete_script(char *document)
-{
-    map_t *variables;
-    int status;
-
-    variables = empty_variables();
-
-    if (!variables)
-    {
-        crash();
-    }
-
-    status = apply_script(document, variables);
-
-    destroy_map(variables);
-
-    return status;
-}
-
-static int apply_script(char *document, map_t *variables)
+static value_t *apply_script(char *document, map_t *variables)
 {
     scanner_t *scanner;
     list_t *expressions;
     value_t *value;
-    int status;
 
     scanner = start_scanner(document);
 
@@ -200,16 +237,7 @@ static int apply_script(char *document, map_t *variables)
     value = execute_expression(expressions, variables);
     destroy_list(expressions);
 
-    if (!value)
-    {
-        crash();
-    }
-
-    status = value->type == TYPE_ERROR;
-    print_value(value);
-    destroy_value(value);
-
-    return status;
+    return value;
 }
 
 static void print_value(value_t *value)
