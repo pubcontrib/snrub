@@ -11,6 +11,8 @@
 
 #define PROGRAM_NAME "snrub"
 #define PROGRAM_VERSION "v0.42.0"
+#define PROGRAM_SUCCESS 0
+#define PROGRAM_ERROR 1
 
 static int run_file(char *file);
 static int run_text(char *text);
@@ -68,7 +70,7 @@ static int run_file(char *file)
 {
     char *document;
     map_t *variables;
-    int status;
+    int success;
 
     document = read_file(file);
 
@@ -84,17 +86,17 @@ static int run_file(char *file)
         crash();
     }
 
-    status = evaluate_script(document, variables);
+    success = evaluate_script(document, variables);
     destroy_map(variables);
 
-    return status;
+    return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
 }
 
 static int run_text(char *text)
 {
     char *document;
     map_t *variables;
-    int status;
+    int success;
 
     document = copy_string(text);
 
@@ -110,10 +112,10 @@ static int run_text(char *text)
         crash();
     }
 
-    status = evaluate_script(document, variables);
+    success = evaluate_script(document, variables);
     destroy_map(variables);
 
-    return status;
+    return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
 }
 
 static int run_interactive()
@@ -131,7 +133,7 @@ static int run_interactive()
     {
         line_t *line;
         char *document;
-        int status;
+        int success;
 
         printf("> ");
         line = next_line();
@@ -145,19 +147,19 @@ static int run_interactive()
         {
             destroy_map(variables);
             destroy_line(line);
-            return 0;
+            return PROGRAM_SUCCESS;
         }
 
         document = line->string;
         line->string = NULL;
         destroy_line(line);
 
-        status = evaluate_script(document, variables);
+        success = evaluate_script(document, variables);
 
-        if (status)
+        if (!success)
         {
             destroy_map(variables);
-            return status;
+            return PROGRAM_ERROR;
         }
 
         fflush(stdout);
@@ -167,7 +169,7 @@ static int run_interactive()
 static int run_version()
 {
     printf("%s\n", PROGRAM_VERSION);
-    return 0;
+    return PROGRAM_SUCCESS;
 }
 
 static int run_help()
@@ -180,14 +182,14 @@ static int run_help()
     printf("  -f --file         Execute a script file.\n");
     printf("  -i --interactive  Start an interactive scripting shell.\n");
     printf("  -t --text         Execute script text.\n");
-    return 0;
+    return PROGRAM_SUCCESS;
 }
 
 static int evaluate_script(char *document, map_t *variables)
 {
     value_t *result;
     char *represent;
-    int status;
+    int success;
 
     result = apply_script(document, variables);
 
@@ -203,12 +205,12 @@ static int evaluate_script(char *document, map_t *variables)
         crash();
     }
 
-    status = result->type == TYPE_ERROR;
+    success = result->type != TYPE_ERROR;
     destroy_value(result);
     printf("%s\n", represent);
     free(represent);
 
-    return status;
+    return success;
 }
 
 static value_t *apply_script(char *document, map_t *variables)
@@ -250,5 +252,5 @@ static void destroy_value_unsafe(void *value)
 
 static void crash()
 {
-    exit(1);
+    exit(PROGRAM_ERROR);
 }
