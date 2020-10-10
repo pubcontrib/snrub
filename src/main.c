@@ -17,8 +17,8 @@ static int run_text(char *text);
 static int run_interactive();
 static int run_version();
 static int run_help();
+static int evaluate_script(char *document, map_t *variables);
 static value_t *apply_script(char *document, map_t *variables);
-static void print_value(value_t *value);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
 static void crash();
@@ -68,7 +68,6 @@ static int run_file(char *file)
 {
     char *document;
     map_t *variables;
-    value_t *result;
     int status;
 
     document = read_file(file);
@@ -85,16 +84,7 @@ static int run_file(char *file)
         crash();
     }
 
-    result = apply_script(document, variables);
-
-    if (!result)
-    {
-        crash();
-    }
-
-    print_value(result);
-    status = result->type == TYPE_ERROR;
-    destroy_value(result);
+    status = evaluate_script(document, variables);
     destroy_map(variables);
 
     return status;
@@ -104,7 +94,6 @@ static int run_text(char *text)
 {
     char *document;
     map_t *variables;
-    value_t *result;
     int status;
 
     document = copy_string(text);
@@ -121,16 +110,7 @@ static int run_text(char *text)
         crash();
     }
 
-    result = apply_script(document, variables);
-
-    if (!result)
-    {
-        crash();
-    }
-
-    print_value(result);
-    status = result->type == TYPE_ERROR;
-    destroy_value(result);
+    status = evaluate_script(document, variables);
     destroy_map(variables);
 
     return status;
@@ -151,7 +131,6 @@ static int run_interactive()
     {
         line_t *line;
         char *document;
-        value_t *result;
         int status;
 
         printf("> ");
@@ -173,16 +152,7 @@ static int run_interactive()
         line->string = NULL;
         destroy_line(line);
 
-        result = apply_script(document, variables);
-
-        if (!result)
-        {
-            crash();
-        }
-
-        print_value(result);
-        status = result->type == TYPE_ERROR;
-        destroy_value(result);
+        status = evaluate_script(document, variables);
 
         if (status)
         {
@@ -213,6 +183,34 @@ static int run_help()
     return 0;
 }
 
+static int evaluate_script(char *document, map_t *variables)
+{
+    value_t *result;
+    char *represent;
+    int status;
+
+    result = apply_script(document, variables);
+
+    if (!result)
+    {
+        crash();
+    }
+
+    represent = represent_value(result);
+
+    if (!represent)
+    {
+        crash();
+    }
+
+    status = result->type == TYPE_ERROR;
+    destroy_value(result);
+    printf("%s\n", represent);
+    free(represent);
+
+    return status;
+}
+
 static value_t *apply_script(char *document, map_t *variables)
 {
     scanner_t *scanner;
@@ -238,23 +236,6 @@ static value_t *apply_script(char *document, map_t *variables)
     destroy_list(expressions);
 
     return value;
-}
-
-static void print_value(value_t *value)
-{
-    char *represent;
-
-    represent = represent_value(value);
-
-    if (represent)
-    {
-        printf("%s\n", represent);
-        free(represent);
-    }
-    else
-    {
-        crash();
-    }
 }
 
 static map_t *empty_variables(void)
