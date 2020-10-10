@@ -187,26 +187,26 @@ static int run_help()
 
 static int evaluate_script(char *document, map_t *variables)
 {
-    value_t *result;
+    value_t *value;
     char *represent;
     int success;
 
-    result = apply_script(document, variables);
+    value = apply_script(document, variables);
 
-    if (!result)
+    if (!value)
     {
         crash();
     }
 
-    represent = represent_value(result);
+    represent = represent_value(value);
 
     if (!represent)
     {
         crash();
     }
 
-    success = result->type != TYPE_ERROR;
-    destroy_value(result);
+    success = value->type != TYPE_ERROR;
+    destroy_value(value);
     printf("%s\n", represent);
     free(represent);
 
