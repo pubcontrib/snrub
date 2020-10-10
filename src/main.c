@@ -14,7 +14,6 @@
 
 static int complete_script(char *document);
 static int apply_script(char *document, map_t *variables);
-static char *read_file(char *path);
 static void print_version(void);
 static void print_usage(void);
 static void print_value(value_t *value);
@@ -176,37 +175,6 @@ static int apply_script(char *document, map_t *variables)
     destroy_value(value);
 
     return status;
-}
-
-static char *read_file(char *path)
-{
-    FILE *file;
-
-    file = fopen(path, "rb");
-
-    if (file)
-    {
-        char *buffer;
-        long int length;
-
-        fseek(file, 0, SEEK_END);
-        length = ftell(file);
-        fseek(file, 0, SEEK_SET);
-
-        buffer = malloc(sizeof(char) * (length + 1));
-
-        if (buffer)
-        {
-            fread(buffer, 1, length, file);
-            buffer[length] = '\0';
-        }
-
-        fclose(file);
-
-        return buffer;
-    }
-
-    return NULL;
 }
 
 static void print_version(void)

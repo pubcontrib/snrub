@@ -47,6 +47,37 @@ char *get_option(int argc, char **argv, char *name)
     return NULL;
 }
 
+char *read_file(char *path)
+{
+    FILE *file;
+
+    file = fopen(path, "rb");
+
+    if (file)
+    {
+        char *buffer;
+        long int length;
+
+        fseek(file, 0, SEEK_END);
+        length = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        buffer = malloc(sizeof(char) * (length + 1));
+
+        if (buffer)
+        {
+            fread(buffer, 1, length, file);
+            buffer[length] = '\0';
+        }
+
+        fclose(file);
+
+        return buffer;
+    }
+
+    return NULL;
+}
+
 line_t *next_line(void)
 {
     line_t* line;
