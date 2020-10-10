@@ -12,10 +12,13 @@
 #define PROGRAM_NAME "snrub"
 #define PROGRAM_VERSION "v0.42.0"
 
+static int run_file(char *file);
+static int run_text(char *text);
+static int run_interactive();
+static int run_version();
+static int run_help();
 static int complete_script(char *document);
 static int apply_script(char *document, map_t *variables);
-static void print_version(void);
-static void print_usage(void);
 static void print_value(value_t *value);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
@@ -27,8 +30,7 @@ int main(int argc, char **argv)
 
     if (get_flag(argc, argv, "--version") || get_flag(argc, argv, "-v"))
     {
-        print_version();
-        return 0;
+        return run_version();
     }
 
     file = get_option(argc, argv, "--file");
@@ -40,16 +42,7 @@ int main(int argc, char **argv)
 
     if (file)
     {
-        char *document;
-
-        document = read_file(file);
-
-        if (!document)
-        {
-            crash();
-        }
-
-        return complete_script(document);
+        return run_file(file);
     }
 
     text = get_option(argc, argv, "--text");
@@ -61,63 +54,105 @@ int main(int argc, char **argv)
 
     if (text)
     {
-        char *document;
-
-        document = copy_string(text);
-
-        if (!document)
-        {
-            crash();
-        }
-
-        return complete_script(document);
+        return run_text(text);
     }
 
     if (get_flag(argc, argv, "--interactive") || get_flag(argc, argv, "-i"))
     {
-        map_t *variables;
+        return run_interactive();
+    }
 
-        variables = empty_variables();
+    return run_help();
+}
 
-        if (!variables)
+static int run_file(char *file)
+{
+    char *document;
+
+    document = read_file(file);
+
+    if (!document)
+    {
+        crash();
+    }
+
+    return complete_script(document);
+}
+
+static int run_text(char *text)
+{
+    char *document;
+
+    document = copy_string(text);
+
+    if (!document)
+    {
+        crash();
+    }
+
+    return complete_script(document);
+}
+
+static int run_interactive()
+{
+    map_t *variables;
+
+    variables = empty_variables();
+
+    if (!variables)
+    {
+        crash();
+    }
+
+    while (1)
+    {
+        line_t *line;
+        char *document;
+
+        printf("> ");
+        line = next_line();
+
+        if (!line)
         {
             crash();
         }
 
-        while (1)
+        if (line->exit)
         {
-            line_t *line;
-            char *document;
-
-            printf("> ");
-            line = next_line();
-
-            if (!line)
-            {
-                crash();
-            }
-
-            if (line->exit)
-            {
-                destroy_map(variables);
-                destroy_line(line);
-                return 0;
-            }
-
-            document = line->string;
-            line->string = NULL;
-
-            if (apply_script(document, variables))
-            {
-                crash();
-            }
-
-            fflush(stdout);
+            destroy_map(variables);
             destroy_line(line);
+            return 0;
         }
-    }
 
-    print_usage();
+        document = line->string;
+        line->string = NULL;
+
+        if (apply_script(document, variables))
+        {
+            crash();
+        }
+
+        fflush(stdout);
+        destroy_line(line);
+    }
+}
+
+static int run_version()
+{
+    printf("%s\n", PROGRAM_VERSION);
+    return 0;
+}
+
+static int run_help()
+{
+    printf("Usage:\n");
+    printf("  %s [options]\n", PROGRAM_NAME);
+    printf("\n");
+    printf("Options:\n");
+    printf("  -v --version      Show version.\n");
+    printf("  -f --file         Execute a script file.\n");
+    printf("  -i --interactive  Start an interactive scripting shell.\n");
+    printf("  -t --text         Execute script text.\n");
     return 0;
 }
 
@@ -175,23 +210,6 @@ static int apply_script(char *document, map_t *variables)
     destroy_value(value);
 
     return status;
-}
-
-static void print_version(void)
-{
-    printf("%s\n", PROGRAM_VERSION);
-}
-
-static void print_usage(void)
-{
-    printf("Usage:\n");
-    printf("  %s [options]\n", PROGRAM_NAME);
-    printf("\n");
-    printf("Options:\n");
-    printf("  -v --version      Show version.\n");
-    printf("  -f --file         Execute a script file.\n");
-    printf("  -i --interactive  Start an interactive scripting shell.\n");
-    printf("  -t --text         Execute script text.\n");
 }
 
 static void print_value(value_t *value)
