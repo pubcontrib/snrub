@@ -14,11 +14,11 @@
 #define PROGRAM_SUCCESS 0
 #define PROGRAM_ERROR 1
 
+static int run_help();
+static int run_version();
 static int run_file(char *file);
 static int run_text(char *text);
 static int run_interactive();
-static int run_version();
-static int run_help();
 static int record_script(char *document, map_t *variables);
 static value_t *apply_script(char *document, map_t *variables);
 static map_t *empty_variables(void);
@@ -27,43 +27,120 @@ static void crash();
 
 int main(int argc, char **argv)
 {
-    char *file, *text;
+    char **arguments;
+    int help, version, text, file, interactive;
+    int remaining, capacity;
+    int modes;
 
-    if (get_flag(argc, argv, "--version") || get_flag(argc, argv, "-v"))
+    arguments = argv;
+    help = version = text = file = interactive = 0;
+    remaining = capacity = argc;
+
+    while (--remaining > 0 && (*++arguments)[0] == '-')
+    {
+        int current;
+
+        if (strcmp(arguments[0], "--") == 0)
+        {
+            remaining--;
+            ++arguments;
+            break;
+        }
+
+        while ((current = *++arguments[0]))
+        {
+            switch (current)
+            {
+                case 'h':
+                    help = 1;
+                    break;
+                case 'v':
+                    version = 1;
+                    break;
+                case 'f':
+                    file = 1;
+                    break;
+                case 't':
+                    text = 1;
+                    break;
+                case 'i':
+                    interactive = 1;
+                    break;
+                default:
+                    fprintf(stderr, "%s: illegal option %c\n", PROGRAM_NAME, current);
+                    crash();
+            }
+        }
+    }
+
+    modes = text + file + interactive;
+
+    if (modes > 1)
+    {
+        fprintf(stderr, "%s: modes are mutually exclusive\n", PROGRAM_NAME);
+        crash();
+    }
+
+    if (help)
+    {
+        return run_help();
+    }
+
+    if (version)
     {
         return run_version();
     }
 
-    file = get_option(argc, argv, "--file");
-
-    if (!file)
+    if (!modes || file)
     {
-        file = get_option(argc, argv, "-f");
-    }
+        if (remaining == 0)
+        {
+            fprintf(stderr, "%s: missing operand\n", PROGRAM_NAME);
+            crash();
+        }
 
-    if (file)
-    {
-        return run_file(file);
-    }
-
-    text = get_option(argc, argv, "--text");
-
-    if (!text)
-    {
-        text = get_option(argc, argv, "-t");
+        return run_file(*arguments++);
     }
 
     if (text)
     {
-        return run_text(text);
+        if (remaining == 0)
+        {
+            fprintf(stderr, "%s: missing operand\n", PROGRAM_NAME);
+            crash();
+        }
+
+        return run_text(*arguments++);
     }
 
-    if (get_flag(argc, argv, "--interactive") || get_flag(argc, argv, "-i"))
+    if (interactive)
     {
         return run_interactive();
     }
 
     return run_help();
+}
+
+static int run_help()
+{
+    printf("Usage:\n");
+    printf("  %s -f script\n", PROGRAM_NAME);
+    printf("  %s -t script\n", PROGRAM_NAME);
+    printf("  %s -i\n", PROGRAM_NAME);
+    printf("\n");
+    printf("Options:\n");
+    printf("  -h  Show help.\n");
+    printf("  -v  Show version.\n");
+    printf("  -f  Set program to file mode. Default mode.\n");
+    printf("  -t  Set program to text mode.\n");
+    printf("  -i  Set program to interactive mode.\n");
+    return PROGRAM_SUCCESS;
+}
+
+static int run_version()
+{
+    printf("%s\n", PROGRAM_VERSION);
+    return PROGRAM_SUCCESS;
 }
 
 static int run_file(char *file)
@@ -164,25 +241,6 @@ static int run_interactive()
 
         fflush(stdout);
     }
-}
-
-static int run_version()
-{
-    printf("%s\n", PROGRAM_VERSION);
-    return PROGRAM_SUCCESS;
-}
-
-static int run_help()
-{
-    printf("Usage:\n");
-    printf("  %s [options]\n", PROGRAM_NAME);
-    printf("\n");
-    printf("Options:\n");
-    printf("  -v --version      Show version.\n");
-    printf("  -f --file         Execute a script file.\n");
-    printf("  -i --interactive  Start an interactive scripting shell.\n");
-    printf("  -t --text         Execute script text.\n");
-    return PROGRAM_SUCCESS;
 }
 
 static int record_script(char *document, map_t *variables)

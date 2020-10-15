@@ -19,29 +19,28 @@ using Make. Try one of the available targets: `all`, `clean`, `check`,
 `install`, `uninstall`. Each target tries to conform to the GNU Makefile best
 practices.
 
-Fastest way to get the program built and installed into a system with Make:
+Fastest way to get the program built and installed onto a system with Make:
 ```shell
 make install
 ```
 
 ## Running
 Once you've built and installed the project you'll have the interpreter at your
-system's disposal. Try one of the available options: `--file`, `--interactive`,
-`--text`, `--help`, `--version`.
+system's disposal. Try `-h` for help.
 
 Run code from a file:
 ```shell
-snrub --file script.txt
-```
-
-Start an interactive scripting shell:
-```shell
-snrub --interactive
+snrub -f script.txt
 ```
 
 Run code without a file:
 ```shell
-snrub --text '("+" #300# #200#)'
+snrub -t '("+" #300# #200#)'
+```
+
+Start an interactive scripting shell:
+```shell
+snrub -i
 ```
 
 ## Support
