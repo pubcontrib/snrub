@@ -14,16 +14,16 @@
 #define PROGRAM_SUCCESS 0
 #define PROGRAM_ERROR 1
 
-static int run_help();
-static int run_version();
+static int run_help(void);
+static int run_version(void);
 static int run_file(char *file);
 static int run_text(char *text);
-static int run_interactive();
+static int run_interactive(void);
 static int record_script(char *document, map_t *variables);
 static value_t *apply_script(char *document, map_t *variables);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
-static void crash();
+static void crash(void);
 
 int main(int argc, char **argv)
 {
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
     return run_help();
 }
 
-static int run_help()
+static int run_help(void)
 {
     printf("Usage:\n");
     printf("  %s -f script\n", PROGRAM_NAME);
@@ -137,7 +137,7 @@ static int run_help()
     return PROGRAM_SUCCESS;
 }
 
-static int run_version()
+static int run_version(void)
 {
     printf("%s\n", PROGRAM_VERSION);
     return PROGRAM_SUCCESS;
@@ -195,7 +195,7 @@ static int run_text(char *text)
     return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
 }
 
-static int run_interactive()
+static int run_interactive(void)
 {
     map_t *variables;
 
@@ -308,7 +308,7 @@ static void destroy_value_unsafe(void *value)
     destroy_value((value_t *) value);
 }
 
-static void crash()
+static void crash(void)
 {
     exit(PROGRAM_ERROR);
 }
