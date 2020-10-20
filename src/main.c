@@ -27,29 +27,23 @@ static void crash(void);
 
 int main(int argc, char **argv)
 {
-    char **arguments;
     int help, version, text, file, interactive;
-    int remaining, capacity;
-    int modes;
+    int argument, modes;
 
-    arguments = argv;
     help = version = text = file = interactive = 0;
-    remaining = capacity = argc;
 
-    while (--remaining > 0 && (*++arguments)[0] == '-')
+    for (argument = 1; argument < argc; argument++)
     {
-        int current;
+        int character;
 
-        if (strcmp(arguments[0], "--") == 0)
+        if (strlen(argv[argument]) == 0 || argv[argument][0] != '-' || strcmp(argv[argument], "--") == 0)
         {
-            remaining--;
-            ++arguments;
             break;
         }
 
-        while ((current = *++arguments[0]))
+        for (character = 1; character < strlen(argv[argument]); character++)
         {
-            switch (current)
+            switch (argv[argument][character])
             {
                 case 'h':
                     help = 1;
@@ -67,7 +61,7 @@ int main(int argc, char **argv)
                     interactive = 1;
                     break;
                 default:
-                    fprintf(stderr, "%s: illegal option %c\n", PROGRAM_NAME, current);
+                    fprintf(stderr, "%s: illegal option %c\n", PROGRAM_NAME, argv[argument][character]);
                     crash();
             }
         }
@@ -93,24 +87,24 @@ int main(int argc, char **argv)
 
     if (!modes || file)
     {
-        if (remaining == 0)
+        if (argument == argc)
         {
             fprintf(stderr, "%s: missing operand\n", PROGRAM_NAME);
             crash();
         }
 
-        return run_file(*arguments++);
+        return run_file(argv[argument++]);
     }
 
     if (text)
     {
-        if (remaining == 0)
+        if (argument == argc)
         {
             fprintf(stderr, "%s: missing operand\n", PROGRAM_NAME);
             crash();
         }
 
-        return run_text(*arguments++);
+        return run_text(argv[argument++]);
     }
 
     if (interactive)
