@@ -16,11 +16,12 @@
 
 static int run_help(void);
 static int run_version(void);
-static int run_file(char *file);
-static int run_text(char *text);
+static int run_file(char *file, char *arguments);
+static int run_text(char *text, char *arguments);
 static int run_interactive(void);
 static int record_script(char *document, map_t *variables);
 static value_t *apply_script(char *document, map_t *variables);
+static map_t *initialize_arguments(char *arguments);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
 static void crash(void);
@@ -93,7 +94,14 @@ int main(int argc, char **argv)
             crash();
         }
 
-        return run_file(argv[argument++]);
+        if (argc - argument > 1)
+        {
+            return run_file(argv[argument], argv[argument + 1]);
+        }
+        else
+        {
+            return run_file(argv[argument], NULL);
+        }
     }
 
     if (text)
@@ -104,7 +112,14 @@ int main(int argc, char **argv)
             crash();
         }
 
-        return run_text(argv[argument++]);
+        if (argc - argument > 1)
+        {
+            return run_text(argv[argument], argv[argument + 1]);
+        }
+        else
+        {
+            return run_text(argv[argument], NULL);
+        }
     }
 
     if (interactive)
@@ -118,8 +133,8 @@ int main(int argc, char **argv)
 static int run_help(void)
 {
     printf("Usage:\n");
-    printf("  %s -f script\n", PROGRAM_NAME);
-    printf("  %s -t script\n", PROGRAM_NAME);
+    printf("  %s -f script [arguments]\n", PROGRAM_NAME);
+    printf("  %s -t script [arguments]\n", PROGRAM_NAME);
     printf("  %s -i\n", PROGRAM_NAME);
     printf("\n");
     printf("Options:\n");
@@ -137,7 +152,7 @@ static int run_version(void)
     return PROGRAM_SUCCESS;
 }
 
-static int run_file(char *file)
+static int run_file(char *file, char *arguments)
 {
     char *document;
     map_t *variables;
@@ -150,20 +165,14 @@ static int run_file(char *file)
         crash();
     }
 
-    variables = empty_variables();
-
-    if (!variables)
-    {
-        crash();
-    }
-
+    variables = initialize_arguments(arguments);
     success = record_script(document, variables);
     destroy_map(variables);
 
     return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
 }
 
-static int run_text(char *text)
+static int run_text(char *text, char *arguments)
 {
     char *document;
     map_t *variables;
@@ -176,13 +185,7 @@ static int run_text(char *text)
         crash();
     }
 
-    variables = empty_variables();
-
-    if (!variables)
-    {
-        crash();
-    }
-
+    variables = initialize_arguments(arguments);
     success = record_script(document, variables);
     destroy_map(variables);
 
@@ -290,6 +293,71 @@ static value_t *apply_script(char *document, map_t *variables)
     destroy_list(expressions);
 
     return value;
+}
+
+static map_t *initialize_arguments(char *arguments)
+{
+    map_t *variables;
+
+    variables = empty_variables();
+
+    if (!variables)
+    {
+        crash();
+    }
+
+    if (arguments)
+    {
+        char *document, *key;
+        value_t *value;
+        int success;
+
+        document = copy_string(arguments);
+
+        if (!document)
+        {
+            crash();
+        }
+
+        value = apply_script(document, variables);
+
+        if (!value)
+        {
+            crash();
+        }
+
+        success = value->type != TYPE_ERROR;
+
+        if (!success)
+        {
+            char *represent;
+
+            represent = represent_value(value);
+
+            if (!represent)
+            {
+                crash();
+            }
+
+            printf("%s\n", represent);
+
+            crash();
+        }
+
+        key = copy_string("arguments");
+
+        if (!key)
+        {
+            crash();
+        }
+
+        if (!set_map_item(variables, key, value))
+        {
+            crash();
+        }
+    }
+
+    return variables;
 }
 
 static map_t *empty_variables(void)
