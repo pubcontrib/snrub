@@ -344,7 +344,7 @@ static map_t *initialize_arguments(char *arguments)
             crash();
         }
 
-        key = copy_string("arguments");
+        key = copy_string("@");
 
         if (!key)
         {
