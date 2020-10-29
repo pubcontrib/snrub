@@ -18,6 +18,11 @@ pass '"word\tword\tword"' '"word\tword\tword"'
 pass '"word\nword\nword"' '"word\nword\nword"'
 pass '"word\rword\rword"' '"word\rword\rword"'
 pass '"1"' '"1"'
+pass '"`comments`"' '"`comments`"'
+pass '"?"' '"?"'
+pass '"#1#"' '"#1#"'
+pass '"[#1# \"one\"]"' '"[#1# \"one\"]"'
+pass '"(\"#\" \"1\")"' '"(\"#\" \"1\")"'
 
 # Syntax Error
 fail '"' '#1#'
