@@ -15,6 +15,7 @@ fi
 . test/suite/type/list.sh
 . test/suite/type/call.sh
 
+. test/suite/operator/evaluate.sh
 . test/suite/operator/value.sh
 . test/suite/operator/assign.sh
 . test/suite/operator/variables.sh

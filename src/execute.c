@@ -27,6 +27,7 @@ static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map
 static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static map_t *default_operators(void);
 static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, map_t *, map_t *));
+static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *operator_value(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *operator_variables(argument_iterator_t *arguments, map_t *variables, map_t *operators);
@@ -341,7 +342,8 @@ static map_t *default_operators(void)
         return NULL;
     }
 
-    if (!set_operator(operators, "<--", operator_value)
+    if (!set_operator(operators, "~", operator_evaluate)
+        || !set_operator(operators, "<--", operator_value)
         || !set_operator(operators, "-->", operator_assign)
         || !set_operator(operators, "---", operator_variables)
         || !set_operator(operators, "(-)", operator_operators)
@@ -400,6 +402,43 @@ static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_
     operator->call = call;
 
     return set_map_item(operators, key, operator);
+}
+
+static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+{
+    value_t *document;
+    char *copy;
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    document = next_argument(arguments, variables, operators);
+
+    if (!document)
+    {
+        return NULL;
+    }
+
+    if (document->type == TYPE_ERROR)
+    {
+        return copy_value(document);
+    }
+
+    if (document->type != TYPE_STRING)
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    copy = copy_string(view_string(document));
+
+    if (!copy)
+    {
+        return NULL;
+    }
+
+    return execute_script(copy, variables);
 }
 
 static value_t *operator_value(argument_iterator_t *arguments, map_t *variables, map_t *operators)
