@@ -2,6 +2,7 @@
 #include <string.h>
 #include "execute.h"
 #include "parse.h"
+#include "lex.h"
 #include "value.h"
 #include "map.h"
 #include "list.h"
@@ -20,6 +21,7 @@ typedef struct
     value_t *(*call)(argument_iterator_t *, map_t *, map_t *);
 } operator_t;
 
+static value_t *execute_expression(list_t *expressions, map_t *variables);
 static value_t *apply_expression(expression_t *expression, map_t *variables, map_t *operators);
 static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map_t *operators);
 static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map_t *operators);
@@ -61,7 +63,34 @@ static void reset_arguments(argument_iterator_t *iterator);
 static int compare_values_ascending(const void *left, const void *right);
 static int compare_values_descending(const void *left, const void *right);
 
-value_t *execute_expression(list_t *expressions, map_t *variables)
+value_t *execute_script(char *document, map_t *variables)
+{
+    scanner_t *scanner;
+    list_t *expressions;
+    value_t *value;
+
+    scanner = start_scanner(document);
+
+    if (!scanner)
+    {
+        return NULL;
+    }
+
+    expressions = parse_expressions(scanner);
+    destroy_scanner(scanner);
+
+    if (!expressions)
+    {
+        return NULL;
+    }
+
+    value = execute_expression(expressions, variables);
+    destroy_list(expressions);
+
+    return value;
+}
+
+static value_t *execute_expression(list_t *expressions, map_t *variables)
 {
     list_node_t *node;
     value_t *last;
