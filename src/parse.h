@@ -5,6 +5,9 @@
 #include "value.h"
 #include "list.h"
 
+#define LIMIT_DEPTH 32
+#define LIMIT_BREADTH 1024
+
 typedef struct
 {
     value_t *value;

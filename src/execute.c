@@ -18,53 +18,59 @@ typedef struct
 
 typedef struct
 {
-    value_t *(*call)(argument_iterator_t *, map_t *, map_t *);
+    value_t *(*call)(argument_iterator_t *, map_t *, map_t *, int);
 } operator_t;
 
-static value_t *execute_expression(list_t *expressions, map_t *variables);
-static value_t *apply_expression(expression_t *expression, map_t *variables, map_t *operators);
-static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map_t *operators);
+static value_t *evaluate_script(char *document, map_t *variables, int depth);
+static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int depth);
+static value_t *apply_expression(expression_t *expression, map_t *variables, map_t *operators, int depth);
+static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static map_t *default_operators(void);
-static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, map_t *, map_t *));
-static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_value(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_variables(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_operators(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_catch(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_throw(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_add(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_subtract(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_multiply(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_divide(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_modulo(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_and(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_or(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_not(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_conditional(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_chain(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_less(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_greater(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_equal(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_type(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_number(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_string(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_length(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_index(argument_iterator_t *arguments, map_t *variables, map_t *operators);
-static value_t *operator_range(argument_iterator_t *arguments, map_t *variables, map_t *operators);
+static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, map_t *, map_t *, int));
+static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_value(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_variables(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_operators(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_catch(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_throw(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_add(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_subtract(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_multiply(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_divide(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_modulo(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_and(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_or(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_not(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_conditional(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_chain(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_less(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_greater(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_equal(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_type(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_number(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_string(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_length(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_index(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_range(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *list_map_keys(map_t *map);
-static int has_next_argument(argument_iterator_t *iterator);
-static value_t *next_argument(argument_iterator_t *iterator, map_t *variables, map_t *operators);
-static void skip_argument(argument_iterator_t *iterator);
-static void reset_arguments(argument_iterator_t *iterator);
+static int has_next_argument(argument_iterator_t *arguments);
+static value_t *next_argument(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static void skip_argument(argument_iterator_t *arguments);
+static void reset_arguments(argument_iterator_t *arguments);
 static int compare_values_ascending(const void *left, const void *right);
 static int compare_values_descending(const void *left, const void *right);
 
 value_t *execute_script(char *document, map_t *variables)
+{
+    return evaluate_script(document, variables, 1);
+}
+
+static value_t *evaluate_script(char *document, map_t *variables, int depth)
 {
     scanner_t *scanner;
     list_t *expressions;
@@ -85,13 +91,13 @@ value_t *execute_script(char *document, map_t *variables)
         return NULL;
     }
 
-    value = execute_expression(expressions, variables);
+    value = evaluate_expressions(expressions, variables, depth);
     destroy_list(expressions);
 
     return value;
 }
 
-static value_t *execute_expression(list_t *expressions, map_t *variables)
+static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int depth)
 {
     list_node_t *node;
     value_t *last;
@@ -124,7 +130,7 @@ static value_t *execute_expression(list_t *expressions, map_t *variables)
         value_t *value;
 
         expression = node->value;
-        value = apply_expression(expression, variables, operators);
+        value = apply_expression(expression, variables, operators, depth);
 
         if (!value)
         {
@@ -153,7 +159,7 @@ static value_t *execute_expression(list_t *expressions, map_t *variables)
     return last;
 }
 
-static value_t *apply_expression(expression_t *expression, map_t *variables, map_t *operators)
+static value_t *apply_expression(expression_t *expression, map_t *variables, map_t *operators, int depth)
 {
     argument_iterator_t *arguments;
     value_t *result;
@@ -192,10 +198,10 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
             result = copy_value(expression->value);
             break;
         case TYPE_LIST:
-            result = apply_list(arguments, variables, operators);
+            result = apply_list(arguments, variables, operators, depth);
             break;
         case TYPE_CALL:
-            result = apply_call(arguments, variables, operators);
+            result = apply_call(arguments, variables, operators, depth);
             break;
         default:
             result = NULL;
@@ -226,7 +232,7 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
     return result;
 }
 
-static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t **items;
     size_t length;
@@ -254,7 +260,7 @@ static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map
                 return new_error(ERROR_ARGUMENT);
             }
 
-            item = next_argument(arguments, variables, operators);
+            item = next_argument(arguments, variables, operators, depth);
 
             if (!item)
             {
@@ -294,7 +300,7 @@ static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map
     return new_list(items, length);
 }
 
-static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *name;
     operator_t *operator;
@@ -304,7 +310,7 @@ static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map
         return new_error(ERROR_ARGUMENT);
     }
 
-    name = next_argument(arguments, variables, operators);
+    name = next_argument(arguments, variables, operators, depth);
 
     if (!name)
     {
@@ -328,7 +334,7 @@ static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map
         return new_error(ERROR_ARGUMENT);
     }
 
-    return operator->call(arguments, variables, operators);
+    return operator->call(arguments, variables, operators, depth);
 }
 
 static map_t *default_operators(void)
@@ -379,7 +385,7 @@ static map_t *default_operators(void)
     return operators;
 }
 
-static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, map_t *, map_t *))
+static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, map_t *, map_t *, int))
 {
     char *key;
     operator_t *operator;
@@ -404,7 +410,7 @@ static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_
     return set_map_item(operators, key, operator);
 }
 
-static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *document;
     char *copy;
@@ -414,7 +420,7 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variabl
         return new_error(ERROR_ARGUMENT);
     }
 
-    document = next_argument(arguments, variables, operators);
+    document = next_argument(arguments, variables, operators, depth);
 
     if (!document)
     {
@@ -438,10 +444,17 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variabl
         return NULL;
     }
 
-    return execute_script(copy, variables);
+    depth += 1;
+
+    if (depth > LIMIT_DEPTH)
+    {
+        return new_error(ERROR_BOUNDS);
+    }
+
+    return evaluate_script(copy, variables, depth);
 }
 
-static value_t *operator_value(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_value(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *identifier, *value;
 
@@ -450,7 +463,7 @@ static value_t *operator_value(argument_iterator_t *arguments, map_t *variables,
         return new_error(ERROR_ARGUMENT);
     }
 
-    identifier = next_argument(arguments, variables, operators);
+    identifier = next_argument(arguments, variables, operators, depth);
 
     if (!identifier)
     {
@@ -472,7 +485,7 @@ static value_t *operator_value(argument_iterator_t *arguments, map_t *variables,
     return value ? copy_value(value) : new_null();
 }
 
-static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *identifier, *value;
 
@@ -481,7 +494,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables
         return new_error(ERROR_ARGUMENT);
     }
 
-    identifier = next_argument(arguments, variables, operators);
+    identifier = next_argument(arguments, variables, operators, depth);
 
     if (!identifier)
     {
@@ -503,7 +516,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables
         return new_error(ERROR_ARGUMENT);
     }
 
-    value = next_argument(arguments, variables, operators);
+    value = next_argument(arguments, variables, operators, depth);
 
     if (!value)
     {
@@ -548,17 +561,17 @@ static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables
     return new_null();
 }
 
-static value_t *operator_variables(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_variables(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     return list_map_keys(variables);
 }
 
-static value_t *operator_operators(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_operators(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     return list_map_keys(operators);
 }
 
-static value_t *operator_catch(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_catch(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *solo;
 
@@ -567,7 +580,7 @@ static value_t *operator_catch(argument_iterator_t *arguments, map_t *variables,
         return new_null();
     }
 
-    solo = next_argument(arguments, variables, operators);
+    solo = next_argument(arguments, variables, operators, depth);
 
     if (!solo)
     {
@@ -582,7 +595,7 @@ static value_t *operator_catch(argument_iterator_t *arguments, map_t *variables,
     return new_null();
 }
 
-static value_t *operator_throw(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_throw(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *solo;
 
@@ -591,7 +604,7 @@ static value_t *operator_throw(argument_iterator_t *arguments, map_t *variables,
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, variables, operators);
+    solo = next_argument(arguments, variables, operators, depth);
 
     if (!solo)
     {
@@ -611,7 +624,7 @@ static value_t *operator_throw(argument_iterator_t *arguments, map_t *variables,
     return new_error(view_number(solo));
 }
 
-static value_t *operator_add(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_add(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *left, *right;
 
@@ -620,7 +633,7 @@ static value_t *operator_add(argument_iterator_t *arguments, map_t *variables, m
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, variables, operators);
+    left = next_argument(arguments, variables, operators, depth);
 
     if (!left)
     {
@@ -642,7 +655,7 @@ static value_t *operator_add(argument_iterator_t *arguments, map_t *variables, m
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, variables, operators);
+    right = next_argument(arguments, variables, operators, depth);
 
     if (!right)
     {
@@ -689,7 +702,7 @@ static value_t *operator_add(argument_iterator_t *arguments, map_t *variables, m
     return new_error(ERROR_ARGUMENT);
 }
 
-static value_t *operator_subtract(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_subtract(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *left, *right;
 
@@ -698,7 +711,7 @@ static value_t *operator_subtract(argument_iterator_t *arguments, map_t *variabl
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, variables, operators);
+    left = next_argument(arguments, variables, operators, depth);
 
     if (!left)
     {
@@ -720,7 +733,7 @@ static value_t *operator_subtract(argument_iterator_t *arguments, map_t *variabl
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, variables, operators);
+    right = next_argument(arguments, variables, operators, depth);
 
     if (!right)
     {
@@ -740,7 +753,7 @@ static value_t *operator_subtract(argument_iterator_t *arguments, map_t *variabl
     return new_number(view_number(left) - view_number(right));
 }
 
-static value_t *operator_multiply(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_multiply(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *left, *right;
 
@@ -749,7 +762,7 @@ static value_t *operator_multiply(argument_iterator_t *arguments, map_t *variabl
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, variables, operators);
+    left = next_argument(arguments, variables, operators, depth);
 
     if (!left)
     {
@@ -771,7 +784,7 @@ static value_t *operator_multiply(argument_iterator_t *arguments, map_t *variabl
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, variables, operators);
+    right = next_argument(arguments, variables, operators, depth);
 
     if (!right)
     {
@@ -791,7 +804,7 @@ static value_t *operator_multiply(argument_iterator_t *arguments, map_t *variabl
     return new_number(view_number(left) * view_number(right));
 }
 
-static value_t *operator_divide(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_divide(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *left, *right;
 
@@ -800,7 +813,7 @@ static value_t *operator_divide(argument_iterator_t *arguments, map_t *variables
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, variables, operators);
+    left = next_argument(arguments, variables, operators, depth);
 
     if (!left)
     {
@@ -822,7 +835,7 @@ static value_t *operator_divide(argument_iterator_t *arguments, map_t *variables
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, variables, operators);
+    right = next_argument(arguments, variables, operators, depth);
 
     if (!right)
     {
@@ -847,7 +860,7 @@ static value_t *operator_divide(argument_iterator_t *arguments, map_t *variables
     return new_number(div(view_number(left), view_number(right)).quot);
 }
 
-static value_t *operator_modulo(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_modulo(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *left, *right;
 
@@ -856,7 +869,7 @@ static value_t *operator_modulo(argument_iterator_t *arguments, map_t *variables
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, variables, operators);
+    left = next_argument(arguments, variables, operators, depth);
 
     if (!left)
     {
@@ -878,7 +891,7 @@ static value_t *operator_modulo(argument_iterator_t *arguments, map_t *variables
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, variables, operators);
+    right = next_argument(arguments, variables, operators, depth);
 
     if (!right)
     {
@@ -903,7 +916,7 @@ static value_t *operator_modulo(argument_iterator_t *arguments, map_t *variables
     return new_number(div(view_number(left), view_number(right)).rem);
 }
 
-static value_t *operator_and(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_and(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *left, *right;
 
@@ -912,7 +925,7 @@ static value_t *operator_and(argument_iterator_t *arguments, map_t *variables, m
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, variables, operators);
+    left = next_argument(arguments, variables, operators, depth);
 
     if (!left)
     {
@@ -934,7 +947,7 @@ static value_t *operator_and(argument_iterator_t *arguments, map_t *variables, m
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, variables, operators);
+    right = next_argument(arguments, variables, operators, depth);
 
     if (!right)
     {
@@ -954,7 +967,7 @@ static value_t *operator_and(argument_iterator_t *arguments, map_t *variables, m
     return new_number(view_number(left) && view_number(right));
 }
 
-static value_t *operator_or(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_or(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *left, *right;
 
@@ -963,7 +976,7 @@ static value_t *operator_or(argument_iterator_t *arguments, map_t *variables, ma
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, variables, operators);
+    left = next_argument(arguments, variables, operators, depth);
 
     if (!left)
     {
@@ -985,7 +998,7 @@ static value_t *operator_or(argument_iterator_t *arguments, map_t *variables, ma
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, variables, operators);
+    right = next_argument(arguments, variables, operators, depth);
 
     if (!right)
     {
@@ -1005,7 +1018,7 @@ static value_t *operator_or(argument_iterator_t *arguments, map_t *variables, ma
     return new_number(view_number(left) || view_number(right));
 }
 
-static value_t *operator_not(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_not(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *solo;
 
@@ -1014,7 +1027,7 @@ static value_t *operator_not(argument_iterator_t *arguments, map_t *variables, m
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, variables, operators);
+    solo = next_argument(arguments, variables, operators, depth);
 
     if (!solo)
     {
@@ -1034,7 +1047,7 @@ static value_t *operator_not(argument_iterator_t *arguments, map_t *variables, m
     return new_number(!view_number(solo));
 }
 
-static value_t *operator_conditional(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_conditional(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *condition;
 
@@ -1043,7 +1056,7 @@ static value_t *operator_conditional(argument_iterator_t *arguments, map_t *vari
         return new_error(ERROR_ARGUMENT);
     }
 
-    condition = next_argument(arguments, variables, operators);
+    condition = next_argument(arguments, variables, operators, depth);
 
     if (!condition)
     {
@@ -1069,7 +1082,7 @@ static value_t *operator_conditional(argument_iterator_t *arguments, map_t *vari
             return new_error(ERROR_ARGUMENT);
         }
 
-        pass = next_argument(arguments, variables, operators);
+        pass = next_argument(arguments, variables, operators, depth);
 
         if (!pass)
         {
@@ -1089,7 +1102,7 @@ static value_t *operator_conditional(argument_iterator_t *arguments, map_t *vari
             return new_error(ERROR_ARGUMENT);
         }
 
-        fail = next_argument(arguments, variables, operators);
+        fail = next_argument(arguments, variables, operators, depth);
 
         if (!fail)
         {
@@ -1100,7 +1113,7 @@ static value_t *operator_conditional(argument_iterator_t *arguments, map_t *vari
     }
 }
 
-static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     int proceed;
 
@@ -1115,7 +1128,7 @@ static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables, 
             return new_error(ERROR_ARGUMENT);
         }
 
-        condition = next_argument(arguments, variables, operators);
+        condition = next_argument(arguments, variables, operators, depth);
 
         if (!condition)
         {
@@ -1143,7 +1156,7 @@ static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables, 
                 return new_error(ERROR_ARGUMENT);
             }
 
-            pass = next_argument(arguments, variables, operators);
+            pass = next_argument(arguments, variables, operators, depth);
 
             if (!pass)
             {
@@ -1163,7 +1176,7 @@ static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables, 
     return new_null();
 }
 
-static value_t *operator_chain(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_chain(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *last;
 
@@ -1174,7 +1187,7 @@ static value_t *operator_chain(argument_iterator_t *arguments, map_t *variables,
 
     while (has_next_argument(arguments))
     {
-        last = next_argument(arguments, variables, operators);
+        last = next_argument(arguments, variables, operators, depth);
 
         if (!last)
         {
@@ -1190,7 +1203,7 @@ static value_t *operator_chain(argument_iterator_t *arguments, map_t *variables,
     return copy_value(last);
 }
 
-static value_t *operator_less(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_less(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *left, *right;
 
@@ -1199,7 +1212,7 @@ static value_t *operator_less(argument_iterator_t *arguments, map_t *variables, 
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, variables, operators);
+    left = next_argument(arguments, variables, operators, depth);
 
     if (!left)
     {
@@ -1216,7 +1229,7 @@ static value_t *operator_less(argument_iterator_t *arguments, map_t *variables, 
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, variables, operators);
+    right = next_argument(arguments, variables, operators, depth);
 
     if (!right)
     {
@@ -1231,7 +1244,7 @@ static value_t *operator_less(argument_iterator_t *arguments, map_t *variables, 
     return new_number(compare_values(left, right) < 0);
 }
 
-static value_t *operator_greater(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_greater(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *left, *right;
 
@@ -1240,7 +1253,7 @@ static value_t *operator_greater(argument_iterator_t *arguments, map_t *variable
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, variables, operators);
+    left = next_argument(arguments, variables, operators, depth);
 
     if (!left)
     {
@@ -1257,7 +1270,7 @@ static value_t *operator_greater(argument_iterator_t *arguments, map_t *variable
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, variables, operators);
+    right = next_argument(arguments, variables, operators, depth);
 
     if (!right)
     {
@@ -1272,7 +1285,7 @@ static value_t *operator_greater(argument_iterator_t *arguments, map_t *variable
     return new_number(compare_values(left, right) > 0);
 }
 
-static value_t *operator_equal(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_equal(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *left, *right;
 
@@ -1281,7 +1294,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, map_t *variables,
         return new_error(ERROR_ARGUMENT);
     }
 
-    left = next_argument(arguments, variables, operators);
+    left = next_argument(arguments, variables, operators, depth);
 
     if (!left)
     {
@@ -1298,7 +1311,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, map_t *variables,
         return new_error(ERROR_ARGUMENT);
     }
 
-    right = next_argument(arguments, variables, operators);
+    right = next_argument(arguments, variables, operators, depth);
 
     if (!right)
     {
@@ -1313,7 +1326,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, map_t *variables,
     return new_number(compare_values(left, right) == 0);
 }
 
-static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *collection, *reversed;
     value_t **items;
@@ -1324,7 +1337,7 @@ static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables, 
         return new_error(ERROR_ARGUMENT);
     }
 
-    collection = next_argument(arguments, variables, operators);
+    collection = next_argument(arguments, variables, operators, depth);
 
     if (!collection)
     {
@@ -1346,7 +1359,7 @@ static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables, 
         return new_error(ERROR_ARGUMENT);
     }
 
-    reversed = next_argument(arguments, variables, operators);
+    reversed = next_argument(arguments, variables, operators, depth);
 
     if (!reversed)
     {
@@ -1401,7 +1414,7 @@ static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables, 
     return new_list(items, length);
 }
 
-static value_t *operator_type(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_type(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *solo;
 
@@ -1410,7 +1423,7 @@ static value_t *operator_type(argument_iterator_t *arguments, map_t *variables, 
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, variables, operators);
+    solo = next_argument(arguments, variables, operators, depth);
 
     if (!solo)
     {
@@ -1445,7 +1458,7 @@ static value_t *operator_type(argument_iterator_t *arguments, map_t *variables, 
     return new_error(ERROR_ARGUMENT);
 }
 
-static value_t *operator_number(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_number(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *solo;
 
@@ -1454,7 +1467,7 @@ static value_t *operator_number(argument_iterator_t *arguments, map_t *variables
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, variables, operators);
+    solo = next_argument(arguments, variables, operators, depth);
 
     if (!solo)
     {
@@ -1491,7 +1504,7 @@ static value_t *operator_number(argument_iterator_t *arguments, map_t *variables
     return new_error(ERROR_ARGUMENT);
 }
 
-static value_t *operator_string(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_string(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *solo;
 
@@ -1500,7 +1513,7 @@ static value_t *operator_string(argument_iterator_t *arguments, map_t *variables
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, variables, operators);
+    solo = next_argument(arguments, variables, operators, depth);
 
     if (!solo)
     {
@@ -1542,7 +1555,7 @@ static value_t *operator_string(argument_iterator_t *arguments, map_t *variables
     return new_error(ERROR_ARGUMENT);
 }
 
-static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *solo;
 
@@ -1551,7 +1564,7 @@ static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, 
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, variables, operators);
+    solo = next_argument(arguments, variables, operators, depth);
 
     if (!solo)
     {
@@ -1566,7 +1579,7 @@ static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, 
     return new_number(hash_value(solo));
 }
 
-static value_t *operator_length(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_length(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *solo;
 
@@ -1575,7 +1588,7 @@ static value_t *operator_length(argument_iterator_t *arguments, map_t *variables
         return new_error(ERROR_ARGUMENT);
     }
 
-    solo = next_argument(arguments, variables, operators);
+    solo = next_argument(arguments, variables, operators, depth);
 
     if (!solo)
     {
@@ -1595,7 +1608,7 @@ static value_t *operator_length(argument_iterator_t *arguments, map_t *variables
     return new_number(length_value(solo));
 }
 
-static value_t *operator_index(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_index(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *collection, *index;
     int adjusted;
@@ -1605,7 +1618,7 @@ static value_t *operator_index(argument_iterator_t *arguments, map_t *variables,
         return new_error(ERROR_ARGUMENT);
     }
 
-    collection = next_argument(arguments, variables, operators);
+    collection = next_argument(arguments, variables, operators, depth);
 
     if (!collection)
     {
@@ -1627,7 +1640,7 @@ static value_t *operator_index(argument_iterator_t *arguments, map_t *variables,
         return new_error(ERROR_ARGUMENT);
     }
 
-    index = next_argument(arguments, variables, operators);
+    index = next_argument(arguments, variables, operators, depth);
 
     if (!index)
     {
@@ -1678,7 +1691,7 @@ static value_t *operator_index(argument_iterator_t *arguments, map_t *variables,
     return new_error(ERROR_ARGUMENT);
 }
 
-static value_t *operator_range(argument_iterator_t *arguments, map_t *variables, map_t *operators)
+static value_t *operator_range(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *collection, *start, *end;
     int adjustedstart, adjustedend;
@@ -1689,7 +1702,7 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
         return new_error(ERROR_ARGUMENT);
     }
 
-    collection = next_argument(arguments, variables, operators);
+    collection = next_argument(arguments, variables, operators, depth);
 
     if (!collection)
     {
@@ -1711,7 +1724,7 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
         return new_error(ERROR_ARGUMENT);
     }
 
-    start = next_argument(arguments, variables, operators);
+    start = next_argument(arguments, variables, operators, depth);
 
     if (!start)
     {
@@ -1733,7 +1746,7 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
         return new_error(ERROR_ARGUMENT);
     }
 
-    end = next_argument(arguments, variables, operators);
+    end = next_argument(arguments, variables, operators, depth);
 
     if (!end)
     {
@@ -1882,45 +1895,45 @@ static value_t *list_map_keys(map_t *map)
     return new_list(items, length);
 }
 
-static int has_next_argument(argument_iterator_t *iterator)
+static int has_next_argument(argument_iterator_t *arguments)
 {
-    return iterator->index < iterator->expressions->length;
+    return arguments->index < arguments->expressions->length;
 }
 
-static value_t *next_argument(argument_iterator_t *iterator, map_t *variables, map_t *operators)
+static value_t *next_argument(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *result;
 
-    result = apply_expression(iterator->current->value, variables, operators);
-    iterator->current = iterator->current->next;
-    iterator->evaluated[iterator->index] = result;
-    iterator->index += 1;
+    result = apply_expression(arguments->current->value, variables, operators, depth);
+    arguments->current = arguments->current->next;
+    arguments->evaluated[arguments->index] = result;
+    arguments->index += 1;
 
     return result;
 }
 
-static void skip_argument(argument_iterator_t *iterator)
+static void skip_argument(argument_iterator_t *arguments)
 {
-    iterator->current = iterator->current->next;
-    iterator->evaluated[iterator->index] = NULL;
-    iterator->index += 1;
+    arguments->current = arguments->current->next;
+    arguments->evaluated[arguments->index] = NULL;
+    arguments->index += 1;
 }
 
-static void reset_arguments(argument_iterator_t *iterator)
+static void reset_arguments(argument_iterator_t *arguments)
 {
     size_t index;
 
-    for (index = 0; index < iterator->index; index++)
+    for (index = 0; index < arguments->index; index++)
     {
-        if (iterator->evaluated[index])
+        if (arguments->evaluated[index])
         {
-            destroy_value(iterator->evaluated[index]);
-            iterator->evaluated[index] = NULL;
+            destroy_value(arguments->evaluated[index]);
+            arguments->evaluated[index] = NULL;
         }
     }
 
-    iterator->current = iterator->expressions->head;
-    iterator->index = 0;
+    arguments->current = arguments->expressions->head;
+    arguments->index = 0;
 }
 
 static int compare_values_ascending(const void *left, const void *right)

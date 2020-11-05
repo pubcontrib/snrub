@@ -6,9 +6,6 @@
 #include "list.h"
 #include "common.h"
 
-#define LIMIT_DEPTH 32
-#define LIMIT_BREADTH 1024
-
 typedef enum
 {
     PARSER_STATE_SUCCESS,
