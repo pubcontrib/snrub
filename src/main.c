@@ -344,11 +344,11 @@ static void destroy_value_unsafe(void *value)
 
 static void print_error(error_t error)
 {
-    char *message;
+    char *represent;
 
-    message = represent_error(error);
-    printf("%s\n", message);
-    free(message);
+    represent = represent_error(error);
+    printf("%s\n", represent);
+    free(represent);
 }
 
 static void crash(void)
