@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include "cli.h"
 #include "execute.h"
 #include "parse.h"
 #include "lex.h"
@@ -57,6 +59,7 @@ static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, 
 static value_t *operator_length(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *operator_index(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *operator_range(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_read(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *list_map_keys(map_t *map);
 static int has_next_argument(argument_iterator_t *arguments);
 static value_t *next_argument(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
@@ -376,7 +379,8 @@ static map_t *default_operators(void)
         || !set_operator(operators, "::", operator_hash)
         || !set_operator(operators, "| |", operator_length)
         || !set_operator(operators, "[#]", operator_index)
-        || !set_operator(operators, "[# #]", operator_range))
+        || !set_operator(operators, "[# #]", operator_range)
+        || !set_operator(operators, "^", operator_read))
     {
         destroy_map(operators);
         return NULL;
@@ -1842,6 +1846,59 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
     }
 
     return new_error(ERROR_ARGUMENT);
+}
+
+static value_t *operator_read(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
+{
+    value_t *path;
+    char *file;
+    size_t length, index;
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    path = next_argument(arguments, variables, operators, depth);
+
+    if (!path)
+    {
+        return NULL;
+    }
+
+    if (path->type == TYPE_ERROR)
+    {
+        return copy_value(path);
+    }
+
+    if (path->type != TYPE_STRING)
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    file = read_file(view_string(path));
+
+    if (!file)
+    {
+        return new_error(ERROR_IO);
+    }
+
+    length = strlen(file);
+
+    for (index = 0; index < length; index++)
+    {
+        char symbol;
+
+        symbol = file[index];
+
+        if (!(isprint((unsigned char) symbol) || symbol == '\t' || symbol == '\n' || symbol == '\r'))
+        {
+            free(file);
+            return new_error(ERROR_TYPE);
+        }
+    }
+
+    return steal_string(file, sizeof(char) * (length + 1));
 }
 
 static value_t *list_map_keys(map_t *map)

@@ -28,7 +28,8 @@ typedef enum
     ERROR_BOUNDS,
     ERROR_TYPE,
     ERROR_ARGUMENT,
-    ERROR_ARITHMETIC
+    ERROR_ARITHMETIC,
+    ERROR_IO
 } error_t;
 
 value_t *merge_lists(value_t *left, value_t *right);

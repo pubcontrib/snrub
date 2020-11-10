@@ -44,5 +44,6 @@ fi
 . test/suite/operator/length.sh
 . test/suite/operator/index.sh
 . test/suite/operator/range.sh
+. test/suite/operator/read.sh
 
 conclude
