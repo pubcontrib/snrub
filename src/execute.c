@@ -30,6 +30,7 @@ static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map
 static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static map_t *default_operators(void);
 static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, map_t *, map_t *, int));
+static int set_variable(map_t *variables, char *identifier, value_t *variable);
 static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *operator_value(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
@@ -414,9 +415,32 @@ static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_
     return set_map_item(operators, key, operator);
 }
 
+static int set_variable(map_t *variables, char *identifier, value_t *variable)
+{
+    char *key;
+    value_t *value;
+
+    key = copy_string(identifier);
+
+    if (!key)
+    {
+        return 0;
+    }
+
+    value = copy_value(variable);
+
+    if (!value)
+    {
+        free(key);
+        return 0;
+    }
+
+    return set_map_item(variables, key, value);
+}
+
 static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
-    value_t *document;
+    value_t *document, *value;
     char *copy;
 
     if (!has_next_argument(arguments))
@@ -439,6 +463,28 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variabl
     if (document->type != TYPE_STRING)
     {
         return new_error(ERROR_ARGUMENT);
+    }
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    value = next_argument(arguments, variables, operators, depth);
+
+    if (!value)
+    {
+        return NULL;
+    }
+
+    if (value->type == TYPE_ERROR)
+    {
+        return copy_value(value);
+    }
+
+    if (!set_variable(variables, "@", value))
+    {
+        return NULL;
     }
 
     copy = copy_string(view_string(document));
@@ -538,25 +584,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables
     }
     else
     {
-        char *name;
-        value_t *copy;
-
-        name = copy_string(view_string(identifier));
-
-        if (!name)
-        {
-            return NULL;
-        }
-
-        copy = copy_value(value);
-
-        if (!copy)
-        {
-            free(name);
-            return NULL;
-        }
-
-        if (!set_map_item(variables, name, copy))
+        if (!set_variable(variables, view_string(identifier), value))
         {
             return NULL;
         }
