@@ -57,6 +57,7 @@ static value_t *operator_type(argument_iterator_t *arguments, map_t *variables, 
 static value_t *operator_number(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *operator_string(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static value_t *operator_represent(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *operator_length(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *operator_index(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *operator_range(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
@@ -378,6 +379,7 @@ static map_t *default_operators(void)
         || !set_operator(operators, "#", operator_number)
         || !set_operator(operators, "\"", operator_string)
         || !set_operator(operators, "::", operator_hash)
+        || !set_operator(operators, "$", operator_represent)
         || !set_operator(operators, "| |", operator_length)
         || !set_operator(operators, "[#]", operator_index)
         || !set_operator(operators, "[# #]", operator_range)
@@ -1609,6 +1611,38 @@ static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, 
     }
 
     return new_number(hash_value(solo));
+}
+
+static value_t *operator_represent(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
+{
+    value_t *solo;
+    char *represent;
+
+    if (!has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
+    }
+
+    solo = next_argument(arguments, variables, operators, depth);
+
+    if (!solo)
+    {
+        return NULL;
+    }
+
+    if (solo->type == TYPE_ERROR)
+    {
+        return copy_value(solo);
+    }
+
+    represent = represent_value(solo);
+
+    if (!represent)
+    {
+        return NULL;
+    }
+
+    return steal_string(represent, strlen(represent) + 1);
 }
 
 static value_t *operator_length(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)

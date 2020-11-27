@@ -41,6 +41,7 @@ fi
 . test/suite/operator/number.sh
 . test/suite/operator/string.sh
 . test/suite/operator/hash.sh
+. test/suite/operator/represent.sh
 . test/suite/operator/length.sh
 . test/suite/operator/index.sh
 . test/suite/operator/range.sh
