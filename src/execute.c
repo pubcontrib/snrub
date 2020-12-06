@@ -10,12 +10,17 @@
 #include "list.h"
 #include "common.h"
 
+#define TYPES_NONERROR (TYPE_NULL | TYPE_NUMBER | TYPE_STRING | TYPE_LIST)
+#define TYPES_NONNULL (TYPE_NUMBER | TYPE_STRING | TYPE_LIST)
+#define TYPES_ANY (TYPE_NULL | TYPE_NUMBER | TYPE_STRING | TYPE_LIST | TYPE_ERROR)
+
 typedef struct
 {
     list_t *expressions;
     list_node_t *current;
     value_t **evaluated;
     size_t index;
+    value_t *value;
 } argument_iterator_t;
 
 typedef struct
@@ -64,7 +69,7 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
 static value_t *operator_read(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
 static value_t *list_map_keys(map_t *map);
 static int has_next_argument(argument_iterator_t *arguments);
-static value_t *next_argument(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth);
+static int next_argument(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth, int types);
 static void skip_argument(argument_iterator_t *arguments);
 static void reset_arguments(argument_iterator_t *arguments);
 static int compare_values_ascending(const void *left, const void *right);
@@ -246,7 +251,6 @@ static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map
 
     if (length > 0)
     {
-        value_t *item;
         size_t index;
 
         items = malloc(sizeof(value_t *) * length);
@@ -260,20 +264,7 @@ static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map
         {
             value_t *copy;
 
-            if (!has_next_argument(arguments))
-            {
-                return new_error(ERROR_ARGUMENT);
-            }
-
-            item = next_argument(arguments, variables, operators, depth);
-
-            if (!item)
-            {
-                free(items);
-                return NULL;
-            }
-
-            if (item->type == TYPE_ERROR)
+            if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
             {
                 size_t reindex;
 
@@ -283,10 +274,10 @@ static value_t *apply_list(argument_iterator_t *arguments, map_t *variables, map
                 }
 
                 free(items);
-                return copy_value(item);
+                return arguments->value;
             }
 
-            copy = copy_value(item);
+            copy = copy_value(arguments->value);
 
             if (!copy)
             {
@@ -310,27 +301,12 @@ static value_t *apply_call(argument_iterator_t *arguments, map_t *variables, map
     value_t *name;
     operator_t *operator;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_STRING))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    name = next_argument(arguments, variables, operators, depth);
-
-    if (!name)
-    {
-        return NULL;
-    }
-
-    if (name->type == TYPE_ERROR)
-    {
-        return copy_value(name);
-    }
-
-    if (name->type != TYPE_STRING)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    name = arguments->value;
 
     operator = get_map_item(operators, view_string(name));
 
@@ -445,44 +421,19 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, map_t *variabl
     value_t *document, *value;
     char *copy;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_STRING))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    document = next_argument(arguments, variables, operators, depth);
+    document = arguments->value;
 
-    if (!document)
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (document->type == TYPE_ERROR)
-    {
-        return copy_value(document);
-    }
-
-    if (document->type != TYPE_STRING)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    value = next_argument(arguments, variables, operators, depth);
-
-    if (!value)
-    {
-        return NULL;
-    }
-
-    if (value->type == TYPE_ERROR)
-    {
-        return copy_value(value);
-    }
+    value = arguments->value;
 
     if (!set_variable(variables, "@", value))
     {
@@ -510,27 +461,12 @@ static value_t *operator_value(argument_iterator_t *arguments, map_t *variables,
 {
     value_t *identifier, *value;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_STRING))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    identifier = next_argument(arguments, variables, operators, depth);
-
-    if (!identifier)
-    {
-        return NULL;
-    }
-
-    if (identifier->type == TYPE_ERROR)
-    {
-        return copy_value(identifier);
-    }
-
-    if (identifier->type != TYPE_STRING)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    identifier = arguments->value;
 
     value = get_map_item(variables, view_string(identifier));
 
@@ -541,44 +477,19 @@ static value_t *operator_assign(argument_iterator_t *arguments, map_t *variables
 {
     value_t *identifier, *value;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_STRING))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    identifier = next_argument(arguments, variables, operators, depth);
+    identifier = arguments->value;
 
-    if (!identifier)
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (identifier->type == TYPE_ERROR)
-    {
-        return copy_value(identifier);
-    }
-
-    if (identifier->type != TYPE_STRING)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    value = next_argument(arguments, variables, operators, depth);
-
-    if (!value)
-    {
-        return NULL;
-    }
-
-    if (value->type == TYPE_ERROR)
-    {
-        return copy_value(value);
-    }
+    value = arguments->value;
 
     if (value->type == TYPE_NULL)
     {
@@ -614,46 +525,26 @@ static value_t *operator_catch(argument_iterator_t *arguments, map_t *variables,
         return new_null();
     }
 
-    solo = next_argument(arguments, variables, operators, depth);
-
-    if (!solo)
+    if (!next_argument(arguments, variables, operators, depth, TYPES_ANY))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (solo->type == TYPE_ERROR)
-    {
-        return new_number(view_error(solo));
-    }
+    solo = arguments->value;
 
-    return new_null();
+    return solo->type == TYPE_ERROR ? new_number(view_error(solo)) : new_null();
 }
 
 static value_t *operator_throw(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
 {
     value_t *solo;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    solo = next_argument(arguments, variables, operators, depth);
-
-    if (!solo)
-    {
-        return NULL;
-    }
-
-    if (solo->type == TYPE_ERROR)
-    {
-        return copy_value(solo);
-    }
-
-    if (solo->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    solo = arguments->value;
 
     return new_error(view_number(solo));
 }
@@ -662,44 +553,19 @@ static value_t *operator_add(argument_iterator_t *arguments, map_t *variables, m
 {
     value_t *left, *right;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONNULL))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    left = next_argument(arguments, variables, operators, depth);
+    left = arguments->value;
 
-    if (!left)
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONNULL))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (left->type == TYPE_ERROR)
-    {
-        return copy_value(left);
-    }
-
-    if (left->type != TYPE_NUMBER && left->type != TYPE_STRING && left->type != TYPE_LIST)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    right = next_argument(arguments, variables, operators, depth);
-
-    if (!right)
-    {
-        return NULL;
-    }
-
-    if (right->type == TYPE_ERROR)
-    {
-        return copy_value(right);
-    }
+    right = arguments->value;
 
     if (left->type != right->type)
     {
@@ -740,49 +606,19 @@ static value_t *operator_subtract(argument_iterator_t *arguments, map_t *variabl
 {
     value_t *left, *right;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    left = next_argument(arguments, variables, operators, depth);
+    left = arguments->value;
 
-    if (!left)
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (left->type == TYPE_ERROR)
-    {
-        return copy_value(left);
-    }
-
-    if (left->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    right = next_argument(arguments, variables, operators, depth);
-
-    if (!right)
-    {
-        return NULL;
-    }
-
-    if (right->type == TYPE_ERROR)
-    {
-        return copy_value(right);
-    }
-
-    if (right->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    right = arguments->value;
 
     return new_number(view_number(left) - view_number(right));
 }
@@ -791,49 +627,19 @@ static value_t *operator_multiply(argument_iterator_t *arguments, map_t *variabl
 {
     value_t *left, *right;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    left = next_argument(arguments, variables, operators, depth);
+    left = arguments->value;
 
-    if (!left)
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (left->type == TYPE_ERROR)
-    {
-        return copy_value(left);
-    }
-
-    if (left->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    right = next_argument(arguments, variables, operators, depth);
-
-    if (!right)
-    {
-        return NULL;
-    }
-
-    if (right->type == TYPE_ERROR)
-    {
-        return copy_value(right);
-    }
-
-    if (right->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    right = arguments->value;
 
     return new_number(view_number(left) * view_number(right));
 }
@@ -842,49 +648,19 @@ static value_t *operator_divide(argument_iterator_t *arguments, map_t *variables
 {
     value_t *left, *right;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    left = next_argument(arguments, variables, operators, depth);
+    left = arguments->value;
 
-    if (!left)
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (left->type == TYPE_ERROR)
-    {
-        return copy_value(left);
-    }
-
-    if (left->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    right = next_argument(arguments, variables, operators, depth);
-
-    if (!right)
-    {
-        return NULL;
-    }
-
-    if (right->type == TYPE_ERROR)
-    {
-        return copy_value(right);
-    }
-
-    if (right->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    right = arguments->value;
 
     if (view_number(right) == 0)
     {
@@ -898,49 +674,19 @@ static value_t *operator_modulo(argument_iterator_t *arguments, map_t *variables
 {
     value_t *left, *right;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    left = next_argument(arguments, variables, operators, depth);
+    left = arguments->value;
 
-    if (!left)
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (left->type == TYPE_ERROR)
-    {
-        return copy_value(left);
-    }
-
-    if (left->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    right = next_argument(arguments, variables, operators, depth);
-
-    if (!right)
-    {
-        return NULL;
-    }
-
-    if (right->type == TYPE_ERROR)
-    {
-        return copy_value(right);
-    }
-
-    if (right->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    right = arguments->value;
 
     if (view_number(right) == 0)
     {
@@ -954,49 +700,19 @@ static value_t *operator_and(argument_iterator_t *arguments, map_t *variables, m
 {
     value_t *left, *right;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    left = next_argument(arguments, variables, operators, depth);
+    left = arguments->value;
 
-    if (!left)
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (left->type == TYPE_ERROR)
-    {
-        return copy_value(left);
-    }
-
-    if (left->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    right = next_argument(arguments, variables, operators, depth);
-
-    if (!right)
-    {
-        return NULL;
-    }
-
-    if (right->type == TYPE_ERROR)
-    {
-        return copy_value(right);
-    }
-
-    if (right->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    right = arguments->value;
 
     return new_number(view_number(left) && view_number(right));
 }
@@ -1005,49 +721,19 @@ static value_t *operator_or(argument_iterator_t *arguments, map_t *variables, ma
 {
     value_t *left, *right;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    left = next_argument(arguments, variables, operators, depth);
+    left = arguments->value;
 
-    if (!left)
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (left->type == TYPE_ERROR)
-    {
-        return copy_value(left);
-    }
-
-    if (left->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    right = next_argument(arguments, variables, operators, depth);
-
-    if (!right)
-    {
-        return NULL;
-    }
-
-    if (right->type == TYPE_ERROR)
-    {
-        return copy_value(right);
-    }
-
-    if (right->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    right = arguments->value;
 
     return new_number(view_number(left) || view_number(right));
 }
@@ -1056,27 +742,12 @@ static value_t *operator_not(argument_iterator_t *arguments, map_t *variables, m
 {
     value_t *solo;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    solo = next_argument(arguments, variables, operators, depth);
-
-    if (!solo)
-    {
-        return NULL;
-    }
-
-    if (solo->type == TYPE_ERROR)
-    {
-        return copy_value(solo);
-    }
-
-    if (solo->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    solo = arguments->value;
 
     return new_number(!view_number(solo));
 }
@@ -1085,66 +756,24 @@ static value_t *operator_conditional(argument_iterator_t *arguments, map_t *vari
 {
     value_t *condition;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    condition = next_argument(arguments, variables, operators, depth);
+    condition = arguments->value;
 
-    if (!condition)
+    if (!view_number(condition))
     {
-        return NULL;
-    }
-
-    if (condition->type == TYPE_ERROR)
-    {
-        return copy_value(condition);
-    }
-
-    if (condition->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (view_number(condition))
-    {
-        value_t *pass;
-
-        if (!has_next_argument(arguments))
-        {
-            return new_error(ERROR_ARGUMENT);
-        }
-
-        pass = next_argument(arguments, variables, operators, depth);
-
-        if (!pass)
-        {
-            return NULL;
-        }
-
-        return copy_value(pass);
-    }
-    else
-    {
-        value_t *fail;
-
         skip_argument(arguments);
-
-        if (!has_next_argument(arguments))
-        {
-            return new_error(ERROR_ARGUMENT);
-        }
-
-        fail = next_argument(arguments, variables, operators, depth);
-
-        if (!fail)
-        {
-            return NULL;
-        }
-
-        return copy_value(fail);
     }
+
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
+    {
+        return arguments->value;
+    }
+
+    return copy_value(arguments->value);
 }
 
 static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
@@ -1157,49 +786,19 @@ static value_t *operator_loop(argument_iterator_t *arguments, map_t *variables, 
     {
         value_t *condition;
 
-        if (!has_next_argument(arguments))
+        if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
         {
-            return new_error(ERROR_ARGUMENT);
+            return arguments->value;
         }
 
-        condition = next_argument(arguments, variables, operators, depth);
-
-        if (!condition)
-        {
-            return NULL;
-        }
-
-        if (condition->type == TYPE_ERROR)
-        {
-            return copy_value(condition);
-        }
-
-        if (condition->type != TYPE_NUMBER)
-        {
-            return new_error(ERROR_ARGUMENT);
-        }
-
+        condition = arguments->value;
         proceed = view_number(condition);
 
         if (proceed)
         {
-            value_t *pass;
-
-            if (!has_next_argument(arguments))
+            if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
             {
-                return new_error(ERROR_ARGUMENT);
-            }
-
-            pass = next_argument(arguments, variables, operators, depth);
-
-            if (!pass)
-            {
-                return NULL;
-            }
-
-            if (pass->type == TYPE_ERROR)
-            {
-                return copy_value(pass);
+                return arguments->value;
             }
 
             reset_arguments(arguments);
@@ -1221,17 +820,12 @@ static value_t *operator_chain(argument_iterator_t *arguments, map_t *variables,
 
     while (has_next_argument(arguments))
     {
-        last = next_argument(arguments, variables, operators, depth);
-
-        if (!last)
+        if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
         {
-            return NULL;
+            return arguments->value;
         }
 
-        if (last->type == TYPE_ERROR)
-        {
-            return copy_value(last);
-        }
+        last = arguments->value;
     }
 
     return copy_value(last);
@@ -1241,39 +835,19 @@ static value_t *operator_less(argument_iterator_t *arguments, map_t *variables, 
 {
     value_t *left, *right;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    left = next_argument(arguments, variables, operators, depth);
+    left = arguments->value;
 
-    if (!left)
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (left->type == TYPE_ERROR)
-    {
-        return copy_value(left);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    right = next_argument(arguments, variables, operators, depth);
-
-    if (!right)
-    {
-        return NULL;
-    }
-
-    if (right->type == TYPE_ERROR)
-    {
-        return copy_value(right);
-    }
+    right = arguments->value;
 
     return new_number(compare_values(left, right) < 0);
 }
@@ -1282,39 +856,19 @@ static value_t *operator_greater(argument_iterator_t *arguments, map_t *variable
 {
     value_t *left, *right;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    left = next_argument(arguments, variables, operators, depth);
+    left = arguments->value;
 
-    if (!left)
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (left->type == TYPE_ERROR)
-    {
-        return copy_value(left);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    right = next_argument(arguments, variables, operators, depth);
-
-    if (!right)
-    {
-        return NULL;
-    }
-
-    if (right->type == TYPE_ERROR)
-    {
-        return copy_value(right);
-    }
+    right = arguments->value;
 
     return new_number(compare_values(left, right) > 0);
 }
@@ -1323,39 +877,19 @@ static value_t *operator_equal(argument_iterator_t *arguments, map_t *variables,
 {
     value_t *left, *right;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    left = next_argument(arguments, variables, operators, depth);
+    left = arguments->value;
 
-    if (!left)
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (left->type == TYPE_ERROR)
-    {
-        return copy_value(left);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    right = next_argument(arguments, variables, operators, depth);
-
-    if (!right)
-    {
-        return NULL;
-    }
-
-    if (right->type == TYPE_ERROR)
-    {
-        return copy_value(right);
-    }
+    right = arguments->value;
 
     return new_number(compare_values(left, right) == 0);
 }
@@ -1366,49 +900,19 @@ static value_t *operator_sort(argument_iterator_t *arguments, map_t *variables, 
     value_t **items;
     size_t length;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_LIST))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    collection = next_argument(arguments, variables, operators, depth);
+    collection = arguments->value;
 
-    if (!collection)
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (collection->type == TYPE_ERROR)
-    {
-        return copy_value(collection);
-    }
-
-    if (collection->type != TYPE_LIST)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    reversed = next_argument(arguments, variables, operators, depth);
-
-    if (!reversed)
-    {
-        return NULL;
-    }
-
-    if (reversed->type == TYPE_ERROR)
-    {
-        return copy_value(reversed);
-    }
-
-    if (reversed->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    reversed = arguments->value;
 
     length = length_value(collection);
 
@@ -1452,22 +956,12 @@ static value_t *operator_type(argument_iterator_t *arguments, map_t *variables, 
 {
     value_t *solo;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    solo = next_argument(arguments, variables, operators, depth);
-
-    if (!solo)
-    {
-        return NULL;
-    }
-
-    if (solo->type == TYPE_ERROR)
-    {
-        return copy_value(solo);
-    }
+    solo = arguments->value;
 
     if (solo->type == TYPE_NULL)
     {
@@ -1496,22 +990,12 @@ static value_t *operator_number(argument_iterator_t *arguments, map_t *variables
 {
     value_t *solo;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    solo = next_argument(arguments, variables, operators, depth);
-
-    if (!solo)
-    {
-        return NULL;
-    }
-
-    if (solo->type == TYPE_ERROR)
-    {
-        return copy_value(solo);
-    }
+    solo = arguments->value;
 
     if (solo->type == TYPE_NULL)
     {
@@ -1542,22 +1026,12 @@ static value_t *operator_string(argument_iterator_t *arguments, map_t *variables
 {
     value_t *solo;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    solo = next_argument(arguments, variables, operators, depth);
-
-    if (!solo)
-    {
-        return NULL;
-    }
-
-    if (solo->type == TYPE_ERROR)
-    {
-        return copy_value(solo);
-    }
+    solo = arguments->value;
 
     if (solo->type == TYPE_NULL)
     {
@@ -1593,22 +1067,12 @@ static value_t *operator_hash(argument_iterator_t *arguments, map_t *variables, 
 {
     value_t *solo;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    solo = next_argument(arguments, variables, operators, depth);
-
-    if (!solo)
-    {
-        return NULL;
-    }
-
-    if (solo->type == TYPE_ERROR)
-    {
-        return copy_value(solo);
-    }
+    solo = arguments->value;
 
     return new_number(hash_value(solo));
 }
@@ -1618,23 +1082,12 @@ static value_t *operator_represent(argument_iterator_t *arguments, map_t *variab
     value_t *solo;
     char *represent;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPES_NONERROR))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    solo = next_argument(arguments, variables, operators, depth);
-
-    if (!solo)
-    {
-        return NULL;
-    }
-
-    if (solo->type == TYPE_ERROR)
-    {
-        return copy_value(solo);
-    }
-
+    solo = arguments->value;
     represent = represent_value(solo);
 
     if (!represent)
@@ -1649,27 +1102,12 @@ static value_t *operator_length(argument_iterator_t *arguments, map_t *variables
 {
     value_t *solo;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_STRING | TYPE_LIST))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    solo = next_argument(arguments, variables, operators, depth);
-
-    if (!solo)
-    {
-        return NULL;
-    }
-
-    if (solo->type == TYPE_ERROR)
-    {
-        return copy_value(solo);
-    }
-
-    if (solo->type != TYPE_STRING && solo->type != TYPE_LIST)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
+    solo = arguments->value;
 
     return new_number(length_value(solo));
 }
@@ -1679,50 +1117,19 @@ static value_t *operator_index(argument_iterator_t *arguments, map_t *variables,
     value_t *collection, *index;
     int adjusted;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_STRING | TYPE_LIST))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    collection = next_argument(arguments, variables, operators, depth);
+    collection = arguments->value;
 
-    if (!collection)
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (collection->type == TYPE_ERROR)
-    {
-        return copy_value(collection);
-    }
-
-    if (collection->type != TYPE_STRING && collection->type != TYPE_LIST)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    index = next_argument(arguments, variables, operators, depth);
-
-    if (!index)
-    {
-        return NULL;
-    }
-
-    if (index->type == TYPE_ERROR)
-    {
-        return copy_value(index);
-    }
-
-    if (index->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
+    index = arguments->value;
     adjusted = view_number(index) - 1;
 
     if (adjusted < 0 || adjusted >= length_value(collection))
@@ -1763,72 +1170,26 @@ static value_t *operator_range(argument_iterator_t *arguments, map_t *variables,
     int adjustedstart, adjustedend;
     size_t limit, length;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_STRING | TYPE_LIST))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    collection = next_argument(arguments, variables, operators, depth);
+    collection = arguments->value;
 
-    if (!collection)
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return NULL;
+        return arguments->value;
     }
 
-    if (collection->type == TYPE_ERROR)
+    start = arguments->value;
+
+    if (!next_argument(arguments, variables, operators, depth, TYPE_NUMBER))
     {
-        return copy_value(collection);
+        return arguments->value;
     }
 
-    if (collection->type != TYPE_STRING && collection->type != TYPE_LIST)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    start = next_argument(arguments, variables, operators, depth);
-
-    if (!start)
-    {
-        return NULL;
-    }
-
-    if (start->type == TYPE_ERROR)
-    {
-        return copy_value(start);
-    }
-
-    if (start->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    if (!has_next_argument(arguments))
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
-    end = next_argument(arguments, variables, operators, depth);
-
-    if (!end)
-    {
-        return NULL;
-    }
-
-    if (end->type == TYPE_ERROR)
-    {
-        return copy_value(end);
-    }
-
-    if (end->type != TYPE_NUMBER)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
+    end = arguments->value;
     adjustedstart = view_number(start) - 1;
     adjustedend = view_number(end) - 1;
     limit = length_value(collection);
@@ -1916,28 +1277,12 @@ static value_t *operator_read(argument_iterator_t *arguments, map_t *variables, 
     char *file;
     size_t length, index;
 
-    if (!has_next_argument(arguments))
+    if (!next_argument(arguments, variables, operators, depth, TYPE_STRING))
     {
-        return new_error(ERROR_ARGUMENT);
+        return arguments->value;
     }
 
-    path = next_argument(arguments, variables, operators, depth);
-
-    if (!path)
-    {
-        return NULL;
-    }
-
-    if (path->type == TYPE_ERROR)
-    {
-        return copy_value(path);
-    }
-
-    if (path->type != TYPE_STRING)
-    {
-        return new_error(ERROR_ARGUMENT);
-    }
-
+    path = arguments->value;
     file = read_file(view_string(path));
 
     if (!file)
@@ -2019,16 +1364,41 @@ static int has_next_argument(argument_iterator_t *arguments)
     return arguments->index < arguments->expressions->length;
 }
 
-static value_t *next_argument(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth)
+static int next_argument(argument_iterator_t *arguments, map_t *variables, map_t *operators, int depth, int types)
 {
     value_t *result;
+
+    if (!has_next_argument(arguments))
+    {
+        arguments->value = new_error(ERROR_ARGUMENT);
+        return 0;
+    }
 
     result = apply_expression(arguments->current->value, variables, operators, depth);
     arguments->current = arguments->current->next;
     arguments->evaluated[arguments->index] = result;
     arguments->index += 1;
 
-    return result;
+    if (!result)
+    {
+        arguments->value = NULL;
+        return 0;
+    }
+
+    if (result->type == TYPE_ERROR && !(types & TYPE_ERROR))
+    {
+        arguments->value = copy_value(result);
+        return 0;
+    }
+
+    if (!(types & result->type))
+    {
+        arguments->value = new_error(ERROR_ARGUMENT);
+        return 0;
+    }
+
+    arguments->value = result;
+    return 1;
 }
 
 static void skip_argument(argument_iterator_t *arguments)
@@ -2036,6 +1406,7 @@ static void skip_argument(argument_iterator_t *arguments)
     arguments->current = arguments->current->next;
     arguments->evaluated[arguments->index] = NULL;
     arguments->index += 1;
+    arguments->value = NULL;
 }
 
 static void reset_arguments(argument_iterator_t *arguments)
@@ -2053,6 +1424,7 @@ static void reset_arguments(argument_iterator_t *arguments)
 
     arguments->current = arguments->expressions->head;
     arguments->index = 0;
+    arguments->value = NULL;
 }
 
 static int compare_values_ascending(const void *left, const void *right)

@@ -5,13 +5,13 @@
 
 typedef enum
 {
-    TYPE_UNSET,
-    TYPE_NULL,
-    TYPE_NUMBER,
-    TYPE_STRING,
-    TYPE_LIST,
-    TYPE_ERROR,
-    TYPE_CALL
+    TYPE_UNSET = 0x00,
+    TYPE_NULL = 0x01,
+    TYPE_NUMBER = 0x02,
+    TYPE_STRING = 0x04,
+    TYPE_LIST = 0x08,
+    TYPE_ERROR = 0x10,
+    TYPE_CALL = 0x20
 } type_t;
 
 typedef struct
