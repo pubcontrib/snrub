@@ -171,32 +171,25 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int 
 
 static value_t *apply_expression(expression_t *expression, map_t *variables, map_t *operators, int depth)
 {
-    argument_iterator_t *arguments;
+    argument_iterator_t arguments;
     value_t *result;
 
-    arguments = malloc(sizeof(argument_iterator_t));
+    arguments.expressions = expression->arguments;
+    arguments.current = expression->arguments->head;
+    arguments.index = 0;
 
-    if (!arguments)
+    if (arguments.expressions->length > 0)
     {
-        return NULL;
-    }
+        arguments.evaluated = malloc(sizeof(value_t *) * arguments.expressions->length);
 
-    arguments->expressions = expression->arguments;
-    arguments->current = expression->arguments->head;
-    arguments->index = 0;
-
-    if (arguments->expressions->length > 0)
-    {
-        arguments->evaluated = malloc(sizeof(value_t *) * arguments->expressions->length);
-
-        if (!arguments->evaluated)
+        if (!arguments.evaluated)
         {
             return NULL;
         }
     }
     else
     {
-        arguments->evaluated = NULL;
+        arguments.evaluated = NULL;
     }
 
     switch (expression->value->type)
@@ -208,25 +201,25 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
             result = copy_value(expression->value);
             break;
         case TYPE_LIST:
-            result = apply_list(arguments, variables, operators, depth);
+            result = apply_list(&arguments, variables, operators, depth);
             break;
         case TYPE_CALL:
-            result = apply_call(arguments, variables, operators, depth);
+            result = apply_call(&arguments, variables, operators, depth);
             break;
         default:
             result = NULL;
             break;
     }
 
-    if (arguments->evaluated)
+    if (arguments.evaluated)
     {
         size_t index;
 
-        for (index = 0; index < arguments->index; index++)
+        for (index = 0; index < arguments.index; index++)
         {
             value_t *value;
 
-            value = arguments->evaluated[index];
+            value = arguments.evaluated[index];
 
             if (value)
             {
@@ -234,10 +227,8 @@ static value_t *apply_expression(expression_t *expression, map_t *variables, map
             }
         }
 
-        free(arguments->evaluated);
+        free(arguments.evaluated);
     }
-
-    free(arguments);
 
     return result;
 }
