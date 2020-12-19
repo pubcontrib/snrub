@@ -754,6 +754,7 @@ static value_t *operator_not(argument_iterator_t *arguments, stack_frame_t *fram
 static value_t *operator_conditional(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *condition;
+    int first;
 
     if (!next_argument(arguments, frame, TYPE_NUMBER))
     {
@@ -761,8 +762,9 @@ static value_t *operator_conditional(argument_iterator_t *arguments, stack_frame
     }
 
     condition = arguments->value;
+    first = view_number(condition);
 
-    if (!view_number(condition))
+    if (!first)
     {
         skip_argument(arguments);
     }
@@ -770,6 +772,11 @@ static value_t *operator_conditional(argument_iterator_t *arguments, stack_frame
     if (!next_argument(arguments, frame, TYPES_NONERROR))
     {
         return arguments->value;
+    }
+
+    if (first && !has_next_argument(arguments))
+    {
+        return new_error(ERROR_ARGUMENT);
     }
 
     return copy_value(arguments->value);
