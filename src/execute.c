@@ -814,12 +814,7 @@ static value_t *operator_chain(argument_iterator_t *arguments, stack_frame_t *fr
 {
     value_t *last;
 
-    if (!has_next_argument(arguments))
-    {
-        return new_null();
-    }
-
-    while (has_next_argument(arguments))
+    do
     {
         if (!next_argument(arguments, frame, TYPES_NONERROR))
         {
@@ -827,7 +822,7 @@ static value_t *operator_chain(argument_iterator_t *arguments, stack_frame_t *fr
         }
 
         last = arguments->value;
-    }
+    } while (has_next_argument(arguments));
 
     return copy_value(last);
 }

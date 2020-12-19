@@ -3,7 +3,6 @@
 hint 'operator/chain'
 
 # Completed Chain
-pass '("...")' '?'
 pass '("..." ?)' '?'
 pass '("..." #100#)' '#100#'
 pass '("..." "one")' '"one"'
@@ -17,6 +16,9 @@ pass '("-->" "count" #0#)
     ("-->" "count" ("+" ("<--" "count") #1#))
 )
 ("<--" "count")' '#3#'
+
+# Argument Error
+fail '("...")' '#4#'
 
 # Error Breaking
 fail '("..." ("#" "text") ("unknown" #1# #2#) ("/" #10# #0#))' '#3#'
