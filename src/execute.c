@@ -519,11 +519,6 @@ static value_t *operator_catch(argument_iterator_t *arguments, stack_frame_t *fr
 {
     value_t *solo;
 
-    if (!has_next_argument(arguments))
-    {
-        return new_null();
-    }
-
     if (!next_argument(arguments, frame, TYPES_ANY))
     {
         return arguments->value;
