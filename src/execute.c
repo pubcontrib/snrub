@@ -1402,10 +1402,13 @@ static int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, i
 
 static void skip_argument(argument_iterator_t *arguments)
 {
-    arguments->current = arguments->current->next;
-    arguments->evaluated[arguments->index] = NULL;
-    arguments->index += 1;
-    arguments->value = NULL;
+    if (has_next_argument(arguments))
+    {
+        arguments->current = arguments->current->next;
+        arguments->evaluated[arguments->index] = NULL;
+        arguments->index += 1;
+        arguments->value = NULL;
+    }
 }
 
 static void reset_arguments(argument_iterator_t *arguments)
