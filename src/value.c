@@ -156,7 +156,7 @@ value_t *copy_value(value_t *this)
 
                 if (!copy)
                 {
-                    destroy_items(items, index);
+                    destroy_items(data, index);
                     return NULL;
                 }
 
