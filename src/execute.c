@@ -154,6 +154,7 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int 
         if (!value)
         {
             destroy_value(last);
+            destroy_map(frame.operators);
             return NULL;
         }
 
