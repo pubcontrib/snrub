@@ -120,6 +120,11 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int 
     stack_frame_t frame;
     value_t *last;
 
+    if (depth > LIMIT_DEPTH)
+    {
+        return new_error(ERROR_BOUNDS);
+    }
+
     for (node = expressions->head; node != NULL; node = node->next)
     {
         expression_t *expression;
@@ -439,11 +444,6 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
     if (!copy)
     {
         return NULL;
-    }
-
-    if (frame->depth >= LIMIT_DEPTH)
-    {
-        return new_error(ERROR_BOUNDS);
     }
 
     return evaluate_script(copy, frame->variables, frame->depth + 1);
