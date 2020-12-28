@@ -63,5 +63,6 @@ int view_number(value_t *value);
 char *view_string(value_t *value);
 error_t view_error(value_t *value);
 void destroy_value(value_t *value);
+void destroy_items(value_t **items, size_t length);
 
 #endif

@@ -30,7 +30,7 @@ value_t *merge_lists(value_t *left, value_t *right)
 
             if (!copy)
             {
-                free(items);
+                destroy_items(items, index);
                 return NULL;
             }
 
@@ -156,7 +156,7 @@ value_t *copy_value(value_t *this)
 
                 if (!copy)
                 {
-                    free(data);
+                    destroy_items(items, index);
                     return NULL;
                 }
 
@@ -581,25 +581,27 @@ void destroy_value(value_t *value)
     {
         if (value->type == TYPE_LIST)
         {
-            size_t index;
-            value_t **items;
-
-            items = value->data;
-
-            for (index = 0; index < value->size; index++)
-            {
-                value_t *item;
-
-                item = items[index];
-
-                destroy_value(item);
-            }
+            destroy_items(value->data, value->size);
         }
-
-        free(value->data);
+        else
+        {
+            free(value->data);
+        }
     }
 
     free(value);
+}
+
+void destroy_items(value_t **items, size_t length)
+{
+    size_t index;
+
+    for (index = 0; index < length; index++)
+    {
+        destroy_value(items[index]);
+    }
+
+    free(items);
 }
 
 static value_t *create_value(type_t type, void *data, size_t size)

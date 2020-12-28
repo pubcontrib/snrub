@@ -267,14 +267,7 @@ static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame)
 
             if (!next_argument(arguments, frame, TYPES_NONERROR))
             {
-                size_t reindex;
-
-                for (reindex = 0; reindex < index; reindex++)
-                {
-                    destroy_value(items[reindex]);
-                }
-
-                free(items);
+                destroy_items(items, index);
                 return arguments->value;
             }
 
@@ -282,7 +275,7 @@ static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame)
 
             if (!copy)
             {
-                free(items);
+                destroy_items(items, index);
                 return NULL;
             }
 
@@ -931,7 +924,7 @@ static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *fra
 
             if (!copy)
             {
-                free(items);
+                destroy_items(items, index);
                 return NULL;
             }
 
@@ -1249,7 +1242,7 @@ static value_t *operator_range(argument_iterator_t *arguments, stack_frame_t *fr
 
                 if (!item)
                 {
-                    free(items);
+                    destroy_items(items, index);
                     return NULL;
                 }
 
@@ -1336,7 +1329,7 @@ static value_t *list_map_keys(map_t *map)
 
                     if (!item)
                     {
-                        free(items);
+                        destroy_items(items, index);
                         return NULL;
                     }
 
