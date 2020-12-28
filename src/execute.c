@@ -117,18 +117,8 @@ static value_t *evaluate_script(char *document, map_t *variables, int depth)
 static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int depth)
 {
     list_node_t *node;
-    value_t *last;
     stack_frame_t frame;
-
-    frame.variables = variables;
-    frame.operators = default_operators();
-
-    if (!frame.operators)
-    {
-        return NULL;
-    }
-
-    frame.depth = depth;
+    value_t *last;
 
     for (node = expressions->head; node != NULL; node = node->next)
     {
@@ -140,6 +130,15 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int 
         {
             return copy_value(expression->value);
         }
+    }
+
+    frame.variables = variables;
+    frame.operators = default_operators();
+    frame.depth = depth;
+
+    if (!frame.operators)
+    {
+        return NULL;
     }
 
     last = new_null();
