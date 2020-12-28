@@ -322,10 +322,10 @@ char *represent_list(value_t **items, size_t length)
         if (index > 0)
         {
             swap = merge_strings(body, " ");
+            free(body);
 
             if (!swap)
             {
-                free(body);
                 return NULL;
             }
 
@@ -342,18 +342,21 @@ char *represent_list(value_t **items, size_t length)
         }
 
         swap = merge_strings(body, represent);
+        free(body);
+        free(represent);
 
         if (!swap)
         {
-            free(body);
-            free(represent);
             return NULL;
         }
 
         body = swap;
     }
 
-    return merge_strings(body, "]");
+    swap = merge_strings(body, "]");
+    free(body);
+
+    return swap;
 }
 
 char *represent_error(error_t error)
