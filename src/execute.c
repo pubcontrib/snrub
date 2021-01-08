@@ -885,8 +885,7 @@ static value_t *operator_equal(argument_iterator_t *arguments, stack_frame_t *fr
 
 static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *collection, *reversed;
-    value_t **items;
+    value_t *collection, *reversed, *sorted;
     size_t length;
 
     if (!next_argument(arguments, frame, TYPE_LIST))
@@ -902,43 +901,15 @@ static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *fra
     }
 
     reversed = arguments->value;
-
     length = length_value(collection);
+    sorted = copy_value(collection);
 
-    if (length > 0)
+    if (sorted && length > 0)
     {
-        size_t index;
-
-        items = malloc(sizeof(value_t *) * length);
-
-        if (!items)
-        {
-            return NULL;
-        }
-
-        for (index = 0; index < length; index++)
-        {
-            value_t *copy;
-
-            copy = copy_value(((value_t **) collection->data)[index]);
-
-            if (!copy)
-            {
-                destroy_items(items, index);
-                return NULL;
-            }
-
-            items[index] = copy;
-        }
-
-        qsort(items, length, sizeof(value_t *), view_number(reversed) ? compare_values_descending : compare_values_ascending);
-    }
-    else
-    {
-        items = NULL;
+        qsort(sorted->data, length, sizeof(value_t *), view_number(reversed) ? compare_values_descending : compare_values_ascending);
     }
 
-    return new_list(items, length);
+    return sorted;
 }
 
 static value_t *operator_type(argument_iterator_t *arguments, stack_frame_t *frame)
