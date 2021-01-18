@@ -16,7 +16,7 @@ repeat()
         index=$((index + 1))
     done
 
-    printf "%s" "$result"
+    printf '%s' "$result"
 }
 
 # Call Expression

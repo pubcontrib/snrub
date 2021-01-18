@@ -1,4 +1,4 @@
-hint="unset"
+hint='unset'
 
 hint()
 {
@@ -17,7 +17,7 @@ fail()
 
 conclude()
 {
-    printf "%d tests run.\n" $count
+    printf '%d tests run.\n' $count
     count=0
 }
 
@@ -32,21 +32,21 @@ run_test()
 
     if [ $actual_code != $expected_code ]
     then
-        printf "[ERROR] Test case returned an unexpected exit code.\n" 1>&2
-        printf "Hint: %s\n" "$hint" 1>&2
-        printf "Source: %s\n" "$text" 1>&2
-        printf "Expected: %d\n" $expected_code 1>&2
-        printf "Actual: %d\n" $actual_code 1>&2
+        printf '[ERROR] Test case returned an unexpected exit code.\n' 1>&2
+        printf 'Hint: %s\n' "$hint" 1>&2
+        printf 'Source: %s\n' "$text" 1>&2
+        printf 'Expected: %d\n' $expected_code 1>&2
+        printf 'Actual: %d\n' $actual_code 1>&2
         exit 1
     fi
 
     if [ "$actual_output" != "$expected_output" ]
     then
-        printf "[ERROR] Test case returned an unexpected stdout.\n" 1>&2
-        printf "Hint: %s\n" "$hint" 1>&2
-        printf "Source: %s\n" "$text" 1>&2
-        printf "Expected: %s\n" "$expected_output" 1>&2
-        printf "Actual: %s\n" "$actual_output" 1>&2
+        printf '[ERROR] Test case returned an unexpected stdout.\n' 1>&2
+        printf 'Hint: %s\n' "$hint" 1>&2
+        printf 'Source: %s\n' "$text" 1>&2
+        printf 'Expected: %s\n' "$expected_output" 1>&2
+        printf 'Actual: %s\n' "$actual_output" 1>&2
         exit 1
     fi
 
