@@ -96,6 +96,7 @@ pass "(\"...\" $center)" '?'
 center=`repeat '?' 1024`
 fail "(\"...\" $center)" '#2#'
 fail '("-->" "recurse" "(\"~\" (\"<--\" \"recurse\") ?)")
+("<3" "recurse")
 ("~" ("<--" "recurse") ?)' '#2#'
 
 # Argument Error

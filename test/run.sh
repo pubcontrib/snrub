@@ -18,6 +18,8 @@ fi
 . test/suite/operator/evaluate.sh
 . test/suite/operator/value.sh
 . test/suite/operator/assign.sh
+. test/suite/operator/promote.sh
+. test/suite/operator/demote.sh
 . test/suite/operator/variables.sh
 . test/suite/operator/operators.sh
 . test/suite/operator/catch.sh

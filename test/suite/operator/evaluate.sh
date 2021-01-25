@@ -10,7 +10,8 @@ pass '("~" "[#1# #2# #3#]" ?)' '[#1# #2# #3#]'
 pass '("~" "(\"#\" \"1\")" ?)' '#1#'
 
 # Variable Persistence
-pass '("~" "(\"-->\" \"string\" \"word\")" ?) ("<--" "string")' '"word"'
+pass '("~" "(\"-->\" \"local\" \"word\")" ?) ("<--" "local")' '?'
+pass '("-->" "local" "before") ("~" "(\"-->\" \"local\" \"after\")" ?) ("<--" "local")' '"before"'
 
 # Argument Passthrough
 pass '("~" "(\"<--\" \"@\")" ?)' '?'

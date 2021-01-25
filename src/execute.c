@@ -25,7 +25,8 @@ typedef struct
 
 typedef struct
 {
-    map_t *variables;
+    map_t *globals;
+    map_t *locals;
     map_t *operators;
     int depth;
 } stack_frame_t;
@@ -35,8 +36,8 @@ typedef struct
     value_t *(*call)(argument_iterator_t *, stack_frame_t *);
 } operator_t;
 
-static value_t *evaluate_script(char *document, map_t *variables, int depth);
-static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int depth);
+static value_t *evaluate_script(char *document, map_t *globals, int depth);
+static value_t *evaluate_expressions(list_t *expressions, map_t *globals, int depth);
 static value_t *apply_expression(expression_t *expression, stack_frame_t *frame);
 static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -46,6 +47,8 @@ static int set_variable(map_t *variables, char *identifier, value_t *variable);
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_value(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_assign(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_operators(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_catch(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -81,13 +84,15 @@ static void skip_argument(argument_iterator_t *arguments);
 static void reset_arguments(argument_iterator_t *arguments);
 static int compare_values_ascending(const void *left, const void *right);
 static int compare_values_descending(const void *left, const void *right);
+static void destroy_value_unsafe(void *value);
+static map_t *empty_variables(void);
 
-value_t *execute_script(char *document, map_t *variables)
+value_t *execute_script(char *document, map_t *globals)
 {
-    return evaluate_script(document, variables, 1);
+    return evaluate_script(document, globals, 1);
 }
 
-static value_t *evaluate_script(char *document, map_t *variables, int depth)
+static value_t *evaluate_script(char *document, map_t *globals, int depth)
 {
     scanner_t *scanner;
     list_t *expressions;
@@ -108,13 +113,13 @@ static value_t *evaluate_script(char *document, map_t *variables, int depth)
         return NULL;
     }
 
-    value = evaluate_expressions(expressions, variables, depth);
+    value = evaluate_expressions(expressions, globals, depth);
     destroy_list(expressions);
 
     return value;
 }
 
-static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int depth)
+static value_t *evaluate_expressions(list_t *expressions, map_t *globals, int depth)
 {
     list_node_t *node;
     stack_frame_t frame;
@@ -137,12 +142,20 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int 
         }
     }
 
-    frame.variables = variables;
+    frame.globals = globals;
     frame.operators = default_operators();
     frame.depth = depth;
 
     if (!frame.operators)
     {
+        return NULL;
+    }
+
+    frame.locals = empty_variables();
+
+    if (!frame.locals)
+    {
+        destroy_map(frame.operators);
         return NULL;
     }
 
@@ -160,6 +173,7 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int 
         {
             destroy_value(last);
             destroy_map(frame.operators);
+            destroy_map(frame.locals);
             return NULL;
         }
 
@@ -180,6 +194,7 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *variables, int 
     }
 
     destroy_map(frame.operators);
+    destroy_map(frame.locals);
 
     return last;
 }
@@ -331,6 +346,8 @@ static map_t *default_operators(void)
     if (!set_operator(operators, "~", operator_evaluate)
         || !set_operator(operators, "<--", operator_value)
         || !set_operator(operators, "-->", operator_assign)
+        || !set_operator(operators, "<3", operator_promote)
+        || !set_operator(operators, "</3", operator_demote)
         || !set_operator(operators, "---", operator_variables)
         || !set_operator(operators, "(-)", operator_operators)
         || !set_operator(operators, "><", operator_catch)
@@ -434,7 +451,7 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
 
     value = arguments->value;
 
-    if (!set_variable(frame->variables, "@", value))
+    if (!set_variable(frame->globals, "@", value))
     {
         return NULL;
     }
@@ -446,7 +463,7 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
         return NULL;
     }
 
-    return evaluate_script(copy, frame->variables, frame->depth + 1);
+    return evaluate_script(copy, frame->globals, frame->depth + 1);
 }
 
 static value_t *operator_value(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -460,7 +477,12 @@ static value_t *operator_value(argument_iterator_t *arguments, stack_frame_t *fr
 
     identifier = arguments->value;
 
-    value = get_map_item(frame->variables, view_string(identifier));
+    value = get_map_item(frame->globals, view_string(identifier));
+
+    if (!value)
+    {
+        value = get_map_item(frame->locals, view_string(identifier));
+    }
 
     return value ? copy_value(value) : new_null();
 }
@@ -485,14 +507,75 @@ static value_t *operator_assign(argument_iterator_t *arguments, stack_frame_t *f
 
     if (value->type == TYPE_NULL)
     {
-        remove_map_item(frame->variables, view_string(identifier));
+        remove_map_item(frame->globals, view_string(identifier));
+        remove_map_item(frame->locals, view_string(identifier));
     }
     else
     {
-        if (!set_variable(frame->variables, view_string(identifier), value))
+        if (get_map_item(frame->globals, view_string(identifier)))
+        {
+            if (!set_variable(frame->globals, view_string(identifier), value))
+            {
+                return NULL;
+            }
+        }
+        else
+        {
+            if (!set_variable(frame->locals, view_string(identifier), value))
+            {
+                return NULL;
+            }
+        }
+    }
+
+    return new_null();
+}
+
+static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *identifier, *value;
+
+    if (!next_argument(arguments, frame, TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    identifier = arguments->value;
+    value = get_map_item(frame->locals, view_string(identifier));
+
+    if (value)
+    {
+        if (!set_variable(frame->globals, view_string(identifier), value))
         {
             return NULL;
         }
+
+        remove_map_item(frame->locals, view_string(identifier));
+    }
+
+    return new_null();
+}
+
+static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *identifier, *value;
+
+    if (!next_argument(arguments, frame, TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    identifier = arguments->value;
+    value = get_map_item(frame->globals, view_string(identifier));
+
+    if (value)
+    {
+        if (!set_variable(frame->locals, view_string(identifier), value))
+        {
+            return NULL;
+        }
+
+        remove_map_item(frame->globals, view_string(identifier));
     }
 
     return new_null();
@@ -500,7 +583,37 @@ static value_t *operator_assign(argument_iterator_t *arguments, stack_frame_t *f
 
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    return list_map_keys(frame->variables);
+    value_t *left, *right, *sorted;
+    size_t length;
+
+    left = list_map_keys(frame->globals);
+
+    if (!left)
+    {
+        return NULL;
+    }
+
+    right = list_map_keys(frame->locals);
+
+    if (!right)
+    {
+        destroy_value(left);
+        return NULL;
+    }
+
+    sorted = merge_lists(left, right);
+    destroy_value(left);
+    destroy_value(right);
+
+    if (!sorted)
+    {
+        return NULL;
+    }
+
+    length = length_value(sorted);
+    qsort(sorted->data, length, sizeof(value_t *), compare_values_ascending);
+
+    return sorted;
 }
 
 static value_t *operator_operators(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1398,4 +1511,14 @@ static int compare_values_ascending(const void *left, const void *right)
 static int compare_values_descending(const void *left, const void *right)
 {
     return compare_values(*(value_t **) left, *(value_t **) right) * -1;
+}
+
+static map_t *empty_variables(void)
+{
+    return empty_map(hash_string, destroy_value_unsafe, 64);
+}
+
+static void destroy_value_unsafe(void *value)
+{
+    destroy_value((value_t *) value);
 }

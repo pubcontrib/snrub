@@ -17,7 +17,7 @@ static int run_version(void);
 static int run_file(char *file, char *arguments);
 static int run_text(char *text, char *arguments);
 static int run_interactive(void);
-static int record_script(char *document, map_t *variables);
+static int record_script(char *document, map_t *globals);
 static map_t *initialize_arguments(char *arguments);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
@@ -153,7 +153,7 @@ static int run_version(void)
 static int run_file(char *file, char *arguments)
 {
     char *document;
-    map_t *variables;
+    map_t *globals;
     int success;
 
     document = read_file(file);
@@ -164,9 +164,9 @@ static int run_file(char *file, char *arguments)
         crash();
     }
 
-    variables = initialize_arguments(arguments);
-    success = record_script(document, variables);
-    destroy_map(variables);
+    globals = initialize_arguments(arguments);
+    success = record_script(document, globals);
+    destroy_map(globals);
 
     return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
 }
@@ -174,7 +174,7 @@ static int run_file(char *file, char *arguments)
 static int run_text(char *text, char *arguments)
 {
     char *document;
-    map_t *variables;
+    map_t *globals;
     int success;
 
     document = copy_string(text);
@@ -184,20 +184,20 @@ static int run_text(char *text, char *arguments)
         crash();
     }
 
-    variables = initialize_arguments(arguments);
-    success = record_script(document, variables);
-    destroy_map(variables);
+    globals = initialize_arguments(arguments);
+    success = record_script(document, globals);
+    destroy_map(globals);
 
     return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
 }
 
 static int run_interactive(void)
 {
-    map_t *variables;
+    map_t *globals;
 
-    variables = empty_variables();
+    globals = empty_variables();
 
-    if (!variables)
+    if (!globals)
     {
         crash();
     }
@@ -218,7 +218,7 @@ static int run_interactive(void)
 
         if (line->exit)
         {
-            destroy_map(variables);
+            destroy_map(globals);
             destroy_line(line);
             return PROGRAM_SUCCESS;
         }
@@ -227,11 +227,11 @@ static int run_interactive(void)
         line->string = NULL;
         destroy_line(line);
 
-        success = record_script(document, variables);
+        success = record_script(document, globals);
 
         if (!success)
         {
-            destroy_map(variables);
+            destroy_map(globals);
             return PROGRAM_ERROR;
         }
 
@@ -239,13 +239,13 @@ static int run_interactive(void)
     }
 }
 
-static int record_script(char *document, map_t *variables)
+static int record_script(char *document, map_t *globals)
 {
     value_t *value;
     char *represent;
     int success;
 
-    value = execute_script(document, variables);
+    value = execute_script(document, globals);
 
     if (!value)
     {
@@ -269,11 +269,11 @@ static int record_script(char *document, map_t *variables)
 
 static map_t *initialize_arguments(char *arguments)
 {
-    map_t *variables;
+    map_t *globals;
 
-    variables = empty_variables();
+    globals = empty_variables();
 
-    if (!variables)
+    if (!globals)
     {
         crash();
     }
@@ -291,7 +291,7 @@ static map_t *initialize_arguments(char *arguments)
             crash();
         }
 
-        value = execute_script(document, variables);
+        value = execute_script(document, globals);
 
         if (!value)
         {
@@ -323,13 +323,13 @@ static map_t *initialize_arguments(char *arguments)
             crash();
         }
 
-        if (!set_map_item(variables, key, value))
+        if (!set_map_item(globals, key, value))
         {
             crash();
         }
     }
 
-    return variables;
+    return globals;
 }
 
 static map_t *empty_variables(void)
