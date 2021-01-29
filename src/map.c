@@ -114,6 +114,8 @@ void remove_map_item(map_t *map, char *key)
 
             return;
         }
+
+        previous = chain;
     }
 }
 
