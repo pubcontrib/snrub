@@ -451,6 +451,8 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
 
     value = arguments->value;
 
+    remove_map_item(frame->locals, "@");
+
     if (!set_variable(frame->globals, "@", value))
     {
         return NULL;
