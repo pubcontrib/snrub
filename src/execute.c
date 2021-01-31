@@ -453,9 +453,16 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
 
     remove_map_item(frame->locals, "@");
 
-    if (!set_variable(frame->globals, "@", value))
+    if (value->type == TYPE_NULL)
     {
-        return NULL;
+        remove_map_item(frame->globals, "@");
+    }
+    else
+    {
+        if (!set_variable(frame->globals, "@", value))
+        {
+            return NULL;
+        }
     }
 
     copy = copy_string(view_string(document));
