@@ -4,6 +4,6 @@
 #include "value.h"
 #include "map.h"
 
-value_t *execute_script(char *document, map_t *globals);
+value_t *execute_script(char *document, map_t *globals, value_t *arguments);
 
 #endif

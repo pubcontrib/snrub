@@ -36,8 +36,8 @@ typedef struct
     value_t *(*call)(argument_iterator_t *, stack_frame_t *);
 } operator_t;
 
-static value_t *evaluate_script(char *document, map_t *globals, int depth);
-static value_t *evaluate_expressions(list_t *expressions, map_t *globals, int depth);
+static value_t *evaluate_script(char *document, map_t *globals, value_t *arguments, int depth);
+static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_t *arguments, int depth);
 static value_t *apply_expression(expression_t *expression, stack_frame_t *frame);
 static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -87,12 +87,12 @@ static int compare_values_descending(const void *left, const void *right);
 static void destroy_value_unsafe(void *value);
 static map_t *empty_variables(void);
 
-value_t *execute_script(char *document, map_t *globals)
+value_t *execute_script(char *document, map_t *globals, value_t *arguments)
 {
-    return evaluate_script(document, globals, 1);
+    return evaluate_script(document, globals, arguments, 1);
 }
 
-static value_t *evaluate_script(char *document, map_t *globals, int depth)
+static value_t *evaluate_script(char *document, map_t *globals, value_t *arguments, int depth)
 {
     scanner_t *scanner;
     list_t *expressions;
@@ -113,13 +113,13 @@ static value_t *evaluate_script(char *document, map_t *globals, int depth)
         return NULL;
     }
 
-    value = evaluate_expressions(expressions, globals, depth);
+    value = evaluate_expressions(expressions, globals, arguments, depth);
     destroy_list(expressions);
 
     return value;
 }
 
-static value_t *evaluate_expressions(list_t *expressions, map_t *globals, int depth)
+static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_t *arguments, int depth)
 {
     list_node_t *node;
     stack_frame_t frame;
@@ -157,6 +157,28 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *globals, int de
     {
         destroy_map(frame.operators);
         return NULL;
+    }
+
+    if (arguments->type == TYPE_NULL)
+    {
+        remove_map_item(frame.globals, "@");
+    }
+    else
+    {
+        if (get_map_item(frame.globals, "@"))
+        {
+            if (!set_variable(frame.globals, "@", arguments))
+            {
+                return NULL;
+            }
+        }
+        else
+        {
+            if (!set_variable(frame.locals, "@", arguments))
+            {
+                return NULL;
+            }
+        }
     }
 
     last = new_null();
@@ -451,20 +473,6 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
 
     value = arguments->value;
 
-    remove_map_item(frame->locals, "@");
-
-    if (value->type == TYPE_NULL)
-    {
-        remove_map_item(frame->globals, "@");
-    }
-    else
-    {
-        if (!set_variable(frame->globals, "@", value))
-        {
-            return NULL;
-        }
-    }
-
     copy = copy_string(view_string(document));
 
     if (!copy)
@@ -472,7 +480,7 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
         return NULL;
     }
 
-    return evaluate_script(copy, frame->globals, frame->depth + 1);
+    return evaluate_script(copy, frame->globals, value, frame->depth + 1);
 }
 
 static value_t *operator_value(argument_iterator_t *arguments, stack_frame_t *frame)
