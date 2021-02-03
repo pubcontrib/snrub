@@ -325,13 +325,14 @@ static value_t *initialize_arguments(char *document)
             crash();
         }
 
-        arguments = execute_script(document, globals, null);
+        arguments = execute_script(copy, globals, null);
 
         if (!arguments)
         {
             crash();
         }
 
+        destroy_map(globals);
         destroy_value(null);
 
         success = arguments->type != TYPE_ERROR;
