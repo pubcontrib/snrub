@@ -456,7 +456,7 @@ static int set_variable(map_t *variables, char *identifier, value_t *variable)
 
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *document, *value;
+    value_t *document, *initial;
     char *copy;
 
     if (!next_argument(arguments, frame, TYPE_STRING))
@@ -471,7 +471,7 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
         return arguments->value;
     }
 
-    value = arguments->value;
+    initial = arguments->value;
 
     copy = copy_string(view_string(document));
 
@@ -480,7 +480,7 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
         return NULL;
     }
 
-    return evaluate_script(copy, frame->globals, value, frame->depth + 1);
+    return evaluate_script(copy, frame->globals, initial, frame->depth + 1);
 }
 
 static value_t *operator_value(argument_iterator_t *arguments, stack_frame_t *frame)
