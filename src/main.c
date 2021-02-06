@@ -153,9 +153,6 @@ static int run_version(void)
 static int run_file(char *file, char *initial)
 {
     char *document;
-    map_t *globals;
-    value_t *arguments;
-    int success;
 
     document = read_file(file);
 
@@ -165,19 +162,7 @@ static int run_file(char *file, char *initial)
         crash();
     }
 
-    globals = empty_variables();
-
-    if (!globals)
-    {
-        crash();
-    }
-
-    arguments = initialize_arguments(initial);
-    success = record_script(document, globals, arguments);
-    destroy_map(globals);
-    destroy_value(arguments);
-
-    return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
+    return run_text(document, initial);
 }
 
 static int run_text(char *text, char *initial)
