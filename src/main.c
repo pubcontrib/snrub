@@ -241,8 +241,8 @@ static int run_interactive(void)
 
         if (!success)
         {
-            destroy_value(arguments);
             destroy_map(globals);
+            destroy_value(arguments);
             return PROGRAM_ERROR;
         }
 
@@ -307,10 +307,9 @@ static value_t *initialize_arguments(char *document)
             crash();
         }
 
+        success = arguments->type != TYPE_ERROR;
         destroy_map(globals);
         destroy_value(null);
-
-        success = arguments->type != TYPE_ERROR;
 
         if (!success)
         {
@@ -324,7 +323,6 @@ static value_t *initialize_arguments(char *document)
             }
 
             printf("%s\n", represent);
-
             crash();
         }
 
