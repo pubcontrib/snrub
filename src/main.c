@@ -153,6 +153,7 @@ static int run_version(void)
 static int run_file(char *file, char *initial)
 {
     char *document;
+    int success;
 
     document = read_file(file);
 
@@ -162,22 +163,17 @@ static int run_file(char *file, char *initial)
         crash();
     }
 
-    return run_text(document, initial);
+    success = run_text(document, initial);
+    free(document);
+
+    return success;
 }
 
 static int run_text(char *text, char *initial)
 {
-    char *document;
     map_t *globals;
     value_t *arguments;
     int success;
-
-    document = copy_string(text);
-
-    if (!document)
-    {
-        crash();
-    }
 
     globals = empty_variables();
 
@@ -187,7 +183,7 @@ static int run_text(char *text, char *initial)
     }
 
     arguments = initialize_arguments(initial);
-    success = record_script(document, globals, arguments);
+    success = record_script(text, globals, arguments);
     destroy_map(globals);
     destroy_value(arguments);
 
@@ -216,7 +212,6 @@ static int run_interactive(void)
     while (1)
     {
         line_t *line;
-        char *document;
         int success;
 
         printf("> ");
@@ -235,11 +230,8 @@ static int run_interactive(void)
             return PROGRAM_SUCCESS;
         }
 
-        document = line->string;
-        line->string = NULL;
+        success = record_script(line->string, globals, arguments);
         destroy_line(line);
-
-        success = record_script(document, globals, arguments);
 
         if (!success)
         {
@@ -284,17 +276,9 @@ static value_t *initialize_arguments(char *document)
 {
     if (document)
     {
-        char *copy;
         map_t *globals;
         value_t *null, *arguments;
         int success;
-
-        copy = copy_string(document);
-
-        if (!copy)
-        {
-            crash();
-        }
 
         globals = empty_variables();
 
@@ -310,7 +294,7 @@ static value_t *initialize_arguments(char *document)
             crash();
         }
 
-        arguments = execute_script(copy, globals, null);
+        arguments = execute_script(document, globals, null);
 
         if (!arguments)
         {

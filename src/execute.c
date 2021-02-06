@@ -89,6 +89,13 @@ static map_t *empty_variables(void);
 
 value_t *execute_script(char *document, map_t *globals, value_t *arguments)
 {
+    document = copy_string(document);
+
+    if (!document)
+    {
+        return NULL;
+    }
+
     return evaluate_script(document, globals, arguments, 1);
 }
 
