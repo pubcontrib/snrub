@@ -153,7 +153,7 @@ static int run_version(void)
 static int run_file(char *file, char *initial)
 {
     char *document;
-    int success;
+    int exit;
 
     document = read_file(file);
 
@@ -163,10 +163,10 @@ static int run_file(char *file, char *initial)
         crash();
     }
 
-    success = run_text(document, initial);
+    exit = run_text(document, initial);
     free(document);
 
-    return success;
+    return exit;
 }
 
 static int run_text(char *text, char *initial)
