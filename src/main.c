@@ -183,6 +183,12 @@ static int run_text(char *text, char *initial)
     }
 
     arguments = initialize_arguments(initial);
+
+    if (!arguments)
+    {
+        crash();
+    }
+
     success = record_script(text, globals, arguments);
     destroy_map(globals);
     destroy_value(arguments);
