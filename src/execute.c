@@ -170,6 +170,8 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_
 
     if (!set_scoped_variable(&frame, "@", arguments))
     {
+        destroy_map(frame.operators);
+        destroy_map(frame.locals);
         return NULL;
     }
 
