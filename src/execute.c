@@ -44,6 +44,7 @@ static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
 static map_t *default_operators(void);
 static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
 static int set_variable(map_t *variables, char *identifier, value_t *variable);
+static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable);
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_value(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_assign(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -166,26 +167,9 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_
         return NULL;
     }
 
-    if (arguments->type == TYPE_NULL)
+    if (!set_scoped_variable(&frame, "@", arguments))
     {
-        remove_map_item(frame.globals, "@");
-    }
-    else
-    {
-        if (get_map_item(frame.globals, "@"))
-        {
-            if (!set_variable(frame.globals, "@", arguments))
-            {
-                return NULL;
-            }
-        }
-        else
-        {
-            if (!set_variable(frame.locals, "@", arguments))
-            {
-                return NULL;
-            }
-        }
+        return NULL;
     }
 
     last = new_null();
@@ -461,6 +445,34 @@ static int set_variable(map_t *variables, char *identifier, value_t *variable)
     return set_map_item(variables, key, value);
 }
 
+static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable)
+{
+    if (variable->type == TYPE_NULL)
+    {
+        remove_map_item(frame->globals, identifier);
+        remove_map_item(frame->locals, identifier);
+    }
+    else
+    {
+        if (get_map_item(frame->globals, identifier))
+        {
+            if (!set_variable(frame->globals, identifier, variable))
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            if (!set_variable(frame->locals, identifier, variable))
+            {
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *document, *initial;
@@ -529,27 +541,9 @@ static value_t *operator_assign(argument_iterator_t *arguments, stack_frame_t *f
 
     value = arguments->value;
 
-    if (value->type == TYPE_NULL)
+    if (!set_scoped_variable(frame, view_string(identifier), value))
     {
-        remove_map_item(frame->globals, view_string(identifier));
-        remove_map_item(frame->locals, view_string(identifier));
-    }
-    else
-    {
-        if (get_map_item(frame->globals, view_string(identifier)))
-        {
-            if (!set_variable(frame->globals, view_string(identifier), value))
-            {
-                return NULL;
-            }
-        }
-        else
-        {
-            if (!set_variable(frame->locals, view_string(identifier), value))
-            {
-                return NULL;
-            }
-        }
+        return NULL;
     }
 
     return new_null();
