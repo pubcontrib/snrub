@@ -45,6 +45,7 @@ static map_t *default_operators(void);
 static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
 static int set_variable(map_t *variables, char *identifier, value_t *variable);
 static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable);
+static int swap_variable_scope(map_t *before, map_t *after, char *identifier);
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_value(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_assign(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -473,6 +474,25 @@ static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *
     return 1;
 }
 
+static int swap_variable_scope(map_t *before, map_t *after, char *identifier)
+{
+    value_t *value;
+
+    value = get_map_item(before, identifier);
+
+    if (value)
+    {
+        if (!set_variable(after, identifier, value))
+        {
+            return 0;
+        }
+
+        remove_map_item(before, identifier);
+    }
+
+    return 1;
+}
+
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *document, *initial;
@@ -551,7 +571,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, stack_frame_t *f
 
 static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *identifier, *value;
+    value_t *identifier;
 
     if (!next_argument(arguments, frame, TYPE_STRING))
     {
@@ -559,16 +579,10 @@ static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *
     }
 
     identifier = arguments->value;
-    value = get_map_item(frame->locals, view_string(identifier));
 
-    if (value)
+    if (!swap_variable_scope(frame->locals, frame->globals, view_string(identifier)))
     {
-        if (!set_variable(frame->globals, view_string(identifier), value))
-        {
-            return NULL;
-        }
-
-        remove_map_item(frame->locals, view_string(identifier));
+        return NULL;
     }
 
     return new_null();
@@ -576,7 +590,7 @@ static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *
 
 static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *identifier, *value;
+    value_t *identifier;
 
     if (!next_argument(arguments, frame, TYPE_STRING))
     {
@@ -584,16 +598,10 @@ static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *f
     }
 
     identifier = arguments->value;
-    value = get_map_item(frame->globals, view_string(identifier));
 
-    if (value)
+    if (!swap_variable_scope(frame->globals, frame->locals, view_string(identifier)))
     {
-        if (!set_variable(frame->locals, view_string(identifier), value))
-        {
-            return NULL;
-        }
-
-        remove_map_item(frame->globals, view_string(identifier));
+        return NULL;
     }
 
     return new_null();
