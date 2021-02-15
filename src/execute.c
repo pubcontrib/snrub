@@ -41,11 +41,6 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_
 static value_t *apply_expression(expression_t *expression, stack_frame_t *frame);
 static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame);
-static map_t *default_operators(void);
-static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
-static int set_variable(map_t *variables, char *identifier, value_t *variable);
-static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable);
-static int swap_variable_scope(map_t *before, map_t *after, char *identifier);
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_value(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_assign(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -79,15 +74,20 @@ static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *f
 static value_t *operator_index(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_range(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *list_map_keys(map_t *map);
+static map_t *default_operators(void);
+static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
+static map_t *empty_variables(void);
+static int set_variable(map_t *variables, char *identifier, value_t *variable);
+static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable);
+static int swap_variable_scope(map_t *before, map_t *after, char *identifier);
 static int has_next_argument(argument_iterator_t *arguments);
 static int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, int types);
 static void skip_argument(argument_iterator_t *arguments);
 static void reset_arguments(argument_iterator_t *arguments);
+static value_t *list_map_keys(map_t *map);
 static int compare_values_ascending(const void *left, const void *right);
 static int compare_values_descending(const void *left, const void *right);
 static void destroy_value_unsafe(void *value);
-static map_t *empty_variables(void);
 
 value_t *execute_script(char *document, map_t *globals, value_t *arguments)
 {
@@ -346,153 +346,6 @@ static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
     }
 
     return operator->call(arguments, frame);
-}
-
-static map_t *default_operators(void)
-{
-    map_t *operators;
-
-    operators = empty_map(hash_string, free, 32);
-
-    if (!operators)
-    {
-        return NULL;
-    }
-
-    if (!set_operator(operators, "~", operator_evaluate)
-        || !set_operator(operators, "<--", operator_value)
-        || !set_operator(operators, "-->", operator_assign)
-        || !set_operator(operators, "<3", operator_promote)
-        || !set_operator(operators, "</3", operator_demote)
-        || !set_operator(operators, "---", operator_variables)
-        || !set_operator(operators, "(-)", operator_operators)
-        || !set_operator(operators, "><", operator_catch)
-        || !set_operator(operators, "<>", operator_throw)
-        || !set_operator(operators, "+", operator_add)
-        || !set_operator(operators, "-", operator_subtract)
-        || !set_operator(operators, "*", operator_multiply)
-        || !set_operator(operators, "/", operator_divide)
-        || !set_operator(operators, "%", operator_modulo)
-        || !set_operator(operators, "&", operator_and)
-        || !set_operator(operators, "|", operator_or)
-        || !set_operator(operators, "!", operator_not)
-        || !set_operator(operators, "?", operator_conditional)
-        || !set_operator(operators, "o", operator_loop)
-        || !set_operator(operators, "...", operator_chain)
-        || !set_operator(operators, "<", operator_less)
-        || !set_operator(operators, ">", operator_greater)
-        || !set_operator(operators, "=", operator_equal)
-        || !set_operator(operators, "<|>", operator_sort)
-        || !set_operator(operators, "_", operator_type)
-        || !set_operator(operators, "#", operator_number)
-        || !set_operator(operators, "\"", operator_string)
-        || !set_operator(operators, "::", operator_hash)
-        || !set_operator(operators, "$", operator_represent)
-        || !set_operator(operators, "| |", operator_length)
-        || !set_operator(operators, "[#]", operator_index)
-        || !set_operator(operators, "[# #]", operator_range)
-        || !set_operator(operators, "^", operator_read))
-    {
-        destroy_map(operators);
-        return NULL;
-    }
-
-    return operators;
-}
-
-static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *))
-{
-    char *key;
-    operator_t *operator;
-
-    key = copy_string(name);
-
-    if (!key)
-    {
-        return 0;
-    }
-
-    operator = malloc(sizeof(operator_t *));
-
-    if (!operator)
-    {
-        free(key);
-        return 0;
-    }
-
-    operator->call = call;
-
-    return set_map_item(operators, key, operator);
-}
-
-static int set_variable(map_t *variables, char *identifier, value_t *variable)
-{
-    char *key;
-    value_t *value;
-
-    key = copy_string(identifier);
-
-    if (!key)
-    {
-        return 0;
-    }
-
-    value = copy_value(variable);
-
-    if (!value)
-    {
-        free(key);
-        return 0;
-    }
-
-    return set_map_item(variables, key, value);
-}
-
-static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable)
-{
-    if (variable->type == TYPE_NULL)
-    {
-        remove_map_item(frame->globals, identifier);
-        remove_map_item(frame->locals, identifier);
-    }
-    else
-    {
-        if (get_map_item(frame->globals, identifier))
-        {
-            if (!set_variable(frame->globals, identifier, variable))
-            {
-                return 0;
-            }
-        }
-        else
-        {
-            if (!set_variable(frame->locals, identifier, variable))
-            {
-                return 0;
-            }
-        }
-    }
-
-    return 1;
-}
-
-static int swap_variable_scope(map_t *before, map_t *after, char *identifier)
-{
-    value_t *value;
-
-    value = get_map_item(before, identifier);
-
-    if (value)
-    {
-        if (!set_variable(after, identifier, value))
-        {
-            return 0;
-        }
-
-        remove_map_item(before, identifier);
-    }
-
-    return 1;
 }
 
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1409,55 +1262,156 @@ static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *fra
     return steal_string(file, sizeof(char) * (length + 1));
 }
 
-static value_t *list_map_keys(map_t *map)
+static map_t *default_operators(void)
 {
-    value_t **items;
-    size_t length;
+    map_t *operators;
 
-    length = map->length;
+    operators = empty_map(hash_string, free, 32);
 
-    if (length > 0)
+    if (!operators)
     {
-        size_t index, placement;
+        return NULL;
+    }
 
-        items = malloc(sizeof(value_t *) * length);
+    if (!set_operator(operators, "~", operator_evaluate)
+        || !set_operator(operators, "<--", operator_value)
+        || !set_operator(operators, "-->", operator_assign)
+        || !set_operator(operators, "<3", operator_promote)
+        || !set_operator(operators, "</3", operator_demote)
+        || !set_operator(operators, "---", operator_variables)
+        || !set_operator(operators, "(-)", operator_operators)
+        || !set_operator(operators, "><", operator_catch)
+        || !set_operator(operators, "<>", operator_throw)
+        || !set_operator(operators, "+", operator_add)
+        || !set_operator(operators, "-", operator_subtract)
+        || !set_operator(operators, "*", operator_multiply)
+        || !set_operator(operators, "/", operator_divide)
+        || !set_operator(operators, "%", operator_modulo)
+        || !set_operator(operators, "&", operator_and)
+        || !set_operator(operators, "|", operator_or)
+        || !set_operator(operators, "!", operator_not)
+        || !set_operator(operators, "?", operator_conditional)
+        || !set_operator(operators, "o", operator_loop)
+        || !set_operator(operators, "...", operator_chain)
+        || !set_operator(operators, "<", operator_less)
+        || !set_operator(operators, ">", operator_greater)
+        || !set_operator(operators, "=", operator_equal)
+        || !set_operator(operators, "<|>", operator_sort)
+        || !set_operator(operators, "_", operator_type)
+        || !set_operator(operators, "#", operator_number)
+        || !set_operator(operators, "\"", operator_string)
+        || !set_operator(operators, "::", operator_hash)
+        || !set_operator(operators, "$", operator_represent)
+        || !set_operator(operators, "| |", operator_length)
+        || !set_operator(operators, "[#]", operator_index)
+        || !set_operator(operators, "[# #]", operator_range)
+        || !set_operator(operators, "^", operator_read))
+    {
+        destroy_map(operators);
+        return NULL;
+    }
 
-        if (!items)
-        {
-            return NULL;
-        }
+    return operators;
+}
 
-        for (index = 0, placement = 0; index < map->capacity; index++)
-        {
-            if (map->chains[index])
-            {
-                map_chain_t *chain;
+static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *))
+{
+    char *key;
+    operator_t *operator;
 
-                for (chain = map->chains[index]; chain != NULL; chain = chain->next)
-                {
-                    value_t *item;
+    key = copy_string(name);
 
-                    item = new_string(chain->key);
+    if (!key)
+    {
+        return 0;
+    }
 
-                    if (!item)
-                    {
-                        destroy_items(items, index);
-                        return NULL;
-                    }
+    operator = malloc(sizeof(operator_t *));
 
-                    items[placement++] = item;
-                }
-            }
-        }
+    if (!operator)
+    {
+        free(key);
+        return 0;
+    }
 
-        qsort(items, length, sizeof(value_t *), compare_values_ascending);
+    operator->call = call;
+
+    return set_map_item(operators, key, operator);
+}
+
+static map_t *empty_variables(void)
+{
+    return empty_map(hash_string, destroy_value_unsafe, 64);
+}
+
+static int set_variable(map_t *variables, char *identifier, value_t *variable)
+{
+    char *key;
+    value_t *value;
+
+    key = copy_string(identifier);
+
+    if (!key)
+    {
+        return 0;
+    }
+
+    value = copy_value(variable);
+
+    if (!value)
+    {
+        free(key);
+        return 0;
+    }
+
+    return set_map_item(variables, key, value);
+}
+
+static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable)
+{
+    if (variable->type == TYPE_NULL)
+    {
+        remove_map_item(frame->globals, identifier);
+        remove_map_item(frame->locals, identifier);
     }
     else
     {
-        items = NULL;
+        if (get_map_item(frame->globals, identifier))
+        {
+            if (!set_variable(frame->globals, identifier, variable))
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            if (!set_variable(frame->locals, identifier, variable))
+            {
+                return 0;
+            }
+        }
     }
 
-    return new_list(items, length);
+    return 1;
+}
+
+static int swap_variable_scope(map_t *before, map_t *after, char *identifier)
+{
+    value_t *value;
+
+    value = get_map_item(before, identifier);
+
+    if (value)
+    {
+        if (!set_variable(after, identifier, value))
+        {
+            return 0;
+        }
+
+        remove_map_item(before, identifier);
+    }
+
+    return 1;
 }
 
 static int has_next_argument(argument_iterator_t *arguments)
@@ -1531,6 +1485,57 @@ static void reset_arguments(argument_iterator_t *arguments)
     arguments->value = NULL;
 }
 
+static value_t *list_map_keys(map_t *map)
+{
+    value_t **items;
+    size_t length;
+
+    length = map->length;
+
+    if (length > 0)
+    {
+        size_t index, placement;
+
+        items = malloc(sizeof(value_t *) * length);
+
+        if (!items)
+        {
+            return NULL;
+        }
+
+        for (index = 0, placement = 0; index < map->capacity; index++)
+        {
+            if (map->chains[index])
+            {
+                map_chain_t *chain;
+
+                for (chain = map->chains[index]; chain != NULL; chain = chain->next)
+                {
+                    value_t *item;
+
+                    item = new_string(chain->key);
+
+                    if (!item)
+                    {
+                        destroy_items(items, index);
+                        return NULL;
+                    }
+
+                    items[placement++] = item;
+                }
+            }
+        }
+
+        qsort(items, length, sizeof(value_t *), compare_values_ascending);
+    }
+    else
+    {
+        items = NULL;
+    }
+
+    return new_list(items, length);
+}
+
 static int compare_values_ascending(const void *left, const void *right)
 {
     return compare_values(*(value_t **) left, *(value_t **) right);
@@ -1539,11 +1544,6 @@ static int compare_values_ascending(const void *left, const void *right)
 static int compare_values_descending(const void *left, const void *right)
 {
     return compare_values(*(value_t **) left, *(value_t **) right) * -1;
-}
-
-static map_t *empty_variables(void)
-{
-    return empty_map(hash_string, destroy_value_unsafe, 64);
 }
 
 static void destroy_value_unsafe(void *value)
