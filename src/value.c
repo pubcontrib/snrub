@@ -537,7 +537,7 @@ size_t length_value(value_t *value)
     switch (value->type)
     {
         case TYPE_STRING:
-            return strlen(view_string(value));
+            return value->size - 1;
         case TYPE_LIST:
             return value->size;
         default:
