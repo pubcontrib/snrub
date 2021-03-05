@@ -326,13 +326,12 @@ static value_t *parse_number_literal(char *value)
         return NULL;
     }
 
-    if (!is_integer(trimmed))
+    if (!string_to_integer(trimmed, 9, &numbered))
     {
         free(trimmed);
         return new_error(ERROR_TYPE);
     }
 
-    numbered = atoi(trimmed);
     free(trimmed);
 
     return new_number(numbered);

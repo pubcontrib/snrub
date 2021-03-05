@@ -963,14 +963,9 @@ static value_t *operator_number(argument_iterator_t *arguments, stack_frame_t *f
 
     if (solo->type == TYPE_STRING)
     {
-        if (is_integer(view_string(solo)))
-        {
-            return new_number(atoi(view_string(solo)));
-        }
-        else
-        {
-            return new_error(ERROR_TYPE);
-        }
+        int out;
+
+        return string_to_integer(view_string(solo), 9, &out) ? new_number(out) : new_error(ERROR_TYPE);
     }
 
     return new_error(ERROR_ARGUMENT);

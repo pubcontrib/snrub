@@ -3,6 +3,8 @@
 #include <ctype.h>
 #include "common.h"
 
+static int shift_digit(int digit, int places);
+
 char *slice_string(char *string, size_t start, size_t end)
 {
     char *slice;
@@ -138,6 +140,51 @@ char *integer_to_string(int integer)
     return string;
 }
 
+int string_to_integer(char *string, int digits, int *out)
+{
+    size_t length;
+    int integer;
+
+    length = strlen(string);
+    integer = 0;
+
+    if (length > 0)
+    {
+        size_t index;
+        int negative;
+
+        negative = string[0] == '-';
+
+        if (length > (negative ? digits + 1 : digits) || (length == 1 && negative))
+        {
+            return 0;
+        }
+
+        for (index = negative ? 1 : 0; index < length; index++)
+        {
+            unsigned char symbol;
+
+            symbol = string[index];
+
+            if (!isdigit(symbol))
+            {
+                return 0;
+            }
+
+            integer += shift_digit(symbol - '0', length - index - 1);
+        }
+
+        if (negative)
+        {
+            integer *= -1;
+        }
+    }
+
+    (*out) = integer;
+
+    return 1;
+}
+
 int integer_digits(int integer)
 {
     int digits;
@@ -155,24 +202,12 @@ int integer_digits(int integer)
     return digits;
 }
 
-int is_integer(char *string)
+static int shift_digit(int digit, int places)
 {
-    size_t length, index;
-
-    length = strlen(string);
-    index = length > 1 && string[0] == '-' ? 1 : 0;
-
-    for (; index < length; index++)
+    for (; places > 0; places--)
     {
-        char symbol;
-
-        symbol = string[index];
-
-        if (!isdigit((unsigned char) symbol))
-        {
-            return 0;
-        }
+        digit *= 10;
     }
 
-    return 1;
+    return digit;
 }
