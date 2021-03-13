@@ -653,6 +653,7 @@ static value_t *operator_multiply(argument_iterator_t *arguments, stack_frame_t 
 static value_t *operator_divide(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *left, *right;
+    int quotient;
 
     if (!next_argument(arguments, frame, TYPE_NUMBER))
     {
@@ -668,12 +669,14 @@ static value_t *operator_divide(argument_iterator_t *arguments, stack_frame_t *f
 
     right = arguments->value;
 
-    if (view_number(right) == 0)
+    if (number_divide(view_number(left), view_number(right), &quotient))
+    {
+        return new_number(quotient);
+    }
+    else
     {
         return new_error(ERROR_ARITHMETIC);
     }
-
-    return new_number(div(view_number(left), view_number(right)).quot);
 }
 
 static value_t *operator_modulo(argument_iterator_t *arguments, stack_frame_t *frame)

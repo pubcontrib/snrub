@@ -668,6 +668,27 @@ int number_multiply(int left, int right, int *out)
     return 1;
 }
 
+int number_divide(int left, int right, int *out)
+{
+    int quotient;
+
+    if (left < NUMBER_MIN || left > NUMBER_MAX || right < NUMBER_MIN || right > NUMBER_MAX)
+    {
+        return 0;
+    }
+
+    if (right == 0)
+    {
+        return 0;
+    }
+
+    quotient = div(left, right).quot;
+
+    (*out) = quotient;
+
+    return 1;
+}
+
 void destroy_value(value_t *value)
 {
     if (value->data)
