@@ -620,6 +620,54 @@ int number_subtract(int left, int right, int *out)
     return 1;
 }
 
+int number_multiply(int left, int right, int *out)
+{
+    int product, goal, increment;
+
+    if (left < NUMBER_MIN || left > NUMBER_MAX || right < NUMBER_MIN || right > NUMBER_MAX)
+    {
+        return 0;
+    }
+
+    product = 0;
+
+    if (abs(left) < abs(right))
+    {
+        goal = left;
+        increment = right;
+    }
+    else
+    {
+        goal = right;
+        increment = left;
+    }
+
+    if (goal < 0)
+    {
+        goal *= -1;
+        increment *= -1;
+    }
+
+    if (goal == 1)
+    {
+        product = increment;
+    }
+    else
+    {
+        while (goal--)
+        {
+            if (!number_add(product, increment, &product))
+            {
+                return 0;
+            }
+        }
+    }
+
+    (*out) = product;
+
+    return 1;
+}
+
 void destroy_value(value_t *value)
 {
     if (value->data)

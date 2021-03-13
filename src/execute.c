@@ -624,6 +624,7 @@ static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t 
 static value_t *operator_multiply(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *left, *right;
+    int product;
 
     if (!next_argument(arguments, frame, TYPE_NUMBER))
     {
@@ -639,7 +640,14 @@ static value_t *operator_multiply(argument_iterator_t *arguments, stack_frame_t 
 
     right = arguments->value;
 
-    return new_number(view_number(left) * view_number(right));
+    if (number_multiply(view_number(left), view_number(right), &product))
+    {
+        return new_number(product);
+    }
+    else
+    {
+        return new_error(ERROR_ARITHMETIC);
+    }
 }
 
 static value_t *operator_divide(argument_iterator_t *arguments, stack_frame_t *frame)
