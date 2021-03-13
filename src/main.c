@@ -8,7 +8,7 @@
 #include "common.h"
 
 #define PROGRAM_NAME "snrub"
-#define PROGRAM_VERSION "v0.53.0"
+#define PROGRAM_VERSION "v0.54.0"
 #define PROGRAM_SUCCESS 0
 #define PROGRAM_ERROR 1
 
