@@ -682,6 +682,7 @@ static value_t *operator_divide(argument_iterator_t *arguments, stack_frame_t *f
 static value_t *operator_modulo(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *left, *right;
+    int remainder;
 
     if (!next_argument(arguments, frame, TYPE_NUMBER))
     {
@@ -697,12 +698,14 @@ static value_t *operator_modulo(argument_iterator_t *arguments, stack_frame_t *f
 
     right = arguments->value;
 
-    if (view_number(right) == 0)
+    if (number_modulo(view_number(left), view_number(right), &remainder))
+    {
+        return new_number(remainder);
+    }
+    else
     {
         return new_error(ERROR_ARITHMETIC);
     }
-
-    return new_number(div(view_number(left), view_number(right)).rem);
 }
 
 static value_t *operator_and(argument_iterator_t *arguments, stack_frame_t *frame)
