@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#define NUMBER_DIGIT_CAPACITY 9
+
 typedef enum
 {
     TYPE_UNSET = 0x00,

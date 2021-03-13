@@ -965,7 +965,7 @@ static value_t *operator_number(argument_iterator_t *arguments, stack_frame_t *f
     {
         int out;
 
-        return string_to_integer(view_string(solo), 9, &out) ? new_number(out) : new_error(ERROR_TYPE);
+        return string_to_integer(view_string(solo), NUMBER_DIGIT_CAPACITY, &out) ? new_number(out) : new_error(ERROR_TYPE);
     }
 
     return new_error(ERROR_ARGUMENT);

@@ -326,7 +326,7 @@ static value_t *parse_number_literal(char *value)
         return NULL;
     }
 
-    if (!string_to_integer(trimmed, 9, &numbered))
+    if (!string_to_integer(trimmed, NUMBER_DIGIT_CAPACITY, &numbered))
     {
         free(trimmed);
         return new_error(ERROR_TYPE);
