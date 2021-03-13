@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#define NUMBER_MAX 999999999
+#define NUMBER_MIN -999999999
 #define NUMBER_DIGIT_CAPACITY 9
 
 typedef enum
@@ -64,6 +66,7 @@ size_t length_value(value_t *value);
 int view_number(value_t *value);
 char *view_string(value_t *value);
 error_t view_error(value_t *value);
+int number_add(int left, int right, int *out);
 void destroy_value(value_t *value);
 void destroy_items(value_t **items, size_t length);
 

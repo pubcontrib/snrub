@@ -578,6 +578,27 @@ error_t view_error(value_t *value)
     }
 }
 
+int number_add(int left, int right, int *out)
+{
+    int sum;
+
+    if (left < NUMBER_MIN || left > NUMBER_MAX || right < NUMBER_MIN || right > NUMBER_MAX)
+    {
+        return 0;
+    }
+
+    sum = left + right;
+
+    if (sum < NUMBER_MIN || sum > NUMBER_MAX)
+    {
+        return 0;
+    }
+
+    (*out) = sum;
+
+    return 1;
+}
+
 void destroy_value(value_t *value)
 {
     if (value->data)

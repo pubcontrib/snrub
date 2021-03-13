@@ -555,7 +555,16 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
 
     if (left->type == TYPE_NUMBER)
     {
-        return new_number(view_number(left) + view_number(right));
+        int sum;
+
+        if (number_add(view_number(left), view_number(right), &sum))
+        {
+            return new_number(sum);
+        }
+        else
+        {
+            return new_error(ERROR_ARITHMETIC);
+        }
     }
 
     if (left->type == TYPE_STRING)
