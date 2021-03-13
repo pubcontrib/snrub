@@ -599,6 +599,27 @@ int number_add(int left, int right, int *out)
     return 1;
 }
 
+int number_subtract(int left, int right, int *out)
+{
+    int difference;
+
+    if (left < NUMBER_MIN || left > NUMBER_MAX || right < NUMBER_MIN || right > NUMBER_MAX)
+    {
+        return 0;
+    }
+
+    difference = left - right;
+
+    if (difference < NUMBER_MIN || difference > NUMBER_MAX)
+    {
+        return 0;
+    }
+
+    (*out) = difference;
+
+    return 1;
+}
+
 void destroy_value(value_t *value)
 {
     if (value->data)

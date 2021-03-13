@@ -595,6 +595,7 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
 static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *left, *right;
+    int difference;
 
     if (!next_argument(arguments, frame, TYPE_NUMBER))
     {
@@ -610,7 +611,14 @@ static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t 
 
     right = arguments->value;
 
-    return new_number(view_number(left) - view_number(right));
+    if (number_subtract(view_number(left), view_number(right), &difference))
+    {
+        return new_number(difference);
+    }
+    else
+    {
+        return new_error(ERROR_ARITHMETIC);
+    }
 }
 
 static value_t *operator_multiply(argument_iterator_t *arguments, stack_frame_t *frame)

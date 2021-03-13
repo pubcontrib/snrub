@@ -67,6 +67,7 @@ int view_number(value_t *value);
 char *view_string(value_t *value);
 error_t view_error(value_t *value);
 int number_add(int left, int right, int *out);
+int number_subtract(int left, int right, int *out);
 void destroy_value(value_t *value);
 void destroy_items(value_t **items, size_t length);
 
