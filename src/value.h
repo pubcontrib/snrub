@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#if INT_MAX < 2147483647 || INT_MIN > -2147483647
+#if INT_MIN > -2147483647 || INT_MAX < 2147483647
 #error int needs to be able to hold values between -2147483647 and 2147483647.
 #endif
 
