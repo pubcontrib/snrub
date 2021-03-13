@@ -2,6 +2,11 @@
 #define VALUE_H
 
 #include <stdlib.h>
+#include <limits.h>
+
+#if INT_MAX < 2147483647 || INT_MIN > -2147483647
+#error int needs to be able to hold values between -2147483647 and 2147483647.
+#endif
 
 #define NUMBER_MAX 999999999
 #define NUMBER_MIN -999999999
