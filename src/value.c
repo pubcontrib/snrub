@@ -216,7 +216,7 @@ int hash_null(void)
 
 int hash_number(int number)
 {
-    return number;
+    return div(number, NUMBER_MAX).rem;
 }
 
 int hash_string(char *string)
@@ -232,7 +232,7 @@ int hash_string(char *string)
         hash += string[index];
     }
 
-    return hash;
+    return hash_number(hash);
 }
 
 int hash_list(value_t **items, size_t length)
@@ -247,7 +247,7 @@ int hash_list(value_t **items, size_t length)
         hash += hash_value(items[index]);
     }
 
-    return hash;
+    return hash_number(hash);
 }
 
 char *represent_value(value_t *this)
