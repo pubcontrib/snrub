@@ -85,6 +85,7 @@ static int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, i
 static void skip_argument(argument_iterator_t *arguments);
 static void reset_arguments(argument_iterator_t *arguments);
 static value_t *list_map_keys(map_t *map);
+static void sort_collection(value_t *collection, int reversed);
 static int compare_values_ascending(const void *left, const void *right);
 static int compare_values_descending(const void *left, const void *right);
 static void destroy_value_unsafe(void *value);
@@ -465,7 +466,6 @@ static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *f
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *left, *right, *sorted;
-    size_t length;
 
     left = list_map_keys(frame->globals);
 
@@ -491,15 +491,25 @@ static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t
         return NULL;
     }
 
-    length = length_value(sorted);
-    qsort(sorted->data, length, sizeof(value_t *), compare_values_ascending);
+    sort_collection(sorted, 0);
 
     return sorted;
 }
 
 static value_t *operator_operators(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    return list_map_keys(frame->operators);
+    value_t *sorted;
+
+    sorted = list_map_keys(frame->operators);
+
+    if (!sorted)
+    {
+        return NULL;
+    }
+
+    sort_collection(sorted, 0);
+
+    return sorted;
 }
 
 static value_t *operator_catch(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -911,7 +921,6 @@ static value_t *operator_equal(argument_iterator_t *arguments, stack_frame_t *fr
 static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *collection, *reversed, *sorted;
-    size_t length;
 
     if (!next_argument(arguments, frame, TYPE_LIST))
     {
@@ -926,12 +935,11 @@ static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *fra
     }
 
     reversed = arguments->value;
-    length = length_value(collection);
     sorted = copy_value(collection);
 
-    if (sorted && length > 0)
+    if (sorted)
     {
-        qsort(sorted->data, length, sizeof(value_t *), view_number(reversed) ? compare_values_descending : compare_values_ascending);
+        sort_collection(sorted, view_number(reversed));
     }
 
     return sorted;
@@ -1551,8 +1559,6 @@ static value_t *list_map_keys(map_t *map)
                 }
             }
         }
-
-        qsort(items, length, sizeof(value_t *), compare_values_ascending);
     }
     else
     {
@@ -1560,6 +1566,18 @@ static value_t *list_map_keys(map_t *map)
     }
 
     return new_list(items, length);
+}
+
+static void sort_collection(value_t *collection, int reversed)
+{
+    size_t length;
+
+    length = length_value(collection);
+
+    if (length > 0)
+    {
+        qsort(collection->data, length, sizeof(value_t *), reversed ? compare_values_descending : compare_values_ascending);
+    }
 }
 
 static int compare_values_ascending(const void *left, const void *right)
