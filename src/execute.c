@@ -1574,7 +1574,7 @@ static void sort_collection(value_t *collection, int reversed)
 
     length = length_value(collection);
 
-    if (length > 0)
+    if (length > 0 && collection->type == TYPE_LIST)
     {
         qsort(collection->data, length, sizeof(value_t *), reversed ? compare_values_descending : compare_values_ascending);
     }
