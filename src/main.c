@@ -21,7 +21,6 @@ static int record_script(char *document, map_t *globals, value_t *arguments);
 static value_t *initialize_arguments(char *document);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
-static void print_error(error_t error);
 static void crash(void);
 
 int main(int argc, char **argv)
@@ -159,8 +158,14 @@ static int run_file(char *file, char *initial)
 
     if (!document)
     {
-        print_error(ERROR_IO);
-        crash();
+        document = malloc(sizeof(char));
+
+        if (!document)
+        {
+            crash();
+        }
+
+        document[0] = '\0';
     }
 
     exit = run_text(document, initial);
@@ -340,15 +345,6 @@ static map_t *empty_variables(void)
 static void destroy_value_unsafe(void *value)
 {
     destroy_value((value_t *) value);
-}
-
-static void print_error(error_t error)
-{
-    char *represent;
-
-    represent = represent_error(error);
-    printf("%s\n", represent);
-    free(represent);
 }
 
 static void crash(void)

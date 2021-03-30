@@ -1276,7 +1276,7 @@ static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *fra
 
     if (!file)
     {
-        return new_error(ERROR_IO);
+        return new_null();
     }
 
     length = strlen(file);
