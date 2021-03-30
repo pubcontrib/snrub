@@ -74,6 +74,7 @@ static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *f
 static value_t *operator_index(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_range(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame);
 static map_t *default_operators(void);
 static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
 static map_t *empty_variables(void);
@@ -1296,6 +1297,37 @@ static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *fra
     return steal_string(file, sizeof(char) * (length + 1));
 }
 
+static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *path, *text;
+
+    if (!next_argument(arguments, frame, TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    path = arguments->value;
+
+    if (!next_argument(arguments, frame, TYPE_NULL | TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    text = arguments->value;
+
+    switch (text->type)
+    {
+        case TYPE_NULL:
+            remove_file(view_string(path));
+            return new_null();
+        case TYPE_STRING:
+            write_file(view_string(path), view_string(text));
+            return new_null();
+        default:
+            return new_error(ERROR_ARGUMENT);
+    }
+}
+
 static map_t *default_operators(void)
 {
     map_t *operators;
@@ -1339,7 +1371,8 @@ static map_t *default_operators(void)
         || !set_operator(operators, "| |", operator_length)
         || !set_operator(operators, "[#]", operator_index)
         || !set_operator(operators, "[# #]", operator_range)
-        || !set_operator(operators, "^", operator_read))
+        || !set_operator(operators, "^", operator_read)
+        || !set_operator(operators, "[o]<-", operator_write))
     {
         destroy_map(operators);
         return NULL;

@@ -48,5 +48,6 @@ fi
 . test/suite/operator/index.sh
 . test/suite/operator/range.sh
 . test/suite/operator/read.sh
+. test/suite/operator/write.sh
 
 conclude
