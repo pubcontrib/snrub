@@ -1371,7 +1371,7 @@ static map_t *default_operators(void)
         || !set_operator(operators, "| |", operator_length)
         || !set_operator(operators, "[#]", operator_index)
         || !set_operator(operators, "[# #]", operator_range)
-        || !set_operator(operators, "^", operator_read)
+        || !set_operator(operators, "[o]->", operator_read)
         || !set_operator(operators, "[o]<-", operator_write))
     {
         destroy_map(operators);
