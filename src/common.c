@@ -41,13 +41,16 @@ char *copy_string(char *string)
 char *merge_strings(char *left, char *right)
 {
     char *merge;
+    size_t leftLength, rightLength;
 
-    merge = malloc(sizeof(char) * (strlen(left) + strlen(right) + 1));
+    leftLength = strlen(left);
+    rightLength = strlen(right);
+    merge = malloc(sizeof(char) * (leftLength + rightLength + 1));
 
     if (merge)
     {
-        strncpy(merge, left, strlen(left));
-        strncpy(merge + strlen(left), right, strlen(right) + 1);
+        strncpy(merge, left, leftLength);
+        strncpy(merge + leftLength, right, rightLength + 1);
     }
 
     return merge;
