@@ -1,10 +1,26 @@
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include "value.h"
 #include "common.h"
 
 static value_t *create_value(type_t type, void *data, size_t size);
 static value_t *quote_string(char *body, char qualifier);
+
+int is_portable(void)
+{
+    if (INT_MIN > -2147483647L || INT_MAX < 2147483647L)
+    {
+        return 0;
+    }
+
+    if (((size_t) -1) < 2147483647L)
+    {
+        return 0;
+    }
+
+    return 1;
+}
 
 value_t *merge_lists(value_t *left, value_t *right)
 {

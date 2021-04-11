@@ -84,6 +84,12 @@ int main(int argc, char **argv)
         return run_version();
     }
 
+    if (!is_portable())
+    {
+        fprintf(stderr, "%s: not portable\n", PROGRAM_NAME);
+        crash();
+    }
+
     if (!modes || file)
     {
         if (argument == argc)

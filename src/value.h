@@ -2,11 +2,6 @@
 #define VALUE_H
 
 #include <stdlib.h>
-#include <limits.h>
-
-#if INT_MIN > -2147483647 || INT_MAX < 2147483647
-#error int needs to be able to hold values between -2147483647 and 2147483647.
-#endif
 
 #define NUMBER_MAX 999999999
 #define NUMBER_MIN -999999999
@@ -40,6 +35,7 @@ typedef enum
     ERROR_ARITHMETIC
 } error_t;
 
+int is_portable(void);
 value_t *merge_lists(value_t *left, value_t *right);
 value_t *new_unset(void);
 value_t *new_null(void);
