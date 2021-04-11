@@ -327,7 +327,7 @@ value_t *represent_list(value_t **items, size_t length)
             if (!fit)
             {
                 free(swap);
-                return new_error(ERROR_ARITHMETIC);
+                return new_error(ERROR_BOUNDS);
             }
 
             if (!swap)
@@ -360,7 +360,7 @@ value_t *represent_list(value_t **items, size_t length)
         if (!fit)
         {
             free(swap);
-            return new_error(ERROR_ARITHMETIC);
+            return new_error(ERROR_BOUNDS);
         }
 
         if (!swap)
@@ -377,7 +377,7 @@ value_t *represent_list(value_t **items, size_t length)
     if (!fit)
     {
         free(swap);
-        return new_error(ERROR_ARITHMETIC);
+        return new_error(ERROR_BOUNDS);
     }
 
     if (!swap)

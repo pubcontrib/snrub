@@ -574,7 +574,7 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
         }
         else
         {
-            return new_error(ERROR_ARITHMETIC);
+            return new_error(ERROR_BOUNDS);
         }
     }
 
@@ -597,7 +597,7 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
         }
         else
         {
-            return new_error(ERROR_ARITHMETIC);
+            return new_error(ERROR_BOUNDS);
         }
     }
 
@@ -606,7 +606,7 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
         return merge_lists(left, right);
     }
 
-    return new_error(ERROR_ARGUMENT);
+    return new_error(ERROR_BOUNDS);
 }
 
 static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -634,7 +634,7 @@ static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t 
     }
     else
     {
-        return new_error(ERROR_ARITHMETIC);
+        return new_error(ERROR_BOUNDS);
     }
 }
 
@@ -663,7 +663,7 @@ static value_t *operator_multiply(argument_iterator_t *arguments, stack_frame_t 
     }
     else
     {
-        return new_error(ERROR_ARITHMETIC);
+        return new_error(ERROR_BOUNDS);
     }
 }
 
@@ -686,13 +686,18 @@ static value_t *operator_divide(argument_iterator_t *arguments, stack_frame_t *f
 
     right = arguments->value;
 
+    if (view_number(right) == 0)
+    {
+        return new_error(ERROR_ARITHMETIC);
+    }
+
     if (number_divide(view_number(left), view_number(right), &quotient))
     {
         return new_number(quotient);
     }
     else
     {
-        return new_error(ERROR_ARITHMETIC);
+        return new_error(ERROR_BOUNDS);
     }
 }
 
@@ -715,13 +720,18 @@ static value_t *operator_modulo(argument_iterator_t *arguments, stack_frame_t *f
 
     right = arguments->value;
 
+    if (view_number(right) == 0)
+    {
+        return new_error(ERROR_ARITHMETIC);
+    }
+
     if (number_modulo(view_number(left), view_number(right), &remainder))
     {
         return new_number(remainder);
     }
     else
     {
-        return new_error(ERROR_ARITHMETIC);
+        return new_error(ERROR_BOUNDS);
     }
 }
 
