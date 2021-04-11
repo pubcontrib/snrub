@@ -18,6 +18,7 @@ static int run_file(char *file, char *initial);
 static int run_text(char *text, char *initial);
 static int run_interactive(void);
 static int record_script(char *document, map_t *globals, value_t *arguments);
+static int print_value(value_t *value);
 static value_t *initialize_arguments(char *document);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
@@ -258,7 +259,6 @@ static int run_interactive(void)
 static int record_script(char *document, map_t *globals, value_t *arguments)
 {
     value_t *value;
-    char *represent;
     int success;
 
     value = execute_script(document, globals, arguments);
@@ -268,17 +268,40 @@ static int record_script(char *document, map_t *globals, value_t *arguments)
         crash();
     }
 
+    success = print_value(value);
+    destroy_value(value);
+
+    return success;
+}
+
+static int print_value(value_t *value)
+{
+    value_t *represent;
+    int success;
+
     represent = represent_value(value);
+    success = 0;
 
     if (!represent)
     {
         crash();
     }
 
-    success = value->type != TYPE_ERROR;
-    destroy_value(value);
-    printf("%s\n", represent);
-    free(represent);
+    switch (represent->type)
+    {
+        case TYPE_STRING:
+            printf("%s\n", view_string(represent));
+            success = value->type != TYPE_ERROR;
+            break;
+        case TYPE_ERROR:
+            print_value(represent);
+            break;
+        default:
+            crash();
+            break;
+    }
+
+    destroy_value(represent);
 
     return success;
 }
@@ -318,16 +341,7 @@ static value_t *initialize_arguments(char *document)
 
         if (!success)
         {
-            char *represent;
-
-            represent = represent_value(arguments);
-
-            if (!represent)
-            {
-                crash();
-            }
-
-            printf("%s\n", represent);
+            print_value(arguments);
             crash();
         }
 

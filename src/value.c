@@ -4,7 +4,7 @@
 #include "common.h"
 
 static value_t *create_value(type_t type, void *data, size_t size);
-static char *quote_string(char *body, char qualifier);
+static value_t *quote_string(char *body, char qualifier);
 
 value_t *merge_lists(value_t *left, value_t *right)
 {
@@ -250,7 +250,7 @@ int hash_list(value_t **items, size_t length)
     return hash_number(hash);
 }
 
-char *represent_value(value_t *this)
+value_t *represent_value(value_t *this)
 {
     switch (this->type)
     {
@@ -269,12 +269,12 @@ char *represent_value(value_t *this)
     }
 }
 
-char *represent_null(void)
+value_t *represent_null(void)
 {
-    return copy_string("?");
+    return new_string("?");
 }
 
-char *represent_number(int number)
+value_t *represent_number(int number)
 {
     char *body;
 
@@ -288,7 +288,7 @@ char *represent_number(int number)
     return quote_string(body, '#');
 }
 
-char *represent_string(char *string)
+value_t *represent_string(char *string)
 {
     char *body;
 
@@ -302,10 +302,11 @@ char *represent_string(char *string)
     return quote_string(body, '\"');
 }
 
-char *represent_list(value_t **items, size_t length)
+value_t *represent_list(value_t **items, size_t length)
 {
     char *body, *swap;
     size_t index;
+    int fit;
 
     body = copy_string("[");
 
@@ -316,13 +317,18 @@ char *represent_list(value_t **items, size_t length)
 
     for (index = 0; index < length; index++)
     {
-        value_t *item;
-        char *represent;
+        value_t *item, *represent;
 
         if (index > 0)
         {
-            swap = merge_strings(body, " ");
+            fit = string_add(body, " ", &swap);
             free(body);
+
+            if (!fit)
+            {
+                free(swap);
+                return new_error(ERROR_ARITHMETIC);
+            }
 
             if (!swap)
             {
@@ -341,9 +347,21 @@ char *represent_list(value_t **items, size_t length)
             return NULL;
         }
 
-        swap = merge_strings(body, represent);
+        if (represent->type == TYPE_ERROR)
+        {
+            free(swap);
+            return represent;
+        }
+
+        fit = string_add(body, view_string(represent), &swap);
         free(body);
-        free(represent);
+        destroy_value(represent);
+
+        if (!fit)
+        {
+            free(swap);
+            return new_error(ERROR_ARITHMETIC);
+        }
 
         if (!swap)
         {
@@ -353,13 +371,24 @@ char *represent_list(value_t **items, size_t length)
         body = swap;
     }
 
-    swap = merge_strings(body, "]");
+    fit = string_add(body, "]", &swap);
     free(body);
 
-    return swap;
+    if (!fit)
+    {
+        free(swap);
+        return new_error(ERROR_ARITHMETIC);
+    }
+
+    if (!swap)
+    {
+        return NULL;
+    }
+
+    return steal_string(swap, sizeof(char) * (strlen(swap) + 1));
 }
 
-char *represent_error(error_t error)
+value_t *represent_error(error_t error)
 {
     return represent_number(error);
 }
@@ -710,6 +739,33 @@ int number_modulo(int left, int right, int *out)
     return 1;
 }
 
+int string_add(char *left, char *right, char **out)
+{
+    char *sum;
+    size_t leftLength, rightLength;
+    int sumLength;
+
+    leftLength = strlen(left);
+    rightLength = strlen(right);
+
+    if (!number_add(leftLength, rightLength, &sumLength))
+    {
+        return 0;
+    }
+
+    sum = malloc(sizeof(char) * (sumLength + 1));
+
+    if (sum)
+    {
+        strncpy(sum, left, leftLength);
+        strncpy(sum + leftLength, right, rightLength + 1);
+    }
+
+    (*out) = sum;
+
+    return 1;
+}
+
 void destroy_value(value_t *value)
 {
     if (value->data)
@@ -755,13 +811,14 @@ static value_t *create_value(type_t type, void *data, size_t size)
     return value;
 }
 
-static char *quote_string(char *body, char qualifier)
+static value_t *quote_string(char *body, char qualifier)
 {
     char *represent;
-    size_t length, index;
+    size_t length, size, index;
 
     length = strlen(body);
-    represent = realloc(body, sizeof(char) * (length + 2 + 1));
+    size = sizeof(char) * (length + 2 + 1);
+    represent = realloc(body, size);
 
     if (!represent)
     {
@@ -778,5 +835,5 @@ static char *quote_string(char *body, char qualifier)
     represent[length + 1] = qualifier;
     represent[length + 2] = '\0';
 
-    return represent;
+    return steal_string(represent, size);
 }

@@ -580,19 +580,25 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
 
     if (left->type == TYPE_STRING)
     {
-        char *string;
-        size_t size;
+        char *sum;
 
-        string = merge_strings(view_string(left), view_string(right));
-
-        if (!string)
+        if (string_add(view_string(left), view_string(right), &sum))
         {
-            return NULL;
+            size_t size;
+
+            if (!sum)
+            {
+                return NULL;
+            }
+
+            size = sizeof(char) * (strlen(sum) + 1);
+
+            return steal_string(sum, size);
         }
-
-        size = sizeof(char) * (strlen(string) + 1);
-
-        return steal_string(string, size);
+        else
+        {
+            return new_error(ERROR_ARITHMETIC);
+        }
     }
 
     if (left->type == TYPE_LIST)
@@ -1069,7 +1075,6 @@ static value_t *operator_hash(argument_iterator_t *arguments, stack_frame_t *fra
 static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *solo;
-    char *represent;
 
     if (!next_argument(arguments, frame, TYPES_NONERROR))
     {
@@ -1077,14 +1082,8 @@ static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t
     }
 
     solo = arguments->value;
-    represent = represent_value(solo);
 
-    if (!represent)
-    {
-        return NULL;
-    }
-
-    return steal_string(represent, strlen(represent) + 1);
+    return represent_value(solo);
 }
 
 static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *frame)
