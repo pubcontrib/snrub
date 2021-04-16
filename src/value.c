@@ -25,24 +25,31 @@ int is_portable(void)
 value_t *merge_lists(value_t *left, value_t *right)
 {
     value_t **items;
-    size_t length, index;
+    size_t leftLength, rightLength, index;
+    int sumLength;
 
-    length = left->size + right->size;
+    leftLength = length_value(left);
+    rightLength = length_value(right);
 
-    if (length > 0)
+    if (!number_add(leftLength, rightLength, &sumLength))
     {
-        items = malloc(sizeof(value_t *) * length);
+        return new_error(ERROR_BOUNDS);
+    }
+
+    if (sumLength > 0)
+    {
+        items = malloc(sizeof(value_t *) * sumLength);
 
         if (!items)
         {
             return NULL;
         }
 
-        for (index = 0; index < length; index++)
+        for (index = 0; index < sumLength; index++)
         {
             value_t *copy;
 
-            copy = copy_value(index < left->size ? ((value_t **) left->data)[index] : ((value_t **) right->data)[index - left->size]);
+            copy = copy_value(index < leftLength ? ((value_t **) left->data)[index] : ((value_t **) right->data)[index - leftLength]);
 
             if (!copy)
             {
@@ -58,7 +65,7 @@ value_t *merge_lists(value_t *left, value_t *right)
         items = NULL;
     }
 
-    return new_list(items, length);
+    return new_list(items, sumLength);
 }
 
 value_t *new_unset(void)
