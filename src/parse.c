@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include "parse.h"
 #include "lex.h"
+#include "value.h"
 #include "list.h"
 #include "common.h"
 
@@ -121,7 +122,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
         return NULL;
     }
 
-    if (depth > LIMIT_DEPTH)
+    if (depth > LIMIT_DEPTH || scanner->length > NUMBER_MAX)
     {
         state = PARSER_STATE_ERROR;
         expression->value = new_error(ERROR_BOUNDS);
