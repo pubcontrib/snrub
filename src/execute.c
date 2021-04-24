@@ -78,9 +78,9 @@ static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *fr
 static map_t *default_operators(void);
 static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
 static map_t *empty_variables(void);
-static int set_variable(map_t *variables, char *identifier, value_t *variable);
 static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable);
 static int swap_variable_scope(map_t *before, map_t *after, char *identifier);
+static int set_variable(map_t *variables, char *identifier, value_t *variable);
 static int has_next_argument(argument_iterator_t *arguments);
 static int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, int types);
 static void skip_argument(argument_iterator_t *arguments);
@@ -1420,29 +1420,6 @@ static map_t *empty_variables(void)
     return empty_map(hash_string, destroy_value_unsafe, 64);
 }
 
-static int set_variable(map_t *variables, char *identifier, value_t *variable)
-{
-    char *key;
-    value_t *value;
-
-    key = copy_string(identifier);
-
-    if (!key)
-    {
-        return 0;
-    }
-
-    value = copy_value(variable);
-
-    if (!value)
-    {
-        free(key);
-        return 0;
-    }
-
-    return set_map_item(variables, key, value);
-}
-
 static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable)
 {
     if (variable->type == TYPE_NULL)
@@ -1488,6 +1465,29 @@ static int swap_variable_scope(map_t *before, map_t *after, char *identifier)
     }
 
     return 1;
+}
+
+static int set_variable(map_t *variables, char *identifier, value_t *variable)
+{
+    char *key;
+    value_t *value;
+
+    key = copy_string(identifier);
+
+    if (!key)
+    {
+        return 0;
+    }
+
+    value = copy_value(variable);
+
+    if (!value)
+    {
+        free(key);
+        return 0;
+    }
+
+    return set_map_item(variables, key, value);
 }
 
 static int has_next_argument(argument_iterator_t *arguments)
