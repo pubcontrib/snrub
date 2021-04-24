@@ -1452,7 +1452,7 @@ static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *
     }
     else
     {
-        if (get_map_item(frame->globals, identifier))
+        if (has_map_item(frame->globals, identifier))
         {
             if (!set_variable(frame->globals, identifier, variable))
             {

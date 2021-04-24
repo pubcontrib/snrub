@@ -21,6 +21,11 @@ map_t *empty_map(int (*hash)(char *), void (*destroy)(void *), size_t capacity)
     return create_map(hash, destroy, 0, capacity, chains);
 }
 
+int has_map_item(map_t *map, char *key)
+{
+    return get_map_item(map, key) != NULL;
+}
+
 void *get_map_item(map_t *map, char *key)
 {
     map_chain_t *chain;
