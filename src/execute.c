@@ -79,7 +79,7 @@ static map_t *default_operators(void);
 static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
 static map_t *empty_variables(void);
 static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable);
-static int swap_variable_scope(map_t *before, map_t *after, char *identifier);
+static value_t *swap_variable_scope(map_t *before, map_t *after, char *identifier);
 static int set_variable(map_t *variables, char *identifier, value_t *variable);
 static int has_next_argument(argument_iterator_t *arguments);
 static int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, int types);
@@ -437,12 +437,7 @@ static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *
 
     identifier = arguments->value;
 
-    if (!swap_variable_scope(frame->locals, frame->globals, view_string(identifier)))
-    {
-        return NULL;
-    }
-
-    return new_null();
+    return swap_variable_scope(frame->locals, frame->globals, view_string(identifier));
 }
 
 static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -456,12 +451,7 @@ static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *f
 
     identifier = arguments->value;
 
-    if (!swap_variable_scope(frame->globals, frame->locals, view_string(identifier)))
-    {
-        return NULL;
-    }
-
-    return new_null();
+    return swap_variable_scope(frame->globals, frame->locals, view_string(identifier));
 }
 
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1448,7 +1438,7 @@ static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *
     return 1;
 }
 
-static int swap_variable_scope(map_t *before, map_t *after, char *identifier)
+static value_t *swap_variable_scope(map_t *before, map_t *after, char *identifier)
 {
     value_t *value;
 
@@ -1456,15 +1446,24 @@ static int swap_variable_scope(map_t *before, map_t *after, char *identifier)
 
     if (value)
     {
+        int exists;
+
+        exists = has_map_item(after, identifier);
+
+        if (!exists && after->length >= NUMBER_MAX)
+        {
+            return new_error(ERROR_BOUNDS);
+        }
+
         if (!set_variable(after, identifier, value))
         {
-            return 0;
+            return NULL;
         }
 
         remove_map_item(before, identifier);
     }
 
-    return 1;
+    return new_null();
 }
 
 static int set_variable(map_t *variables, char *identifier, value_t *variable)
