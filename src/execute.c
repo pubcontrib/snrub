@@ -78,7 +78,7 @@ static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *fr
 static map_t *default_operators(void);
 static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
 static map_t *empty_variables(void);
-static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable);
+static value_t *set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable);
 static value_t *swap_variable_scope(map_t *before, map_t *after, char *identifier);
 static int set_variable(map_t *variables, char *identifier, value_t *variable);
 static int has_next_argument(argument_iterator_t *arguments);
@@ -170,44 +170,39 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_
         return NULL;
     }
 
-    if (!set_scoped_variable(&frame, "@", arguments))
+    last = set_scoped_variable(&frame, "@", arguments);
+
+    if (last && last->type == TYPE_NULL)
     {
-        destroy_map(frame.operators);
-        destroy_map(frame.locals);
-        return NULL;
-    }
-
-    last = new_null();
-
-    for (node = expressions->head; node != NULL; node = node->next)
-    {
-        expression_t *expression;
-        value_t *value;
-
-        expression = node->value;
-        value = apply_expression(expression, &frame);
-
-        if (!value)
+        for (node = expressions->head; node != NULL; node = node->next)
         {
-            destroy_value(last);
-            destroy_map(frame.operators);
-            destroy_map(frame.locals);
-            return NULL;
-        }
+            expression_t *expression;
+            value_t *value;
 
-        if (value->type == TYPE_UNSET)
-        {
-            destroy_value(value);
-        }
-        else
-        {
-            destroy_value(last);
-            last = value;
-        }
+            expression = node->value;
+            value = apply_expression(expression, &frame);
 
-        if (last->type == TYPE_ERROR)
-        {
-            break;
+            if (!value)
+            {
+                destroy_value(last);
+                last = NULL;
+                break;
+            }
+
+            if (value->type == TYPE_UNSET)
+            {
+                destroy_value(value);
+            }
+            else
+            {
+                destroy_value(last);
+                last = value;
+            }
+
+            if (last->type == TYPE_ERROR)
+            {
+                break;
+            }
         }
     }
 
@@ -418,12 +413,7 @@ static value_t *operator_assign(argument_iterator_t *arguments, stack_frame_t *f
 
     value = arguments->value;
 
-    if (!set_scoped_variable(frame, view_string(identifier), value))
-    {
-        return NULL;
-    }
-
-    return new_null();
+    return set_scoped_variable(frame, view_string(identifier), value);
 }
 
 static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1410,32 +1400,36 @@ static map_t *empty_variables(void)
     return empty_map(hash_string, destroy_value_unsafe, 64);
 }
 
-static int set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable)
+static value_t *set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable)
 {
+    int global;
+    map_t *variables;
+
+    global = has_map_item(frame->globals, identifier);
+    variables = global ? frame->globals : frame->locals;
+
     if (variable->type == TYPE_NULL)
     {
-        remove_map_item(frame->globals, identifier);
-        remove_map_item(frame->locals, identifier);
+        remove_map_item(variables, identifier);
     }
     else
     {
-        if (has_map_item(frame->globals, identifier))
+        int exists;
+
+        exists = global || has_map_item(variables, identifier);
+
+        if (!exists && variables->length >= NUMBER_MAX)
         {
-            if (!set_variable(frame->globals, identifier, variable))
-            {
-                return 0;
-            }
+            return new_error(ERROR_BOUNDS);
         }
-        else
+
+        if (!set_variable(variables, identifier, variable))
         {
-            if (!set_variable(frame->locals, identifier, variable))
-            {
-                return 0;
-            }
+            return NULL;
         }
     }
 
-    return 1;
+    return new_null();
 }
 
 static value_t *swap_variable_scope(map_t *before, map_t *after, char *identifier)
