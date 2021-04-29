@@ -18,8 +18,8 @@ The codebase is written using the 1989 ANSI standard of C. An ANSI-compliant
 compiler is required to build the program from source. Consider the following
 minimums of the target data model additional requirements:
 
-- `int` must be able to hold all values between -(2^32) and 2^32
-- `size_t` must be able to hold all values between 0 and 2^32
+- `int` must be able to hold all values between `[-2147483647, 2147483647]`
+- `size_t` must be able to hold all values between `[0, 2147483647]`
 
 Builds are automated using Make. Try one of the available targets: `all`,
 `clean`, `check`, `install`, `uninstall`. Each target tries to conform to the
