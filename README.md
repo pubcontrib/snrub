@@ -25,9 +25,10 @@ Builds are optionally automated using Make. Try one of the available targets:
 `all`, `clean`, `check`, `install`, `uninstall`. Each target tries to conform to
 the GNU Makefile conventions.
 
-Fastest way to get the program built and installed onto a system with Make:
+Perform a fresh build of the program, check build passes tests, then install it
+to the system:
 ```shell
-make install
+make clean check install
 ```
 
 ## Running
