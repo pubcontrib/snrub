@@ -14,10 +14,11 @@ Snrub is licensed under the MIT license. Review the LICENSE file included in the
 project before using Snrub to understand your rights.
 
 ## Building
-The codebase is written using the 1989 ANSI standard of C. Builds are automated
-using Make. Try one of the available targets: `all`, `clean`, `check`,
-`install`, `uninstall`. Each target tries to conform to the GNU Makefile best
-practices.
+The codebase is written using the 1989 ANSI standard of C.
+
+Builds are automated using Make. Try one of the available targets: `all`,
+`clean`, `check`, `install`, `uninstall`. Each target tries to conform to the
+GNU Makefile best practices.
 
 Fastest way to get the program built and installed onto a system with Make:
 ```shell
