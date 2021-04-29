@@ -21,9 +21,9 @@ minimums of the target data model additional requirements:
 - `int` must be able to hold all values between `[-2147483647, 2147483647]`
 - `size_t` must be able to hold all values between `[0, 2147483647]`
 
-Builds are automated using Make. Try one of the available targets: `all`,
-`clean`, `check`, `install`, `uninstall`. Each target tries to conform to the
-GNU Makefile conventions.
+Builds are optionally automated using Make. Try one of the available targets:
+`all`, `clean`, `check`, `install`, `uninstall`. Each target tries to conform to
+the GNU Makefile conventions.
 
 Fastest way to get the program built and installed onto a system with Make:
 ```shell
