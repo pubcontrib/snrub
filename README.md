@@ -23,7 +23,7 @@ minimums of the target data model additional requirements:
 
 Builds are automated using Make. Try one of the available targets: `all`,
 `clean`, `check`, `install`, `uninstall`. Each target tries to conform to the
-GNU Makefile best practices.
+GNU Makefile conventions.
 
 Fastest way to get the program built and installed onto a system with Make:
 ```shell
