@@ -3,7 +3,7 @@
 hint 'operator/type'
 
 # Object Type
-pass '("_" ?)' '?'
+pass '("_" ?)' '"?"'
 pass '("_" #100#)' '"##"'
 pass '("_" "text")' '"\"\""'
 pass '("_" [#1# #0# #0#])' '"[]"'

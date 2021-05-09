@@ -955,7 +955,7 @@ static value_t *operator_type(argument_iterator_t *arguments, stack_frame_t *fra
 
     if (solo->type == TYPE_NULL)
     {
-        return copy_value(solo);
+        return new_string("?");
     }
 
     if (solo->type == TYPE_NUMBER)
