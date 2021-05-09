@@ -1313,7 +1313,7 @@ static map_t *default_operators(void)
 {
     map_t *operators;
 
-    operators = empty_map(hash_string, free, 32);
+    operators = empty_map(hash_string, free, 64);
 
     if (!operators)
     {
