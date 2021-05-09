@@ -953,27 +953,19 @@ static value_t *operator_type(argument_iterator_t *arguments, stack_frame_t *fra
 
     solo = arguments->value;
 
-    if (solo->type == TYPE_NULL)
+    switch (solo->type)
     {
-        return new_string("?");
+        case TYPE_NULL:
+            return new_string("?");
+        case TYPE_NUMBER:
+            return new_string("##");
+        case TYPE_STRING:
+            return new_string("\"\"");
+        case TYPE_LIST:
+            return new_string("[]");
+        default:
+            return new_error(ERROR_ARGUMENT);
     }
-
-    if (solo->type == TYPE_NUMBER)
-    {
-        return new_string("##");
-    }
-
-    if (solo->type == TYPE_STRING)
-    {
-        return new_string("\"\"");
-    }
-
-    if (solo->type == TYPE_LIST)
-    {
-        return new_string("[]");
-    }
-
-    return new_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_number(argument_iterator_t *arguments, stack_frame_t *frame)
