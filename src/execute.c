@@ -586,7 +586,7 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
         return merge_lists(left, right);
     }
 
-    return new_error(ERROR_BOUNDS);
+    return new_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t *frame)
