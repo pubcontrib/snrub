@@ -293,18 +293,21 @@ static int print_value(value_t *value)
         crash();
     }
 
-    switch (represent->type)
+    if (represent->thrown)
     {
-        case TYPE_STRING:
+        print_value(represent);
+    }
+    else
+    {
+        if (represent->type == TYPE_STRING)
+        {
             printf("%s\n", view_string(represent));
-            success = value->type != TYPE_ERROR;
-            break;
-        case TYPE_ERROR:
-            print_value(represent);
-            break;
-        default:
+            success = !value->thrown;
+        }
+        else
+        {
             crash();
-            break;
+        }
     }
 
     destroy_value(represent);
@@ -341,7 +344,7 @@ static value_t *initialize_arguments(char *document)
             crash();
         }
 
-        success = arguments->type != TYPE_ERROR;
+        success = !arguments->thrown;
         destroy_map(globals);
         destroy_value(null);
 

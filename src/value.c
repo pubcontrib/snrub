@@ -4,7 +4,7 @@
 #include "value.h"
 #include "common.h"
 
-static value_t *create_value(type_t type, void *data, size_t size);
+static value_t *create_value(type_t type, void *data, size_t size, int thrown);
 static value_t *quote_string(char *body, char qualifier);
 
 int is_portable(void)
@@ -33,7 +33,7 @@ value_t *merge_lists(value_t *left, value_t *right)
 
     if (!number_add(leftLength, rightLength, &sumLength))
     {
-        return new_error(ERROR_BOUNDS);
+        return throw_error(ERROR_BOUNDS);
     }
 
     if (sumLength > 0)
@@ -70,12 +70,12 @@ value_t *merge_lists(value_t *left, value_t *right)
 
 value_t *new_unset(void)
 {
-    return create_value(TYPE_UNSET, NULL, 0);
+    return create_value(TYPE_UNSET, NULL, 0, 0);
 }
 
 value_t *new_null(void)
 {
-    return create_value(TYPE_NULL, NULL, 0);
+    return create_value(TYPE_NULL, NULL, 0, 0);
 }
 
 value_t *new_number(int number)
@@ -89,7 +89,7 @@ value_t *new_number(int number)
         return NULL;
     }
 
-    return create_value(TYPE_NUMBER, data, sizeof(int));
+    return create_value(TYPE_NUMBER, data, sizeof(int), 0);
 }
 
 value_t *new_string(char *string)
@@ -103,50 +103,43 @@ value_t *new_string(char *string)
         return NULL;
     }
 
-    return create_value(TYPE_STRING, data, sizeof(char) * (strlen(string) + 1));
+    return create_value(TYPE_STRING, data, sizeof(char) * (strlen(string) + 1), 0);
 }
 
 value_t *new_list(value_t **items, size_t length)
 {
-    return create_value(TYPE_LIST, items, length);
-}
-
-value_t *new_error(error_t error)
-{
-    error_t *data;
-    size_t size;
-
-    size = sizeof(error_t);
-    data = malloc(size);
-
-    if (!data)
-    {
-        return NULL;
-    }
-
-    data[0] = error;
-
-    return create_value(TYPE_ERROR, data, size);
+    return create_value(TYPE_LIST, items, length, 0);
 }
 
 value_t *new_call(void)
 {
-    return create_value(TYPE_CALL, NULL, 0);
+    return create_value(TYPE_CALL, NULL, 0, 0);
 }
 
 value_t *steal_number(int *number, size_t size)
 {
-    return create_value(TYPE_NUMBER, number, size);
+    return create_value(TYPE_NUMBER, number, size, 0);
 }
 
 value_t *steal_string(char *string, size_t size)
 {
-    return create_value(TYPE_STRING, string, size);
+    return create_value(TYPE_STRING, string, size, 0);
 }
 
-value_t *steal_error(error_t *error, size_t size)
+value_t *throw_error(error_t error)
 {
-    return create_value(TYPE_ERROR, error, size);
+    value_t *number;
+
+    number = new_number(error);
+
+    if (!number)
+    {
+        return NULL;
+    }
+
+    number->thrown = 1;
+
+    return number;
 }
 
 value_t *copy_value(value_t *this)
@@ -211,7 +204,7 @@ value_t *copy_value(value_t *this)
             data = NULL;
         }
 
-        return create_value(this->type, data, this->size);
+        return create_value(this->type, data, this->size, this->thrown);
     }
 }
 
@@ -285,8 +278,6 @@ value_t *represent_value(value_t *this)
             return represent_string(view_string(this));
         case TYPE_LIST:
             return represent_list(this->data, this->size);
-        case TYPE_ERROR:
-            return represent_error(view_error(this));
         default:
             return NULL;
     }
@@ -350,7 +341,7 @@ value_t *represent_list(value_t **items, size_t length)
             if (!fit)
             {
                 free(swap);
-                return new_error(ERROR_BOUNDS);
+                return throw_error(ERROR_BOUNDS);
             }
 
             if (!swap)
@@ -370,7 +361,7 @@ value_t *represent_list(value_t **items, size_t length)
             return NULL;
         }
 
-        if (represent->type == TYPE_ERROR)
+        if (represent->thrown)
         {
             free(swap);
             return represent;
@@ -383,7 +374,7 @@ value_t *represent_list(value_t **items, size_t length)
         if (!fit)
         {
             free(swap);
-            return new_error(ERROR_BOUNDS);
+            return throw_error(ERROR_BOUNDS);
         }
 
         if (!swap)
@@ -400,7 +391,7 @@ value_t *represent_list(value_t **items, size_t length)
     if (!fit)
     {
         free(swap);
-        return new_error(ERROR_BOUNDS);
+        return throw_error(ERROR_BOUNDS);
     }
 
     if (!swap)
@@ -409,11 +400,6 @@ value_t *represent_list(value_t **items, size_t length)
     }
 
     return steal_string(swap, sizeof(char) * (strlen(swap) + 1));
-}
-
-value_t *represent_error(error_t error)
-{
-    return represent_number(error);
 }
 
 char *escape_string(char *string)
@@ -619,17 +605,6 @@ char *view_string(value_t *value)
     }
 }
 
-error_t view_error(value_t *value)
-{
-    switch (value->type)
-    {
-        case TYPE_ERROR:
-            return ((error_t *) value->data)[0];
-        default:
-            return ERROR_UNSET;
-    }
-}
-
 int number_add(int left, int right, int *out)
 {
     int sum;
@@ -818,7 +793,7 @@ void destroy_items(value_t **items, size_t length)
     free(items);
 }
 
-static value_t *create_value(type_t type, void *data, size_t size)
+static value_t *create_value(type_t type, void *data, size_t size, int thrown)
 {
     value_t *value;
 
@@ -829,6 +804,7 @@ static value_t *create_value(type_t type, void *data, size_t size)
         value->type = type;
         value->data = data;
         value->size = size;
+        value->thrown = thrown;
     }
 
     return value;

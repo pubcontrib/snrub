@@ -14,8 +14,7 @@ typedef enum
     TYPE_NUMBER = 0x02,
     TYPE_STRING = 0x04,
     TYPE_LIST = 0x08,
-    TYPE_ERROR = 0x10,
-    TYPE_CALL = 0x20
+    TYPE_CALL = 0x10
 } type_t;
 
 typedef struct
@@ -23,6 +22,7 @@ typedef struct
     type_t type;
     void *data;
     size_t size;
+    int thrown;
 } value_t;
 
 typedef enum
@@ -42,11 +42,10 @@ value_t *new_null(void);
 value_t *new_number(int number);
 value_t *new_string(char *string);
 value_t *new_list(value_t **items, size_t length);
-value_t *new_error(error_t error);
 value_t *new_call(void);
 value_t *steal_number(int *number, size_t size);
 value_t *steal_string(char *string, size_t size);
-value_t *steal_error(error_t *error, size_t size);
+value_t *throw_error(error_t error);
 value_t *copy_value(value_t *this);
 int hash_value(value_t *this);
 int hash_null(void);
@@ -58,14 +57,12 @@ value_t *represent_null(void);
 value_t *represent_number(int number);
 value_t *represent_string(char *string);
 value_t *represent_list(value_t **items, size_t length);
-value_t *represent_error(error_t error);
 char *escape_string(char *string);
 char *unescape_string(char *string);
 int compare_values(value_t *left, value_t *right);
 size_t length_value(value_t *value);
 int view_number(value_t *value);
 char *view_string(value_t *value);
-error_t view_error(value_t *value);
 int number_add(int left, int right, int *out);
 int number_subtract(int left, int right, int *out);
 int number_multiply(int left, int right, int *out);

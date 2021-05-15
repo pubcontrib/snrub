@@ -49,7 +49,7 @@ list_t *parse_expressions(scanner_t *scanner)
                 return NULL;
             }
 
-            if (expression->value->type == TYPE_ERROR)
+            if (expression->value->thrown)
             {
                 return expressions;
             }
@@ -125,7 +125,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     if (depth > LIMIT_DEPTH || scanner->length > NUMBER_MAX)
     {
         state = PARSER_STATE_ERROR;
-        expression->value = new_error(ERROR_BOUNDS);
+        expression->value = throw_error(ERROR_BOUNDS);
     }
 
     while (!scanner->closed && state != PARSER_STATE_ERROR && state != PARSER_STATE_SUCCESS)
@@ -135,7 +135,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
             destroy_value(expression->value);
 
             state = PARSER_STATE_ERROR;
-            expression->value = new_error(ERROR_BOUNDS);
+            expression->value = throw_error(ERROR_BOUNDS);
             break;
         }
 
@@ -146,7 +146,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
             if (token->name == TOKEN_NAME_UNKNOWN)
             {
                 state = PARSER_STATE_ERROR;
-                expression->value = new_error(ERROR_SYNTAX);
+                expression->value = throw_error(ERROR_SYNTAX);
             }
             else if (token->name != TOKEN_NAME_WHITESPACE && token->name != TOKEN_NAME_COMMENT)
             {
@@ -174,7 +174,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                             expression->value = new_call();
                             break;
                         default:
-                            expression->value = new_error(ERROR_SYNTAX);
+                            expression->value = throw_error(ERROR_SYNTAX);
                             break;
                     }
 
@@ -185,7 +185,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                         return NULL;
                     }
 
-                    if (expression->value->type == TYPE_ERROR)
+                    if (expression->value->thrown)
                     {
                         state = PARSER_STATE_ERROR;
                     }
@@ -207,7 +207,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                             destroy_value(expression->value);
 
                             state = PARSER_STATE_ERROR;
-                            expression->value = new_error(ERROR_ARGUMENT);
+                            expression->value = throw_error(ERROR_ARGUMENT);
                         }
                     }
                     else
@@ -219,7 +219,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
 
                         if (argument)
                         {
-                            if (argument->value->type == TYPE_ERROR)
+                            if (argument->value->thrown)
                             {
                                 destroy_value(expression->value);
 
@@ -270,7 +270,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
             destroy_value(expression->value);
         }
 
-        expression->value = new_error(ERROR_SYNTAX);
+        expression->value = throw_error(ERROR_SYNTAX);
     }
 
     if (token)
@@ -291,12 +291,12 @@ static value_t *parse_null_literal(char *value)
 {
     if (strlen(value) != 1)
     {
-        return new_error(ERROR_TYPE);
+        return throw_error(ERROR_TYPE);
     }
 
     if (value[0] != SYMBOL_NULL)
     {
-        return new_error(ERROR_TYPE);
+        return throw_error(ERROR_TYPE);
     }
 
     return new_null();
@@ -312,12 +312,12 @@ static value_t *parse_number_literal(char *value)
 
     if (length < 2)
     {
-        return new_error(ERROR_TYPE);
+        return throw_error(ERROR_TYPE);
     }
 
     if (value[0] != SYMBOL_NUMBER || value[length - 1] != SYMBOL_NUMBER)
     {
-        return new_error(ERROR_TYPE);
+        return throw_error(ERROR_TYPE);
     }
 
     trimmed = slice_string(value, 1, length - 1);
@@ -330,7 +330,7 @@ static value_t *parse_number_literal(char *value)
     if (!string_to_integer(trimmed, NUMBER_DIGIT_CAPACITY, &numbered))
     {
         free(trimmed);
-        return new_error(ERROR_TYPE);
+        return throw_error(ERROR_TYPE);
     }
 
     free(trimmed);
@@ -347,12 +347,12 @@ static value_t *parse_string_literal(char *value)
 
     if (length < 2)
     {
-        return new_error(ERROR_TYPE);
+        return throw_error(ERROR_TYPE);
     }
 
     if (value[0] != SYMBOL_STRING || value[length - 1] != SYMBOL_STRING)
     {
-        return new_error(ERROR_TYPE);
+        return throw_error(ERROR_TYPE);
     }
 
     trimmed = slice_string(value, 1, length - 1);
@@ -365,7 +365,7 @@ static value_t *parse_string_literal(char *value)
     if (!is_printable(trimmed))
     {
         free(trimmed);
-        return new_error(ERROR_TYPE);
+        return throw_error(ERROR_TYPE);
     }
 
     escaped = escape_string(trimmed);
