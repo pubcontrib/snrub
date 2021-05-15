@@ -20,7 +20,7 @@ typedef struct
     value_t **evaluated;
     size_t index;
     value_t *value;
-    int thrown;
+    int interception;
 } argument_iterator_t;
 
 typedef struct
@@ -506,7 +506,7 @@ static value_t *operator_catch(argument_iterator_t *arguments, stack_frame_t *fr
             return NULL;
         }
 
-        if (arguments->thrown)
+        if (arguments->interception)
         {
             solo->thrown = 0;
         }
@@ -1512,7 +1512,7 @@ static int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, i
     arguments->current = arguments->current->next;
     arguments->evaluated[arguments->index] = result;
     arguments->index += 1;
-    arguments->thrown = 0;
+    arguments->interception = 0;
 
     if (!result)
     {
@@ -1523,7 +1523,7 @@ static int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, i
     if (result->thrown)
     {
         arguments->value = copy_value(result);
-        arguments->thrown = 1;
+        arguments->interception = 1;
         return 0;
     }
 
@@ -1545,7 +1545,7 @@ static void skip_argument(argument_iterator_t *arguments)
         arguments->evaluated[arguments->index] = NULL;
         arguments->index += 1;
         arguments->value = NULL;
-        arguments->thrown = 0;
+        arguments->interception = 0;
     }
 }
 
@@ -1565,7 +1565,7 @@ static void reset_arguments(argument_iterator_t *arguments)
     arguments->current = arguments->expressions->head;
     arguments->index = 0;
     arguments->value = NULL;
-    arguments->thrown = 0;
+    arguments->interception = 0;
 }
 
 static value_t *list_map_keys(map_t *map)
