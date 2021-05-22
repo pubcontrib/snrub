@@ -1155,7 +1155,7 @@ static value_t *operator_index(argument_iterator_t *arguments, stack_frame_t *fr
 static value_t *operator_range(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *collection, *start, *end;
-    int adjustedstart, adjustedend;
+    int adjustedStart, adjustedEnd;
     size_t limit, length;
 
     if (!next_argument(arguments, frame, TYPE_STRING | TYPE_LIST))
@@ -1178,37 +1178,37 @@ static value_t *operator_range(argument_iterator_t *arguments, stack_frame_t *fr
     }
 
     end = arguments->value;
-    adjustedstart = view_number(start) - 1;
-    adjustedend = view_number(end) - 1;
+    adjustedStart = view_number(start) - 1;
+    adjustedEnd = view_number(end) - 1;
     limit = length_value(collection);
 
-    if (adjustedstart > adjustedend)
+    if (adjustedStart > adjustedEnd)
     {
         int swap;
 
-        swap = adjustedstart;
-        adjustedstart = adjustedend;
-        adjustedend = swap;
+        swap = adjustedStart;
+        adjustedStart = adjustedEnd;
+        adjustedEnd = swap;
     }
 
-    if (adjustedstart < 0)
+    if (adjustedStart < 0)
     {
-        adjustedstart = 0;
+        adjustedStart = 0;
     }
 
-    if (adjustedend >= limit)
+    if (adjustedEnd >= limit)
     {
-        adjustedend = limit - 1;
+        adjustedEnd = limit - 1;
     }
 
-    adjustedend += 1;
-    length = adjustedend - adjustedstart;
+    adjustedEnd += 1;
+    length = adjustedEnd - adjustedStart;
 
     if (collection->type == TYPE_STRING)
     {
         char *slice;
 
-        slice = slice_string(view_string(collection), adjustedstart, adjustedend);
+        slice = slice_string(view_string(collection), adjustedStart, adjustedEnd);
 
         if (!slice)
         {
@@ -1233,7 +1233,7 @@ static value_t *operator_range(argument_iterator_t *arguments, stack_frame_t *fr
                 return NULL;
             }
 
-            for (index = adjustedstart, placement = 0; index < adjustedend; index++, placement++)
+            for (index = adjustedStart, placement = 0; index < adjustedEnd; index++, placement++)
             {
                 value_t *item;
 
