@@ -1282,11 +1282,11 @@ static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *fra
 
     for (index = 0; index < length; index++)
     {
-        char symbol;
+        unsigned char symbol;
 
         symbol = file[index];
 
-        if (!(isprint((unsigned char) symbol) || symbol == '\t' || symbol == '\n' || symbol == '\r'))
+        if (!(isprint(symbol) || symbol == '\t' || symbol == '\n' || symbol == '\r'))
         {
             free(file);
             return throw_error(ERROR_TYPE);

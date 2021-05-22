@@ -387,11 +387,11 @@ static int is_printable(char *value)
 
     for (index = 0; index < length; index++)
     {
-        char symbol;
+        unsigned char symbol;
 
         symbol = value[index];
 
-        if (!isprint((unsigned char) symbol))
+        if (!isprint(symbol))
         {
             return 0;
         }
