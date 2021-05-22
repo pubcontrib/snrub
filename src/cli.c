@@ -58,7 +58,7 @@ void remove_file(char *path)
 
 line_t *next_line(void)
 {
-    line_t* line;
+    line_t *line;
 
     line = empty_line();
 
