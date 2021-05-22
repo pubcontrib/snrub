@@ -15,7 +15,7 @@ char *read_file(char *path)
     if (file)
     {
         char *buffer;
-        long int length;
+        long length;
 
         fseek(file, 0, SEEK_END);
         length = ftell(file);
