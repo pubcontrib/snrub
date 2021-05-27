@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "cli.h"
 
 static line_t *create_line(char *document, size_t size, size_t capacity, int exit);
