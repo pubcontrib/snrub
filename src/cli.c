@@ -37,20 +37,6 @@ char *read_file(char *path)
     return NULL;
 }
 
-void write_file(char *path, char *text)
-{
-    FILE *file;
-
-    file = fopen(path, "wb");
-
-    if (file)
-    {
-        fwrite(text, sizeof(char), strlen(text), file);
-
-        fclose(file);
-    }
-}
-
 line_t *next_line(void)
 {
     line_t *line;

@@ -1321,8 +1321,17 @@ static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *fr
             remove(view_string(path));
             return new_null();
         case TYPE_STRING:
-            write_file(view_string(path), view_string(text));
-            return new_null();
+        {
+            FILE *file;
+
+            file = fopen(view_string(path), "wb");
+
+            if (file)
+            {
+                fwrite(view_string(text), sizeof(char), length_value(text), file);
+                fclose(file);
+            }
+        }
         default:
             return throw_error(ERROR_ARGUMENT);
     }
