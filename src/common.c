@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include "common.h"
 
+static int integer_digits(int integer);
 static int shift_digit(int digit, int places);
 
 char *slice_string(char *string, size_t start, size_t end)
@@ -124,7 +125,7 @@ int string_to_integer(char *string, int digits, int *out)
     return 1;
 }
 
-int integer_digits(int integer)
+static int integer_digits(int integer)
 {
     int digits;
 
