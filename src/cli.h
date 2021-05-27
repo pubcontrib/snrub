@@ -11,7 +11,6 @@ typedef struct
 
 char *read_file(char *path);
 void write_file(char *path, char *text);
-void remove_file(char *path);
 line_t *next_line(void);
 void destroy_line(line_t *line);
 

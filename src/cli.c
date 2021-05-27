@@ -51,11 +51,6 @@ void write_file(char *path, char *text)
     }
 }
 
-void remove_file(char *path)
-{
-    remove(path);
-}
-
 line_t *next_line(void)
 {
     line_t *line;

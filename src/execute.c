@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -1317,7 +1318,7 @@ static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *fr
     switch (text->type)
     {
         case TYPE_NULL:
-            remove_file(view_string(path));
+            remove(view_string(path));
             return new_null();
         case TYPE_STRING:
             write_file(view_string(path), view_string(text));
