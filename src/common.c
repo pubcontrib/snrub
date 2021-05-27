@@ -38,52 +38,6 @@ char *copy_string(char *string)
     return copy;
 }
 
-size_t characters_in_string(char *string, char character)
-{
-    size_t count, length, index;
-
-    count = 0;
-    length = strlen(string);
-
-    for (index = 0; index < length; index++)
-    {
-        if (string[index] == character)
-        {
-            count += 1;
-        }
-    }
-
-    return count;
-}
-
-void *copy_memory(void *memory, size_t size)
-{
-    void *copy;
-
-    copy = malloc(size);
-
-    if (copy)
-    {
-        memcpy(copy, memory, size);
-    }
-
-    return copy;
-}
-
-int *integer_to_array(int integer)
-{
-    int *array;
-
-    array = malloc(sizeof(int));
-
-    if (array)
-    {
-        array[0] = integer;
-    }
-
-    return array;
-}
-
 char *integer_to_string(int integer)
 {
     char *string;
