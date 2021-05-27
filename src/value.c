@@ -116,11 +116,6 @@ value_t *new_call(void)
     return create_value(TYPE_CALL, NULL, 0, 0);
 }
 
-value_t *steal_number(int *number, size_t size)
-{
-    return create_value(TYPE_NUMBER, number, size, 0);
-}
-
 value_t *steal_string(char *string, size_t size)
 {
     return create_value(TYPE_STRING, string, size, 0);

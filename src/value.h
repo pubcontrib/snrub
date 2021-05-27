@@ -43,7 +43,6 @@ value_t *new_number(int number);
 value_t *new_string(char *string);
 value_t *new_list(value_t **items, size_t length);
 value_t *new_call(void);
-value_t *steal_number(int *number, size_t size);
 value_t *steal_string(char *string, size_t size);
 value_t *throw_error(error_t error);
 value_t *copy_value(value_t *this);
