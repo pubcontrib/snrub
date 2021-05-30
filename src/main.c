@@ -299,7 +299,7 @@ static int print_value(value_t *value)
     }
     else
     {
-        if (represent->type == TYPE_STRING)
+        if (represent->type == VALUE_TYPE_STRING)
         {
             printf("%s\n", view_string(represent));
             success = !value->thrown;

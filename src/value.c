@@ -4,7 +4,7 @@
 #include "value.h"
 #include "common.h"
 
-static value_t *create_value(type_t type, void *data, size_t size, int thrown);
+static value_t *create_value(value_type_t type, void *data, size_t size, int thrown);
 static value_t *quote_string(char *body, char qualifier);
 static size_t characters_in_string(char *string, char character);
 static void *copy_memory(void *memory, size_t size);
@@ -73,12 +73,12 @@ value_t *merge_lists(value_t *left, value_t *right)
 
 value_t *new_unset(void)
 {
-    return create_value(TYPE_UNSET, NULL, 0, 0);
+    return create_value(VALUE_TYPE_UNSET, NULL, 0, 0);
 }
 
 value_t *new_null(void)
 {
-    return create_value(TYPE_NULL, NULL, 0, 0);
+    return create_value(VALUE_TYPE_NULL, NULL, 0, 0);
 }
 
 value_t *new_number(int number)
@@ -92,7 +92,7 @@ value_t *new_number(int number)
         return NULL;
     }
 
-    return create_value(TYPE_NUMBER, data, sizeof(int), 0);
+    return create_value(VALUE_TYPE_NUMBER, data, sizeof(int), 0);
 }
 
 value_t *new_string(char *string)
@@ -106,22 +106,22 @@ value_t *new_string(char *string)
         return NULL;
     }
 
-    return create_value(TYPE_STRING, data, sizeof(char) * (strlen(string) + 1), 0);
+    return create_value(VALUE_TYPE_STRING, data, sizeof(char) * (strlen(string) + 1), 0);
 }
 
 value_t *new_list(value_t **items, size_t length)
 {
-    return create_value(TYPE_LIST, items, length, 0);
+    return create_value(VALUE_TYPE_LIST, items, length, 0);
 }
 
 value_t *new_call(void)
 {
-    return create_value(TYPE_CALL, NULL, 0, 0);
+    return create_value(VALUE_TYPE_CALL, NULL, 0, 0);
 }
 
 value_t *steal_string(char *string, size_t size)
 {
-    return create_value(TYPE_STRING, string, size, 0);
+    return create_value(VALUE_TYPE_STRING, string, size, 0);
 }
 
 value_t *throw_error(error_t error)
@@ -142,7 +142,7 @@ value_t *throw_error(error_t error)
 
 value_t *copy_value(value_t *this)
 {
-    if (this->type == TYPE_LIST)
+    if (this->type == VALUE_TYPE_LIST)
     {
         value_t **data;
         size_t length;
@@ -210,13 +210,13 @@ int hash_value(value_t *this)
 {
     switch (this->type)
     {
-        case TYPE_NULL:
+        case VALUE_TYPE_NULL:
             return hash_null();
-        case TYPE_NUMBER:
+        case VALUE_TYPE_NUMBER:
             return hash_number(view_number(this));
-        case TYPE_STRING:
+        case VALUE_TYPE_STRING:
             return hash_string(view_string(this));
-        case TYPE_LIST:
+        case VALUE_TYPE_LIST:
             return hash_list(this->data, this->size);
         default:
             return 0;
@@ -268,13 +268,13 @@ value_t *represent_value(value_t *this)
 {
     switch (this->type)
     {
-        case TYPE_NULL:
+        case VALUE_TYPE_NULL:
             return represent_null();
-        case TYPE_NUMBER:
+        case VALUE_TYPE_NUMBER:
             return represent_number(view_number(this));
-        case TYPE_STRING:
+        case VALUE_TYPE_STRING:
             return represent_string(view_string(this));
-        case TYPE_LIST:
+        case VALUE_TYPE_LIST:
             return represent_list(this->data, this->size);
         default:
             return NULL;
@@ -531,7 +531,7 @@ int compare_values(value_t *left, value_t *right)
         return left->type - right->type;
     }
 
-    if (left->type == TYPE_LIST)
+    if (left->type == VALUE_TYPE_LIST)
     {
         size_t index;
 
@@ -557,11 +557,11 @@ int compare_values(value_t *left, value_t *right)
 
     switch (left->type)
     {
-        case TYPE_NULL:
+        case VALUE_TYPE_NULL:
             return 0;
-        case TYPE_NUMBER:
+        case VALUE_TYPE_NUMBER:
             return view_number(left) - view_number(right);
-        case TYPE_STRING:
+        case VALUE_TYPE_STRING:
             return strcmp(view_string(left), view_string(right));
         default:
             return 0;
@@ -572,9 +572,9 @@ size_t length_value(value_t *value)
 {
     switch (value->type)
     {
-        case TYPE_STRING:
+        case VALUE_TYPE_STRING:
             return value->size - 1;
-        case TYPE_LIST:
+        case VALUE_TYPE_LIST:
             return value->size;
         default:
             return 0;
@@ -585,7 +585,7 @@ int view_number(value_t *value)
 {
     switch (value->type)
     {
-        case TYPE_NUMBER:
+        case VALUE_TYPE_NUMBER:
             return ((int *) value->data)[0];
         default:
             return 0;
@@ -596,7 +596,7 @@ char *view_string(value_t *value)
 {
     switch (value->type)
     {
-        case TYPE_STRING:
+        case VALUE_TYPE_STRING:
             return (char *) value->data;
         default:
             return "";
@@ -766,7 +766,7 @@ void destroy_value(value_t *value)
 {
     if (value->data)
     {
-        if (value->type == TYPE_LIST)
+        if (value->type == VALUE_TYPE_LIST)
         {
             destroy_items(value->data, value->size);
         }
@@ -791,7 +791,7 @@ void destroy_items(value_t **items, size_t length)
     free(items);
 }
 
-static value_t *create_value(type_t type, void *data, size_t size, int thrown)
+static value_t *create_value(value_type_t type, void *data, size_t size, int thrown)
 {
     value_t *value;
 

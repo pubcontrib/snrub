@@ -9,17 +9,17 @@
 
 typedef enum
 {
-    TYPE_UNSET = 0x00,
-    TYPE_NULL = 0x01,
-    TYPE_NUMBER = 0x02,
-    TYPE_STRING = 0x04,
-    TYPE_LIST = 0x08,
-    TYPE_CALL = 0x10
-} type_t;
+    VALUE_TYPE_UNSET = 0x00,
+    VALUE_TYPE_NULL = 0x01,
+    VALUE_TYPE_NUMBER = 0x02,
+    VALUE_TYPE_STRING = 0x04,
+    VALUE_TYPE_LIST = 0x08,
+    VALUE_TYPE_CALL = 0x10
+} value_type_t;
 
 typedef struct
 {
-    type_t type;
+    value_type_t type;
     void *data;
     size_t size;
     int thrown;

@@ -192,11 +192,11 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                 }
                 else if (state == PARSER_STATE_ARGUMENTS)
                 {
-                    if (expression->value->type == TYPE_LIST && token->name == TOKEN_NAME_LIST_END)
+                    if (expression->value->type == VALUE_TYPE_LIST && token->name == TOKEN_NAME_LIST_END)
                     {
                         state = PARSER_STATE_SUCCESS;
                     }
-                    else if (expression->value->type == TYPE_CALL && token->name == TOKEN_NAME_CALL_END)
+                    else if (expression->value->type == VALUE_TYPE_CALL && token->name == TOKEN_NAME_CALL_END)
                     {
                         if (arguments->length > 0)
                         {
