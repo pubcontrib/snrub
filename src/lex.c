@@ -29,8 +29,7 @@ token_t *next_token(scanner_t *scanner)
         return NULL;
     }
 
-    symbol = scanner->document[scanner->end];
-    scanner->end += 1;
+    symbol = scanner->document[scanner->end++];
 
     switch (symbol)
     {
@@ -108,8 +107,7 @@ static token_t *escape_token(scanner_t *scanner, char qualifier, token_name_t na
     {
         char symbol;
 
-        symbol = scanner->document[scanner->end];
-        scanner->end += 1;
+        symbol = scanner->document[scanner->end++];
 
         if (symbol == qualifier)
         {
