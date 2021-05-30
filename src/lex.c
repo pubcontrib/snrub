@@ -157,13 +157,10 @@ static token_t *slice_token(scanner_t *scanner, token_name_t name)
 
 static token_name_t match_name(char symbol)
 {
-    if (symbol == SYMBOL_NULL)
-    {
-        return TOKEN_NAME_NULL;
-    }
-
     switch (symbol)
     {
+        case SYMBOL_NULL:
+            return TOKEN_NAME_NULL;
         case '[':
             return TOKEN_NAME_LIST_START;
         case ']':
