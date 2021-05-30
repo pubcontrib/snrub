@@ -32,25 +32,16 @@ token_t *next_token(scanner_t *scanner)
     symbol = scanner->document[scanner->end];
     scanner->end += 1;
 
-    if (symbol == SYMBOL_COMMENT)
+    switch (symbol)
     {
-        return escape_token(scanner, SYMBOL_COMMENT, TOKEN_NAME_COMMENT);
-    }
-    else if (symbol == SYMBOL_NUMBER)
-    {
-        return escape_token(scanner, SYMBOL_NUMBER, TOKEN_NAME_NUMBER);
-    }
-    else if (symbol == SYMBOL_STRING)
-    {
-        return escape_token(scanner, SYMBOL_STRING, TOKEN_NAME_STRING);
-    }
-    else
-    {
-        token_name_t name;
-
-        name = match_name(symbol);
-
-        return slice_token(scanner, name);
+        case SYMBOL_COMMENT:
+            return escape_token(scanner, SYMBOL_COMMENT, TOKEN_NAME_COMMENT);
+        case SYMBOL_NUMBER:
+            return escape_token(scanner, SYMBOL_NUMBER, TOKEN_NAME_NUMBER);
+        case SYMBOL_STRING:
+            return escape_token(scanner, SYMBOL_STRING, TOKEN_NAME_STRING);
+        default:
+            return slice_token(scanner, match_name(symbol));
     }
 }
 
