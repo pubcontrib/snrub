@@ -73,6 +73,7 @@ static value_t *operator_hash(argument_iterator_t *arguments, stack_frame_t *fra
 static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_index(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_range(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -1153,6 +1154,140 @@ static value_t *operator_index(argument_iterator_t *arguments, stack_frame_t *fr
     return throw_error(ERROR_ARGUMENT);
 }
 
+static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *collection, *index;
+    int adjusted;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST))
+    {
+        return arguments->value;
+    }
+
+    collection = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    index = arguments->value;
+    adjusted = view_number(index) - 1;
+
+    if (collection->type == VALUE_TYPE_STRING)
+    {
+        value_t *value;
+        char *string;
+        size_t size, left, right;
+
+        if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+        {
+            return arguments->value;
+        }
+
+        value = arguments->value;
+
+        if (adjusted < 0 || adjusted >= length_value(collection))
+        {
+            return copy_value(collection);
+        }
+
+        size = sizeof(char) * length_value(collection) + length_value(value);
+        string = malloc(size);
+
+        if (!string)
+        {
+            return NULL;
+        }
+
+        for (left = 0, right = 0; right < adjusted; left++, right++)
+        {
+            string[left] = view_string(collection)[right];
+        }
+
+        for (right = 0; right < length_value(value); left++, right++)
+        {
+            string[left] = view_string(value)[right];
+        }
+
+        for (right = adjusted + 1; right < length_value(collection); left++, right++)
+        {
+            string[left] = view_string(collection)[right];
+        }
+
+        string[size - 1] = '\0';
+
+        return steal_string(string, size);
+    }
+
+    if (collection->type == VALUE_TYPE_LIST)
+    {
+        value_t *value, *item;
+        value_t **items;
+        size_t length, left, right;
+
+        if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+        {
+            return arguments->value;
+        }
+
+        value = arguments->value;
+
+        if (adjusted < 0 || adjusted >= length_value(collection))
+        {
+            return copy_value(collection);
+        }
+
+        length = length_value(collection);
+        items = malloc(sizeof(value_t *) * length);
+
+        if (!items)
+        {
+            return NULL;
+        }
+
+        for (left = 0, right = 0; right < adjusted; left++, right++)
+        {
+            item = copy_value(((value_t **) collection->data)[right]);
+
+            if (!item)
+            {
+                destroy_items(items, left);
+                return NULL;
+            }
+
+            items[left] = item;
+        }
+
+        item = copy_value(value);
+
+        if (!item)
+        {
+            destroy_items(items, left);
+            return NULL;
+        }
+
+        items[left++] = item;
+
+        for (right = adjusted + 1; right < length_value(collection); left++, right++)
+        {
+            item = copy_value(((value_t **) collection->data)[right]);
+
+            if (!item)
+            {
+                destroy_items(items, left);
+                return NULL;
+            }
+
+            items[left] = item;
+        }
+
+        return new_list(items, length);
+    }
+
+    return throw_error(ERROR_ARGUMENT);
+}
+
 static value_t *operator_range(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *collection, *start, *end;
@@ -1384,6 +1519,7 @@ static map_t *default_operators(void)
         || !set_operator(operators, "$", operator_represent)
         || !set_operator(operators, "| |", operator_length)
         || !set_operator(operators, "[#]", operator_index)
+        || !set_operator(operators, "$<-", operator_set)
         || !set_operator(operators, "[# #]", operator_range)
         || !set_operator(operators, "[o]->", operator_read)
         || !set_operator(operators, "[o]<-", operator_write))
