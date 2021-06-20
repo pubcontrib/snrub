@@ -45,7 +45,7 @@ fi
 . test/suite/operator/hash.sh
 . test/suite/operator/represent.sh
 . test/suite/operator/length.sh
-. test/suite/operator/index.sh
+. test/suite/operator/get.sh
 . test/suite/operator/set.sh
 . test/suite/operator/range.sh
 . test/suite/operator/read.sh

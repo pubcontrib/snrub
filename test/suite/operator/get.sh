@@ -1,8 +1,8 @@
 . test/assert.sh
 
-hint 'operator/index'
+hint 'operator/get'
 
-# Collection Indexing
+# Get Object
 pass '("$->" "abc" #0#)' '?'
 pass '("$->" "abc" #1#)' '"a"'
 pass '("$->" "abc" #2#)' '"b"'

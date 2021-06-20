@@ -72,7 +72,7 @@ static value_t *operator_string(argument_iterator_t *arguments, stack_frame_t *f
 static value_t *operator_hash(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_index(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_range(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -1102,7 +1102,7 @@ static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *f
     return new_number(length_value(solo));
 }
 
-static value_t *operator_index(argument_iterator_t *arguments, stack_frame_t *frame)
+static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *collection, *index;
     int adjusted;
@@ -1518,7 +1518,7 @@ static map_t *default_operators(void)
         || !set_operator(operators, "::", operator_hash)
         || !set_operator(operators, "$", operator_represent)
         || !set_operator(operators, "| |", operator_length)
-        || !set_operator(operators, "$->", operator_index)
+        || !set_operator(operators, "$->", operator_get)
         || !set_operator(operators, "$<-", operator_set)
         || !set_operator(operators, "[# #]", operator_range)
         || !set_operator(operators, "[o]->", operator_read)
