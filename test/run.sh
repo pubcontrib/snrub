@@ -16,7 +16,7 @@ fi
 . test/suite/type/call.sh
 
 . test/suite/operator/evaluate.sh
-. test/suite/operator/value.sh
+. test/suite/operator/memorize.sh
 . test/suite/operator/assign.sh
 . test/suite/operator/promote.sh
 . test/suite/operator/demote.sh

@@ -1,8 +1,8 @@
 . test/assert.sh
 
-hint 'operator/value'
+hint 'operator/memorize'
 
-# Variable Value
+# Memorize Variable
 pass '("x->" "key")' '?'
 pass '("-->" "null" ?) ("x->" "null")' '?'
 pass '("-->" "number" #1#) ("x->" "number")' '#1#'
