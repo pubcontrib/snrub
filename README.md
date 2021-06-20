@@ -6,7 +6,7 @@ language.
 `set numbers a and b then put their sum into c`
 ("-->" "a" #300#)
 ("-->" "b" #200#)
-("-->" "c" ("+" ("<--" "a") ("<--" "b")))
+("-->" "c" ("+" ("x->" "a") ("x->" "b")))
 ```
 
 ## License

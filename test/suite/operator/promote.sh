@@ -6,15 +6,15 @@ hint 'operator/promote'
 pass '("<3" "global")' '?'
 pass '("-->" "global" "word")
 ("<3" "global")
-("<--" "global")' '"word"'
+("x->" "global")' '"word"'
 pass '("-->" "global" "word")
 ("<3" "global")
-("~" "(\"<--\" \"global\")" ?)' '"word"'
+("~" "(\"x->\" \"global\")" ?)' '"word"'
 pass '("~" "(\"-->\" \"global\" \"word\") (\"<3\" \"global\")" ?)
-("<--" "global")' '"word"'
+("x->" "global")' '"word"'
 pass '("-->" "global" "before")
 ("~" "(\"-->\" \"global\" \"after\") (\"<3\" \"global\")" ?)
-("<--" "global")' '"after"'
+("x->" "global")' '"after"'
 
 # Argument Error
 fail '("<3")' '#4#'

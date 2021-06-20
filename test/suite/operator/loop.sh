@@ -5,15 +5,15 @@ hint 'operator/loop'
 # Conditional Looping
 pass '("-->" "count" #0#)
 ("o"
-    ("<" ("<--" "count") #10#)
-    ("-->" "count" ("+" ("<--" "count") #1#))
+    ("<" ("x->" "count") #10#)
+    ("-->" "count" ("+" ("x->" "count") #1#))
 )' '?'
 pass '("-->" "count" #0#)
 ("o"
-    ("<" ("<--" "count") #10#)
-    ("-->" "count" ("+" ("<--" "count") #1#))
+    ("<" ("x->" "count") #10#)
+    ("-->" "count" ("+" ("x->" "count") #1#))
 )
-("<--" "count")' '#10#'
+("x->" "count")' '#10#'
 
 # Argument Error
 fail '("o")' '#4#'

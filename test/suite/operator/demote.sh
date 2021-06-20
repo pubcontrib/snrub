@@ -7,14 +7,14 @@ pass '("</3" "local")' '?'
 pass '("-->" "local" "word")
 ("<3" "local")
 ("</3" "local")
-("<--" "local")' '"word"'
+("x->" "local")' '"word"'
 pass '("-->" "local" "word")
 ("<3" "local")
-("~" "(\"</3\" \"local\") (\"<--\" \"local\")" ?)' '"word"'
+("~" "(\"</3\" \"local\") (\"x->\" \"local\")" ?)' '"word"'
 pass '("-->" "local" "word")
 ("<3" "local")
 ("~" "(\"</3\" \"local\")" ?)
-("<--" "local")' '?'
+("x->" "local")' '?'
 
 # Argument Error
 fail '("</3")' '#4#'

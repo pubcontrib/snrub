@@ -21,10 +21,10 @@ repeat()
 
 # Call Expression
 pass '("-->" "number" #1#)
-("-->" "number" ("+" ("<--" "number") ("<--" "number")))
-("<--" "number")' '#2#'
+("-->" "number" ("+" ("x->" "number") ("x->" "number")))
+("x->" "number")' '#2#'
 pass '("-->" "operator" "+")
-(("<--" "operator") #10# #5#)' '#15#'
+(("x->" "operator") #10# #5#)' '#15#'
 pass '`comments` "after"' '"after"'
 pass '"before" `comments`' '"before"'
 pass '"before" `comments` "after"' '"after"'
@@ -33,18 +33,18 @@ pass '(`comments` "+" #10# #20#)' '#30#'
 pass '("+" `comments` #10# #20#)' '#30#'
 pass '("+" #10# `comments` #20#)' '#30#'
 pass '("+" #10# #20# `comments`)' '#30#'
-pass '`("-->" "number" #1#) ("<--" "number")`' '?'
+pass '`("-->" "number" #1#) ("x->" "number")`' '?'
 pass '`("#" "text")`' '?'
 pass '`\``' '?'
 pass '("-->" "path" "none")
 ("?" #1#
     ("..."
         ("-->" "path" "pass")
-        ("<--" "path")
+        ("x->" "path")
     )
     ("..."
         ("-->" "path" "fail")
-        ("<--" "path")
+        ("x->" "path")
     )
 )' '"pass"'
 pass '("-->" "path" "none")
@@ -52,20 +52,20 @@ pass '("-->" "path" "none")
     ?
     ("..."
         ("-->" "path" "fail")
-        ("<--" "path")
+        ("x->" "path")
     )
 )' '"fail"'
 pass '("-->" "path" "none")
 ("?" #1#
     ("..."
         ("-->" "path" "pass")
-        ("<--" "path")
+        ("x->" "path")
     )
     ?
 )' '"pass"'
-pass '("-->""string""word")("<--""string")' '"word"'
-pass ' ( "-->" "string" "word" ) ( "<--" "string" ) ' '"word"'
-pass '	(	"-->"	"string"	"word"	)	(	"<--"	"string"	)	' '"word"'
+pass '("-->""string""word")("x->""string")' '"word"'
+pass ' ( "-->" "string" "word" ) ( "x->" "string" ) ' '"word"'
+pass '	(	"-->"	"string"	"word"	)	(	"x->"	"string"	)	' '"word"'
 pass '
 (
 "-->"
@@ -73,7 +73,7 @@ pass '
 "word"
 )
 (
-"<--"
+"x->"
 "string"
 )
 ' '"word"'
@@ -95,9 +95,9 @@ center=`repeat '?' 1023`
 pass "(\"...\" $center)" '?'
 center=`repeat '?' 1024`
 fail "(\"...\" $center)" '#2#'
-fail '("-->" "recurse" "(\"~\" (\"<--\" \"recurse\") ?)")
+fail '("-->" "recurse" "(\"~\" (\"x->\" \"recurse\") ?)")
 ("<3" "recurse")
-("~" ("<--" "recurse") ?)' '#2#'
+("~" ("x->" "recurse") ?)' '#2#'
 
 # Argument Error
 fail '()' '#4#'

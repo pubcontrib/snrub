@@ -1489,7 +1489,7 @@ static map_t *default_operators(void)
     }
 
     if (!set_operator(operators, "~", operator_evaluate)
-        || !set_operator(operators, "<--", operator_value)
+        || !set_operator(operators, "x->", operator_value)
         || !set_operator(operators, "-->", operator_assign)
         || !set_operator(operators, "<3", operator_promote)
         || !set_operator(operators, "</3", operator_demote)
