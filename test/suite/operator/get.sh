@@ -2,7 +2,7 @@
 
 hint 'operator/get'
 
-# Get Object
+# Value Getting
 pass '("$->" "abc" #0#)' '?'
 pass '("$->" "abc" #1#)' '"a"'
 pass '("$->" "abc" #2#)' '"b"'

@@ -2,7 +2,7 @@
 
 hint 'operator/greater'
 
-# Object Comparision
+# Value Comparision
 pass '(">" ? ?)' '#0#'
 pass '(">" #100# #100#)' '#0#'
 pass '(">" #100# #200#)' '#0#'

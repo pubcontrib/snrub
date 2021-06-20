@@ -2,7 +2,7 @@
 
 hint 'operator/represent'
 
-# Object Representation
+# Value Representation
 pass '(";" ?)' '"?"'
 pass '(";" #100#)' '"#100#"'
 pass '(";" "text")' '"\"text\""'

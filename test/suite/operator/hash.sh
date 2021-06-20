@@ -2,7 +2,7 @@
 
 hint 'operator/hash'
 
-# Object Hashing
+# Value Hashing
 pass '("::" ?)' '#0#'
 pass '("::" ##)' '#0#'
 pass '("::" #100#)' '#100#'

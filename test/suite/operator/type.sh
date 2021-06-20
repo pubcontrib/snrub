@@ -2,7 +2,7 @@
 
 hint 'operator/type'
 
-# Object Type
+# Value Type
 pass '("_" ?)' '"?"'
 pass '("_" #100#)' '"##"'
 pass '("_" "text")' '"\"\""'

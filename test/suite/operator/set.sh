@@ -2,7 +2,7 @@
 
 hint 'operator/set'
 
-# Set Object
+# Value Setting
 pass '("$<-" "abc" #0# "x")' '"abc"'
 pass '("$<-" "abc" #1# "x")' '"xbc"'
 pass '("$<-" "abc" #2# "x")' '"axc"'

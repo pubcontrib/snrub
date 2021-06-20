@@ -2,7 +2,7 @@
 
 hint 'operator/equal'
 
-# Object Equality
+# Value Equality
 pass '("=" ? ?)' '#1#'
 pass '("=" #100# #100#)' '#1#'
 pass '("=" #100# #200#)' '#0#'
