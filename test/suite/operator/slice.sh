@@ -1,8 +1,8 @@
 . test/assert.sh
 
-hint 'operator/range'
+hint 'operator/slice'
 
-# Collection Ranging
+# Collection Slicing
 pass '("[# #]" "abcde" #1# #5#)' '"abcde"'
 pass '("[# #]" "abcde" #2# #4#)' '"bcd"'
 pass '("[# #]" "abcde" #3# #3#)' '"c"'
