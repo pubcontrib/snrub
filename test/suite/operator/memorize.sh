@@ -2,7 +2,7 @@
 
 hint 'operator/forget'
 
-# Forget Variable
+# Memorize Variable
 pass '("x<-" "null" ?)' '?'
 pass '("x<-" "number" #100#)' '?'
 pass '("x<-" "string" "one hundred")' '?'
