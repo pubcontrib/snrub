@@ -44,7 +44,7 @@ static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame)
 static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_recall(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_memorize(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -397,7 +397,7 @@ static value_t *operator_recall(argument_iterator_t *arguments, stack_frame_t *f
     return value ? copy_value(value) : new_null();
 }
 
-static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *frame)
+static value_t *operator_memorize(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *identifier, *value;
 
@@ -1490,7 +1490,7 @@ static map_t *default_operators(void)
 
     if (!set_operator(operators, "~", operator_evaluate)
         || !set_operator(operators, "x->", operator_recall)
-        || !set_operator(operators, "x<-", operator_forget)
+        || !set_operator(operators, "x<-", operator_memorize)
         || !set_operator(operators, "<3", operator_promote)
         || !set_operator(operators, "</3", operator_demote)
         || !set_operator(operators, "x[]", operator_variables)
