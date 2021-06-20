@@ -3,15 +3,15 @@
 hint 'operator/loop'
 
 # Conditional Looping
-pass '("-->" "count" #0#)
+pass '("x<-" "count" #0#)
 ("o"
     ("<" ("x->" "count") #10#)
-    ("-->" "count" ("+" ("x->" "count") #1#))
+    ("x<-" "count" ("+" ("x->" "count") #1#))
 )' '?'
-pass '("-->" "count" #0#)
+pass '("x<-" "count" #0#)
 ("o"
     ("<" ("x->" "count") #10#)
-    ("-->" "count" ("+" ("x->" "count") #1#))
+    ("x<-" "count" ("+" ("x->" "count") #1#))
 )
 ("x->" "count")' '#10#'
 

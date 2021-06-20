@@ -4,16 +4,16 @@ hint 'operator/promote'
 
 # Variable Scope Promotion
 pass '("<3" "global")' '?'
-pass '("-->" "global" "word")
+pass '("x<-" "global" "word")
 ("<3" "global")
 ("x->" "global")' '"word"'
-pass '("-->" "global" "word")
+pass '("x<-" "global" "word")
 ("<3" "global")
 ("~" "(\"x->\" \"global\")" ?)' '"word"'
-pass '("~" "(\"-->\" \"global\" \"word\") (\"<3\" \"global\")" ?)
+pass '("~" "(\"x<-\" \"global\" \"word\") (\"<3\" \"global\")" ?)
 ("x->" "global")' '"word"'
-pass '("-->" "global" "before")
-("~" "(\"-->\" \"global\" \"after\") (\"<3\" \"global\")" ?)
+pass '("x<-" "global" "before")
+("~" "(\"x<-\" \"global\" \"after\") (\"<3\" \"global\")" ?)
 ("x->" "global")' '"after"'
 
 # Argument Error

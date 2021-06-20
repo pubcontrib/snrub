@@ -4,14 +4,14 @@ hint 'operator/demote'
 
 # Variable Scope Demotion
 pass '("</3" "local")' '?'
-pass '("-->" "local" "word")
+pass '("x<-" "local" "word")
 ("<3" "local")
 ("</3" "local")
 ("x->" "local")' '"word"'
-pass '("-->" "local" "word")
+pass '("x<-" "local" "word")
 ("<3" "local")
 ("~" "(\"</3\" \"local\") (\"x->\" \"local\")" ?)' '"word"'
-pass '("-->" "local" "word")
+pass '("x<-" "local" "word")
 ("<3" "local")
 ("~" "(\"</3\" \"local\")" ?)
 ("x->" "local")' '?'

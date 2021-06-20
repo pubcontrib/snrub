@@ -9,11 +9,11 @@ pass '("..." "one")' '"one"'
 pass '("..." ? ? ?)' '?'
 pass '("..." #100# #200# #300#)' '#300#'
 pass '("..." "one" "two" "three")' '"three"'
-pass '("-->" "count" #0#)
+pass '("x<-" "count" #0#)
 ("..."
-    ("-->" "count" ("+" ("x->" "count") #1#))
-    ("-->" "count" ("+" ("x->" "count") #1#))
-    ("-->" "count" ("+" ("x->" "count") #1#))
+    ("x<-" "count" ("+" ("x->" "count") #1#))
+    ("x<-" "count" ("+" ("x->" "count") #1#))
+    ("x<-" "count" ("+" ("x->" "count") #1#))
 )
 ("x->" "count")' '#3#'
 

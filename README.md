@@ -4,9 +4,9 @@ language.
 
 ```
 `set numbers a and b then put their sum into c`
-("-->" "a" #300#)
-("-->" "b" #200#)
-("-->" "c" ("+" ("x->" "a") ("x->" "b")))
+("x<-" "a" #300#)
+("x<-" "b" #200#)
+("x<-" "c" ("+" ("x->" "a") ("x->" "b")))
 ```
 
 ## License

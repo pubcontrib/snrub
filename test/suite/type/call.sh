@@ -20,10 +20,10 @@ repeat()
 }
 
 # Call Expression
-pass '("-->" "number" #1#)
-("-->" "number" ("+" ("x->" "number") ("x->" "number")))
+pass '("x<-" "number" #1#)
+("x<-" "number" ("+" ("x->" "number") ("x->" "number")))
 ("x->" "number")' '#2#'
-pass '("-->" "operator" "+")
+pass '("x<-" "operator" "+")
 (("x->" "operator") #10# #5#)' '#15#'
 pass '`comments` "after"' '"after"'
 pass '"before" `comments`' '"before"'
@@ -33,42 +33,42 @@ pass '(`comments` "+" #10# #20#)' '#30#'
 pass '("+" `comments` #10# #20#)' '#30#'
 pass '("+" #10# `comments` #20#)' '#30#'
 pass '("+" #10# #20# `comments`)' '#30#'
-pass '`("-->" "number" #1#) ("x->" "number")`' '?'
+pass '`("x<-" "number" #1#) ("x->" "number")`' '?'
 pass '`("#" "text")`' '?'
 pass '`\``' '?'
-pass '("-->" "path" "none")
+pass '("x<-" "path" "none")
 ("?" #1#
     ("..."
-        ("-->" "path" "pass")
+        ("x<-" "path" "pass")
         ("x->" "path")
     )
     ("..."
-        ("-->" "path" "fail")
+        ("x<-" "path" "fail")
         ("x->" "path")
     )
 )' '"pass"'
-pass '("-->" "path" "none")
+pass '("x<-" "path" "none")
 ("?" #0#
     ?
     ("..."
-        ("-->" "path" "fail")
+        ("x<-" "path" "fail")
         ("x->" "path")
     )
 )' '"fail"'
-pass '("-->" "path" "none")
+pass '("x<-" "path" "none")
 ("?" #1#
     ("..."
-        ("-->" "path" "pass")
+        ("x<-" "path" "pass")
         ("x->" "path")
     )
     ?
 )' '"pass"'
-pass '("-->""string""word")("x->""string")' '"word"'
-pass ' ( "-->" "string" "word" ) ( "x->" "string" ) ' '"word"'
-pass '	(	"-->"	"string"	"word"	)	(	"x->"	"string"	)	' '"word"'
+pass '("x<-""string""word")("x->""string")' '"word"'
+pass ' ( "x<-" "string" "word" ) ( "x->" "string" ) ' '"word"'
+pass '	(	"x<-"	"string"	"word"	)	(	"x->"	"string"	)	' '"word"'
 pass '
 (
-"-->"
+"x<-"
 "string"
 "word"
 )
@@ -95,7 +95,7 @@ center=`repeat '?' 1023`
 pass "(\"...\" $center)" '?'
 center=`repeat '?' 1024`
 fail "(\"...\" $center)" '#2#'
-fail '("-->" "recurse" "(\"~\" (\"x->\" \"recurse\") ?)")
+fail '("x<-" "recurse" "(\"~\" (\"x->\" \"recurse\") ?)")
 ("<3" "recurse")
 ("~" ("x->" "recurse") ?)' '#2#'
 
