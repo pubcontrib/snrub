@@ -17,7 +17,7 @@ fi
 
 . test/suite/operator/evaluate.sh
 . test/suite/operator/memorize.sh
-. test/suite/operator/assign.sh
+. test/suite/operator/forget.sh
 . test/suite/operator/promote.sh
 . test/suite/operator/demote.sh
 . test/suite/operator/variables.sh

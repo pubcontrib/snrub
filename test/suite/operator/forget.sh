@@ -1,8 +1,8 @@
 . test/assert.sh
 
-hint 'operator/assign'
+hint 'operator/forget'
 
-# Variable Assignment
+# Forget Variable
 pass '("x<-" "null" ?)' '?'
 pass '("x<-" "number" #100#)' '?'
 pass '("x<-" "string" "one hundred")' '?'
