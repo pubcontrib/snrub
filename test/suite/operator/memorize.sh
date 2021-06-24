@@ -1,6 +1,6 @@
 . test/assert.sh
 
-hint 'operator/forget'
+hint 'operator/memorize'
 
 # Memorize Variable
 pass '("x<-" "null" ?)' '?'
