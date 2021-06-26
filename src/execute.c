@@ -45,6 +45,7 @@ static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_recall(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_memorize(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -74,9 +75,11 @@ static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t
 static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_remove(argument_iterator_t *arguments, stack_frame_t *frame);
 static map_t *default_operators(void);
 static int set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
 static map_t *empty_variables(void);
@@ -416,6 +419,25 @@ static value_t *operator_memorize(argument_iterator_t *arguments, stack_frame_t 
     value = arguments->value;
 
     return set_scoped_variable(frame, view_string(identifier), value);
+}
+
+static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *identifier;
+    int global;
+    map_t *variables;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    identifier = arguments->value;
+    global = has_map_item(frame->globals, view_string(identifier));
+    variables = global ? frame->globals : frame->locals;
+    remove_map_item(variables, view_string(identifier));
+
+    return new_null();
 }
 
 static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1288,6 +1310,93 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
     return throw_error(ERROR_ARGUMENT);
 }
 
+static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *collection, *index;
+    int adjusted;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST))
+    {
+        return arguments->value;
+    }
+
+    collection = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    index = arguments->value;
+    adjusted = view_number(index) - 1;
+
+    if (adjusted < 0 || adjusted >= length_value(collection))
+    {
+        return copy_value(collection);
+    }
+
+    if (collection->type == VALUE_TYPE_STRING)
+    {
+        char *string;
+        size_t size, left, right;
+
+        size = sizeof(char) * length_value(collection);
+        string = malloc(size);
+
+        if (!string)
+        {
+            return NULL;
+        }
+
+        for (left = 0, right = 0; right < length_value(collection); right++)
+        {
+            if (right != adjusted)
+            {
+                string[left++] = view_string(collection)[right];
+            }
+        }
+
+        string[size - 1] = '\0';
+
+        return steal_string(string, size);
+    }
+
+    if (collection->type == VALUE_TYPE_LIST)
+    {
+        value_t *item;
+        value_t **items;
+        size_t length, left, right;
+
+        length = length_value(collection) - 1;
+        items = malloc(sizeof(value_t *) * length);
+
+        if (!items)
+        {
+            return NULL;
+        }
+
+        for (left = 0, right = 0; right < length_value(collection); right++)
+        {
+            if (right != adjusted)
+            {
+                item = copy_value(((value_t **) collection->data)[right]);
+
+                if (!item)
+                {
+                    destroy_items(items, left);
+                    return NULL;
+                }
+
+                items[left++] = item;
+            }
+        }
+
+        return new_list(items, length);
+    }
+
+    return throw_error(ERROR_ARGUMENT);
+}
+
 static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *collection, *start, *end;
@@ -1440,6 +1549,7 @@ static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *fra
 static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *path, *text;
+    FILE *file;
 
     if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
     {
@@ -1448,33 +1558,36 @@ static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *fr
 
     path = arguments->value;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NULL | VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
     {
         return arguments->value;
     }
 
     text = arguments->value;
+    file = fopen(view_string(path), "wb");
 
-    switch (text->type)
+    if (file)
     {
-        case VALUE_TYPE_NULL:
-            remove(view_string(path));
-            return new_null();
-        case VALUE_TYPE_STRING:
-        {
-            FILE *file;
-
-            file = fopen(view_string(path), "wb");
-
-            if (file)
-            {
-                fwrite(view_string(text), sizeof(char), length_value(text), file);
-                fclose(file);
-            }
-        }
-        default:
-            return throw_error(ERROR_ARGUMENT);
+        fwrite(view_string(text), sizeof(char), length_value(text), file);
+        fclose(file);
     }
+
+    return new_null();
+}
+
+static value_t *operator_remove(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *path;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    path = arguments->value;
+    remove(view_string(path));
+
+    return new_null();
 }
 
 static map_t *default_operators(void)
@@ -1491,6 +1604,7 @@ static map_t *default_operators(void)
     if (!set_operator(operators, "~", operator_evaluate)
         || !set_operator(operators, "x->", operator_recall)
         || !set_operator(operators, "x<-", operator_memorize)
+        || !set_operator(operators, "x--", operator_forget)
         || !set_operator(operators, "<3", operator_promote)
         || !set_operator(operators, "</3", operator_demote)
         || !set_operator(operators, "x[]", operator_variables)
@@ -1520,9 +1634,11 @@ static map_t *default_operators(void)
         || !set_operator(operators, "| |", operator_length)
         || !set_operator(operators, "$->", operator_get)
         || !set_operator(operators, "$<-", operator_set)
+        || !set_operator(operators, "$--", operator_unset)
         || !set_operator(operators, "[# #]", operator_slice)
         || !set_operator(operators, "[o]->", operator_read)
-        || !set_operator(operators, "[o]<-", operator_write))
+        || !set_operator(operators, "[o]<-", operator_write)
+        || !set_operator(operators, "[o]--", operator_remove))
     {
         destroy_map(operators);
         return NULL;
@@ -1563,31 +1679,21 @@ static map_t *empty_variables(void)
 
 static value_t *set_scoped_variable(stack_frame_t *frame, char *identifier, value_t *variable)
 {
-    int global;
+    int global, exists;
     map_t *variables;
 
     global = has_map_item(frame->globals, identifier);
     variables = global ? frame->globals : frame->locals;
+    exists = global || has_map_item(variables, identifier);
 
-    if (variable->type == VALUE_TYPE_NULL)
+    if (!exists && variables->length >= NUMBER_MAX)
     {
-        remove_map_item(variables, identifier);
+        return throw_error(ERROR_BOUNDS);
     }
-    else
+
+    if (!set_variable(variables, identifier, variable))
     {
-        int exists;
-
-        exists = global || has_map_item(variables, identifier);
-
-        if (!exists && variables->length >= NUMBER_MAX)
-        {
-            return throw_error(ERROR_BOUNDS);
-        }
-
-        if (!set_variable(variables, identifier, variable))
-        {
-            return NULL;
-        }
+        return NULL;
     }
 
     return new_null();

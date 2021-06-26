@@ -18,6 +18,7 @@ fi
 . test/suite/operator/evaluate.sh
 . test/suite/operator/recall.sh
 . test/suite/operator/memorize.sh
+. test/suite/operator/forget.sh
 . test/suite/operator/promote.sh
 . test/suite/operator/demote.sh
 . test/suite/operator/variables.sh
@@ -47,8 +48,10 @@ fi
 . test/suite/operator/length.sh
 . test/suite/operator/get.sh
 . test/suite/operator/set.sh
+. test/suite/operator/unset.sh
 . test/suite/operator/slice.sh
 . test/suite/operator/read.sh
 . test/suite/operator/write.sh
+. test/suite/operator/remove.sh
 
 conclude
