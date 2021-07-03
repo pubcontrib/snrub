@@ -1214,7 +1214,7 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
             return copy_value(collection);
         }
 
-        size = sizeof(char) * length_value(collection) + length_value(value);
+        size = sizeof(char) * (length_value(collection) + length_value(value));
         string = malloc(size);
 
         if (!string)
