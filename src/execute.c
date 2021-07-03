@@ -583,49 +583,48 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
         return throw_error(ERROR_ARGUMENT);
     }
 
-    if (left->type == VALUE_TYPE_NUMBER)
+    switch (left->type)
     {
-        int sum;
-
-        if (number_add(view_number(left), view_number(right), &sum))
+        case VALUE_TYPE_NUMBER:
         {
-            return new_number(sum);
-        }
-        else
-        {
-            return throw_error(ERROR_BOUNDS);
-        }
-    }
+            int sum;
 
-    if (left->type == VALUE_TYPE_STRING)
-    {
-        char *sum;
-
-        if (string_add(view_string(left), view_string(right), &sum))
-        {
-            size_t size;
-
-            if (!sum)
+            if (number_add(view_number(left), view_number(right), &sum))
             {
-                return NULL;
+                return new_number(sum);
             }
-
-            size = sizeof(char) * (strlen(sum) + 1);
-
-            return steal_string(sum, size);
+            else
+            {
+                return throw_error(ERROR_BOUNDS);
+            }
         }
-        else
+        case VALUE_TYPE_STRING:
         {
-            return throw_error(ERROR_BOUNDS);
+            char *sum;
+
+            if (string_add(view_string(left), view_string(right), &sum))
+            {
+                size_t size;
+
+                if (!sum)
+                {
+                    return NULL;
+                }
+
+                size = sizeof(char) * (strlen(sum) + 1);
+
+                return steal_string(sum, size);
+            }
+            else
+            {
+                return throw_error(ERROR_BOUNDS);
+            }
         }
+        case VALUE_TYPE_LIST:
+            return merge_lists(left, right);
+        default:
+            return throw_error(ERROR_ARGUMENT);
     }
-
-    if (left->type == VALUE_TYPE_LIST)
-    {
-        return merge_lists(left, right);
-    }
-
-    return throw_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1018,24 +1017,20 @@ static value_t *operator_number(argument_iterator_t *arguments, stack_frame_t *f
 
     solo = arguments->value;
 
-    if (solo->type == VALUE_TYPE_NULL)
+    switch (solo->type)
     {
-        return copy_value(solo);
+        case VALUE_TYPE_NULL:
+        case VALUE_TYPE_NUMBER:
+            return copy_value(solo);
+        case VALUE_TYPE_STRING:
+        {
+            int out;
+
+            return string_to_integer(view_string(solo), NUMBER_DIGIT_CAPACITY, &out) ? new_number(out) : throw_error(ERROR_TYPE);
+        }
+        default:
+            return throw_error(ERROR_ARGUMENT);
     }
-
-    if (solo->type == VALUE_TYPE_NUMBER)
-    {
-        return copy_value(solo);
-    }
-
-    if (solo->type == VALUE_TYPE_STRING)
-    {
-        int out;
-
-        return string_to_integer(view_string(solo), NUMBER_DIGIT_CAPACITY, &out) ? new_number(out) : throw_error(ERROR_TYPE);
-    }
-
-    return throw_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_string(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1049,34 +1044,30 @@ static value_t *operator_string(argument_iterator_t *arguments, stack_frame_t *f
 
     solo = arguments->value;
 
-    if (solo->type == VALUE_TYPE_NULL)
+    switch (solo->type)
     {
-        return copy_value(solo);
-    }
-
-    if (solo->type == VALUE_TYPE_STRING)
-    {
-        return copy_value(solo);
-    }
-
-    if (solo->type == VALUE_TYPE_NUMBER)
-    {
-        char *string;
-        size_t size;
-
-        string = integer_to_string(view_number(solo));
-
-        if (!string)
+        case VALUE_TYPE_NULL:
+        case VALUE_TYPE_STRING:
+            return copy_value(solo);
+        case VALUE_TYPE_NUMBER:
         {
-            return NULL;
+            char *string;
+            size_t size;
+
+            string = integer_to_string(view_number(solo));
+
+            if (!string)
+            {
+                return NULL;
+            }
+
+            size = sizeof(char) * (strlen(string) + 1);
+
+            return steal_string(string, size);
         }
-
-        size = sizeof(char) * (strlen(string) + 1);
-
-        return steal_string(string, size);
+        default:
+            return throw_error(ERROR_ARGUMENT);
     }
-
-    return throw_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_hash(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1146,31 +1137,31 @@ static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *fram
         return new_null();
     }
 
-    if (collection->type == VALUE_TYPE_STRING)
+    switch (collection->type)
     {
-        char *string;
-        size_t size;
-
-        size = sizeof(char) * 2;
-        string = malloc(size);
-
-        if (!string)
+        case VALUE_TYPE_STRING:
         {
-            return NULL;
+            char *string;
+            size_t size;
+
+            size = sizeof(char) * 2;
+            string = malloc(size);
+
+            if (!string)
+            {
+                return NULL;
+            }
+
+            string[0] = view_string(collection)[adjusted];
+            string[1] = '\0';
+
+            return steal_string(string, size);
         }
-
-        string[0] = view_string(collection)[adjusted];
-        string[1] = '\0';
-
-        return steal_string(string, size);
+        case VALUE_TYPE_LIST:
+            return copy_value(((value_t **) collection->data)[adjusted]);
+        default:
+            return throw_error(ERROR_ARGUMENT);
     }
-
-    if (collection->type == VALUE_TYPE_LIST)
-    {
-        return copy_value(((value_t **) collection->data)[adjusted]);
-    }
-
-    return throw_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1193,81 +1184,93 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
     index = arguments->value;
     adjusted = view_number(index) - 1;
 
-    if (collection->type == VALUE_TYPE_STRING)
+    switch (collection->type)
     {
-        value_t *value;
-        char *string;
-        size_t size, left, right;
-
-        if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+        case VALUE_TYPE_STRING:
         {
-            return arguments->value;
+            value_t *value;
+            char *string;
+            size_t size, left, right;
+
+            if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+            {
+                return arguments->value;
+            }
+
+            value = arguments->value;
+
+            if (adjusted < 0 || adjusted >= length_value(collection))
+            {
+                return copy_value(collection);
+            }
+
+            size = sizeof(char) * (length_value(collection) + length_value(value));
+            string = malloc(size);
+
+            if (!string)
+            {
+                return NULL;
+            }
+
+            for (left = 0, right = 0; right < adjusted; left++, right++)
+            {
+                string[left] = view_string(collection)[right];
+            }
+
+            for (right = 0; right < length_value(value); left++, right++)
+            {
+                string[left] = view_string(value)[right];
+            }
+
+            for (right = adjusted + 1; right < length_value(collection); left++, right++)
+            {
+                string[left] = view_string(collection)[right];
+            }
+
+            string[size - 1] = '\0';
+
+            return steal_string(string, size);
         }
-
-        value = arguments->value;
-
-        if (adjusted < 0 || adjusted >= length_value(collection))
+        case VALUE_TYPE_LIST:
         {
-            return copy_value(collection);
-        }
+            value_t *value, *item;
+            value_t **items;
+            size_t length, left, right;
 
-        size = sizeof(char) * (length_value(collection) + length_value(value));
-        string = malloc(size);
+            if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+            {
+                return arguments->value;
+            }
 
-        if (!string)
-        {
-            return NULL;
-        }
+            value = arguments->value;
 
-        for (left = 0, right = 0; right < adjusted; left++, right++)
-        {
-            string[left] = view_string(collection)[right];
-        }
+            if (adjusted < 0 || adjusted >= length_value(collection))
+            {
+                return copy_value(collection);
+            }
 
-        for (right = 0; right < length_value(value); left++, right++)
-        {
-            string[left] = view_string(value)[right];
-        }
+            length = length_value(collection);
+            items = malloc(sizeof(value_t *) * length);
 
-        for (right = adjusted + 1; right < length_value(collection); left++, right++)
-        {
-            string[left] = view_string(collection)[right];
-        }
+            if (!items)
+            {
+                return NULL;
+            }
 
-        string[size - 1] = '\0';
+            for (left = 0, right = 0; right < adjusted; left++, right++)
+            {
+                item = copy_value(((value_t **) collection->data)[right]);
 
-        return steal_string(string, size);
-    }
+                if (!item)
+                {
+                    destroy_items(items, left);
+                    return NULL;
+                }
 
-    if (collection->type == VALUE_TYPE_LIST)
-    {
-        value_t *value, *item;
-        value_t **items;
-        size_t length, left, right;
+                items[left] = item;
+            }
 
-        if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-        {
-            return arguments->value;
-        }
-
-        value = arguments->value;
-
-        if (adjusted < 0 || adjusted >= length_value(collection))
-        {
-            return copy_value(collection);
-        }
-
-        length = length_value(collection);
-        items = malloc(sizeof(value_t *) * length);
-
-        if (!items)
-        {
-            return NULL;
-        }
-
-        for (left = 0, right = 0; right < adjusted; left++, right++)
-        {
-            item = copy_value(((value_t **) collection->data)[right]);
+            item = copy_value(value);
 
             if (!item)
             {
@@ -1275,36 +1278,26 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
                 return NULL;
             }
 
-            items[left] = item;
-        }
+            items[left++] = item;
 
-        item = copy_value(value);
-
-        if (!item)
-        {
-            destroy_items(items, left);
-            return NULL;
-        }
-
-        items[left++] = item;
-
-        for (right = adjusted + 1; right < length_value(collection); left++, right++)
-        {
-            item = copy_value(((value_t **) collection->data)[right]);
-
-            if (!item)
+            for (right = adjusted + 1; right < length_value(collection); left++, right++)
             {
-                destroy_items(items, left);
-                return NULL;
+                item = copy_value(((value_t **) collection->data)[right]);
+
+                if (!item)
+                {
+                    destroy_items(items, left);
+                    return NULL;
+                }
+
+                items[left] = item;
             }
 
-            items[left] = item;
+            return new_list(items, length);
         }
-
-        return new_list(items, length);
+        default:
+            return throw_error(ERROR_ARGUMENT);
     }
-
-    return throw_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1332,66 +1325,68 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
         return copy_value(collection);
     }
 
-    if (collection->type == VALUE_TYPE_STRING)
+    switch (collection->type)
     {
-        char *string;
-        size_t size, left, right;
-
-        size = sizeof(char) * length_value(collection);
-        string = malloc(size);
-
-        if (!string)
+        case VALUE_TYPE_STRING:
         {
-            return NULL;
-        }
+            char *string;
+            size_t size, left, right;
 
-        for (left = 0, right = 0; right < length_value(collection); right++)
-        {
-            if (right != adjusted)
+            size = sizeof(char) * length_value(collection);
+            string = malloc(size);
+
+            if (!string)
             {
-                string[left++] = view_string(collection)[right];
+                return NULL;
             }
-        }
 
-        string[size - 1] = '\0';
-
-        return steal_string(string, size);
-    }
-
-    if (collection->type == VALUE_TYPE_LIST)
-    {
-        value_t *item;
-        value_t **items;
-        size_t length, left, right;
-
-        length = length_value(collection) - 1;
-        items = malloc(sizeof(value_t *) * length);
-
-        if (!items)
-        {
-            return NULL;
-        }
-
-        for (left = 0, right = 0; right < length_value(collection); right++)
-        {
-            if (right != adjusted)
+            for (left = 0, right = 0; right < length_value(collection); right++)
             {
-                item = copy_value(((value_t **) collection->data)[right]);
-
-                if (!item)
+                if (right != adjusted)
                 {
-                    destroy_items(items, left);
-                    return NULL;
+                    string[left++] = view_string(collection)[right];
                 }
-
-                items[left++] = item;
             }
+
+            string[size - 1] = '\0';
+
+            return steal_string(string, size);
         }
+        case VALUE_TYPE_LIST:
+        {
+            value_t *item;
+            value_t **items;
+            size_t length, left, right;
 
-        return new_list(items, length);
+            length = length_value(collection) - 1;
+            items = malloc(sizeof(value_t *) * length);
+
+            if (!items)
+            {
+                return NULL;
+            }
+
+            for (left = 0, right = 0; right < length_value(collection); right++)
+            {
+                if (right != adjusted)
+                {
+                    item = copy_value(((value_t **) collection->data)[right]);
+
+                    if (!item)
+                    {
+                        destroy_items(items, left);
+                        return NULL;
+                    }
+
+                    items[left++] = item;
+                }
+            }
+
+            return new_list(items, length);
+        }
+        default:
+            return throw_error(ERROR_ARGUMENT);
     }
-
-    return throw_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1446,59 +1441,61 @@ static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *fr
     adjustedEnd += 1;
     length = adjustedEnd - adjustedStart;
 
-    if (collection->type == VALUE_TYPE_STRING)
+    switch (collection->type)
     {
-        char *slice;
-
-        slice = slice_string(view_string(collection), adjustedStart, adjustedEnd);
-
-        if (!slice)
+        case VALUE_TYPE_STRING:
         {
-            return NULL;
-        }
+            char *slice;
 
-        return steal_string(slice, length + 1);
-    }
+            slice = slice_string(view_string(collection), adjustedStart, adjustedEnd);
 
-    if (collection->type == VALUE_TYPE_LIST)
-    {
-        value_t **items;
-
-        if (length > 0)
-        {
-            size_t index, placement;
-
-            items = malloc(sizeof(value_t *) * length);
-
-            if (!items)
+            if (!slice)
             {
                 return NULL;
             }
 
-            for (index = adjustedStart, placement = 0; index < adjustedEnd; index++, placement++)
+            return steal_string(slice, length + 1);
+        }
+        case VALUE_TYPE_LIST:
+        {
+            value_t **items;
+
+            if (length > 0)
             {
-                value_t *item;
+                size_t index, placement;
 
-                item = copy_value(((value_t **) collection->data)[index]);
+                items = malloc(sizeof(value_t *) * length);
 
-                if (!item)
+                if (!items)
                 {
-                    destroy_items(items, index);
                     return NULL;
                 }
 
-                items[placement] = item;
+                for (index = adjustedStart, placement = 0; index < adjustedEnd; index++, placement++)
+                {
+                    value_t *item;
+
+                    item = copy_value(((value_t **) collection->data)[index]);
+
+                    if (!item)
+                    {
+                        destroy_items(items, index);
+                        return NULL;
+                    }
+
+                    items[placement] = item;
+                }
             }
-        }
-        else
-        {
-            items = NULL;
-        }
+            else
+            {
+                items = NULL;
+            }
 
-        return new_list(items, length);
+            return new_list(items, length);
+        }
+        default:
+            return throw_error(ERROR_ARGUMENT);
     }
-
-    return throw_error(ERROR_ARGUMENT);
 }
 
 static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame)
