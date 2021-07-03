@@ -339,7 +339,6 @@ static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
     }
 
     name = arguments->value;
-
     operator = get_map_item(frame->operators, view_string(name));
 
     if (!operator)
@@ -368,7 +367,6 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
     }
 
     initial = arguments->value;
-
     copy = copy_string(view_string(document));
 
     if (!copy)
@@ -389,7 +387,6 @@ static value_t *operator_recall(argument_iterator_t *arguments, stack_frame_t *f
     }
 
     identifier = arguments->value;
-
     value = get_map_item(frame->globals, view_string(identifier));
 
     if (!value)
