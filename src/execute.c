@@ -11,8 +11,8 @@
 #include "list.h"
 #include "common.h"
 
-#define VALUE_TYPES_NONNULL (VALUE_TYPE_NUMBER | VALUE_TYPE_STRING | VALUE_TYPE_LIST)
-#define VALUE_TYPES_ANY (VALUE_TYPE_NULL | VALUE_TYPE_NUMBER | VALUE_TYPE_STRING | VALUE_TYPE_LIST)
+#define VALUE_TYPES_NONNULL (VALUE_TYPE_NUMBER | VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP)
+#define VALUE_TYPES_ANY (VALUE_TYPE_NULL | VALUE_TYPE_NUMBER | VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP)
 
 typedef struct
 {
@@ -41,6 +41,7 @@ static value_t *evaluate_script(char *document, map_t *globals, value_t *argumen
 static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_t *arguments, int depth);
 static value_t *apply_expression(expression_t *expression, stack_frame_t *frame);
 static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *apply_map(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_recall(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -251,6 +252,9 @@ static value_t *apply_expression(expression_t *expression, stack_frame_t *frame)
         case VALUE_TYPE_LIST:
             result = apply_list(&arguments, frame);
             break;
+        case VALUE_TYPE_MAP:
+            result = apply_map(&arguments, frame);
+            break;
         case VALUE_TYPE_CALL:
             result = apply_call(&arguments, frame);
             break;
@@ -326,6 +330,55 @@ static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame)
     }
 
     return new_list(items, length);
+}
+
+static value_t *apply_map(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    map_t *pairs;
+    size_t length;
+
+    length = arguments->expressions->length;
+
+    if (length > 0)
+    {
+        size_t index;
+
+        pairs = empty_map(hash_string, destroy_value_unsafe, 8);
+
+        if (!pairs)
+        {
+            return NULL;
+        }
+
+        for (index = 0; index < length; index += 2)
+        {
+            value_t *key, *value;
+
+            if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+            {
+                destroy_map(pairs);
+                return arguments->value;
+            }
+
+            key = arguments->value;
+
+            if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+            {
+                destroy_map(pairs);
+                return arguments->value;
+            }
+
+            value = arguments->value;
+
+            set_map_item(pairs, copy_string(view_string(key)), copy_value(value));
+        }
+    }
+    else
+    {
+        pairs = NULL;
+    }
+
+    return new_map(pairs);
 }
 
 static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1001,6 +1054,8 @@ static value_t *operator_type(argument_iterator_t *arguments, stack_frame_t *fra
             return new_string("\"\"");
         case VALUE_TYPE_LIST:
             return new_string("[]");
+        case VALUE_TYPE_MAP:
+            return new_string("{}");
         default:
             return throw_error(ERROR_ARGUMENT);
     }
@@ -1102,7 +1157,7 @@ static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *f
 {
     value_t *solo;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP))
     {
         return arguments->value;
     }

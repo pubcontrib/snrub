@@ -2,6 +2,7 @@
 #include <string.h>
 #include <limits.h>
 #include "value.h"
+#include "map.h"
 #include "common.h"
 
 static value_t *create_value(value_type_t type, void *data, size_t size, int thrown);
@@ -9,6 +10,8 @@ static value_t *quote_string(char *body, char qualifier);
 static size_t characters_in_string(char *string, char character);
 static void *copy_memory(void *memory, size_t size);
 static int *integer_to_array(int integer);
+static int compare_strings_ascending(const void *left, const void *right);
+static void destroy_value_unsafe(void *value);
 
 int is_portable(void)
 {
@@ -114,6 +117,11 @@ value_t *new_list(value_t **items, size_t length)
     return create_value(VALUE_TYPE_LIST, items, length, 0);
 }
 
+value_t *new_map(map_t *pairs)
+{
+    return create_value(VALUE_TYPE_MAP, pairs, pairs ? pairs->length : 0, 0);
+}
+
 value_t *new_call(void)
 {
     return create_value(VALUE_TYPE_CALL, NULL, 0, 0);
@@ -184,6 +192,66 @@ value_t *copy_value(value_t *this)
 
         return new_list(data, length);
     }
+    else if (this->type == VALUE_TYPE_MAP)
+    {
+        map_t *data;
+        size_t length;
+
+        length = this->size;
+
+        if (length > 0)
+        {
+            size_t index;
+            map_t *pairs;
+
+            pairs = this->data;
+            data = empty_map(hash_string, destroy_value_unsafe, 8);
+
+            for (index = 0; index < pairs->capacity; index++)
+            {
+                if (pairs->chains[index])
+                {
+                    map_chain_t *chain;
+
+                    for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
+                    {
+                        char *key;
+                        value_t *value;
+
+                        key = copy_string(chain->key);
+
+                        if (!key)
+                        {
+                            destroy_map(data);
+                            return NULL;
+                        }
+
+                        value = copy_value(chain->value);
+
+                        if (!value)
+                        {
+                            free(key);
+                            destroy_map(data);
+                            return NULL;
+                        }
+
+                        if (!set_map_item(data, key, value))
+                        {
+                            free(key);
+                            destroy_value(value);
+                            return NULL;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            data = NULL;
+        }
+
+        return new_map(data);
+    }
     else
     {
         void *data;
@@ -218,6 +286,8 @@ int hash_value(value_t *this)
             return hash_string(view_string(this));
         case VALUE_TYPE_LIST:
             return hash_list(this->data, this->size);
+        case VALUE_TYPE_MAP:
+            return hash_map(this->data);
         default:
             return 0;
     }
@@ -264,6 +334,34 @@ int hash_list(value_t **items, size_t length)
     return hash_number(hash);
 }
 
+int hash_map(map_t *pairs)
+{
+    int hash;
+
+    hash = 0;
+
+    if (pairs && pairs->length > 0)
+    {
+        size_t index;
+
+        for (index = 0; index < pairs->capacity; index++)
+        {
+            if (pairs->chains[index])
+            {
+                map_chain_t *chain;
+
+                for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
+                {
+                    hash += hash_string(chain->key);
+                    hash += hash_value(chain->value);
+                }
+            }
+        }
+    }
+
+    return hash;
+}
+
 value_t *represent_value(value_t *this)
 {
     switch (this->type)
@@ -276,6 +374,8 @@ value_t *represent_value(value_t *this)
             return represent_string(view_string(this));
         case VALUE_TYPE_LIST:
             return represent_list(this->data, this->size);
+        case VALUE_TYPE_MAP:
+            return represent_map(this->data);
         default:
             return NULL;
     }
@@ -396,6 +496,165 @@ value_t *represent_list(value_t **items, size_t length)
     {
         return NULL;
     }
+
+    return steal_string(swap, sizeof(char) * (strlen(swap) + 1));
+}
+
+value_t *represent_map(map_t *pairs)
+{
+    char *body, *swap;
+    int fit;
+
+    body = copy_string("{");
+
+    if (!body)
+    {
+        return NULL;
+    }
+
+    if (pairs && pairs->length > 0)
+    {
+        char **keys;
+        size_t index, placement;
+
+        keys = malloc(sizeof(char *) * pairs->length);
+
+        for (index = 0, placement = 0; index < pairs->capacity; index++)
+        {
+            if (pairs->chains[index])
+            {
+                map_chain_t *chain;
+
+                for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
+                {
+                    keys[placement++] = chain->key;
+                }
+            }
+        }
+
+        qsort(keys, pairs->length, sizeof(char *), compare_strings_ascending);
+
+        for (index = 0; index < pairs->length; index++)
+        {
+            char *key;
+            value_t *value, *represent;
+
+            key = keys[index];
+            value = get_map_item(pairs, key);
+
+            if (index > 0)
+            {
+                fit = string_add(body, " ", &swap);
+                free(body);
+
+                if (!fit)
+                {
+                    free(swap);
+                    return throw_error(ERROR_BOUNDS);
+                }
+
+                if (!swap)
+                {
+                    return NULL;
+                }
+
+                body = swap;
+            }
+
+            represent = represent_string(key);
+
+            if (!represent)
+            {
+                free(body);
+                return NULL;
+            }
+
+            if (represent->thrown)
+            {
+                free(swap);
+                return represent;
+            }
+
+            fit = string_add(body, view_string(represent), &swap);
+            free(body);
+            destroy_value(represent);
+
+            if (!fit)
+            {
+                free(swap);
+                return throw_error(ERROR_BOUNDS);
+            }
+
+            if (!swap)
+            {
+                return NULL;
+            }
+
+            body = swap;
+            fit = string_add(body, " ", &swap);
+            free(body);
+
+            if (!fit)
+            {
+                free(swap);
+                return throw_error(ERROR_BOUNDS);
+            }
+
+            if (!swap)
+            {
+                return NULL;
+            }
+
+            body = swap;
+            represent = represent_value(value);
+
+            if (!represent)
+            {
+                free(body);
+                return NULL;
+            }
+
+            if (represent->thrown)
+            {
+                free(swap);
+                return represent;
+            }
+
+            fit = string_add(body, view_string(represent), &swap);
+            free(body);
+            destroy_value(represent);
+
+            if (!fit)
+            {
+                free(swap);
+                return throw_error(ERROR_BOUNDS);
+            }
+
+            if (!swap)
+            {
+                return NULL;
+            }
+
+            body = swap;
+        }
+
+        free(keys);
+    }
+
+    fit = string_add(body, "}", &swap);
+
+    if (!fit)
+    {
+        free(swap);
+        return throw_error(ERROR_BOUNDS);
+    }
+
+    if (!swap)
+    {
+        return NULL;
+    }
+
+    free(body);
 
     return steal_string(swap, sizeof(char) * (strlen(swap) + 1));
 }
@@ -531,30 +790,6 @@ int compare_values(value_t *left, value_t *right)
         return left->type - right->type;
     }
 
-    if (left->type == VALUE_TYPE_LIST)
-    {
-        size_t index;
-
-        if (left->size != right->size)
-        {
-            return left->size - right->size;
-        }
-
-        for (index = 0; index < left->size; index++)
-        {
-            int equal;
-
-            equal = compare_values(((value_t **) left->data)[index], ((value_t **) right->data)[index]);
-
-            if (equal != 0)
-            {
-                return equal;
-            }
-        }
-
-        return 0;
-    }
-
     switch (left->type)
     {
         case VALUE_TYPE_NULL:
@@ -563,6 +798,88 @@ int compare_values(value_t *left, value_t *right)
             return view_number(left) - view_number(right);
         case VALUE_TYPE_STRING:
             return strcmp(view_string(left), view_string(right));
+        case VALUE_TYPE_LIST:
+        {
+            size_t index;
+
+            if (left->size != right->size)
+            {
+                return left->size - right->size;
+            }
+
+            for (index = 0; index < left->size; index++)
+            {
+                int equal;
+
+                equal = compare_values(((value_t **) left->data)[index], ((value_t **) right->data)[index]);
+
+                if (equal != 0)
+                {
+                    return equal;
+                }
+            }
+
+            return 0;
+        }
+        case VALUE_TYPE_MAP:
+        {
+            size_t length;
+
+            if (left->size != right->size)
+            {
+                return left->size - right->size;
+            }
+
+            length = left->size;
+
+            if (length > 0)
+            {
+                char **keys;
+                map_t *leftMap, *rightMap;
+                size_t index, placement;
+
+                keys = malloc(sizeof(char *) * length);
+                leftMap = left->data;
+                rightMap = right->data;
+
+                for (index = 0, placement = 0; index < leftMap->capacity; index++)
+                {
+                    if (leftMap->chains[index])
+                    {
+                        map_chain_t *chain;
+
+                        for (chain = leftMap->chains[index]; chain != NULL; chain = chain->next)
+                        {
+                            keys[placement++] = chain->key;
+                        }
+                    }
+                }
+
+                qsort(keys, length, sizeof(char *), compare_strings_ascending);
+
+                for (index = 0; index < length; index++)
+                {
+                    int equal;
+                    char *key;
+                    value_t *leftValue, *rightValue;
+
+                    key = keys[index];
+                    leftValue = get_map_item(leftMap, key);
+                    rightValue = get_map_item(rightMap, key);
+                    equal = compare_values(leftValue, rightValue);
+
+                    if (equal != 0)
+                    {
+                        free(keys);
+                        return equal;
+                    }
+                }
+
+                free(keys);
+            }
+
+            return 0;
+        }
         default:
             return 0;
     }
@@ -575,6 +892,7 @@ size_t length_value(value_t *value)
         case VALUE_TYPE_STRING:
             return value->size - 1;
         case VALUE_TYPE_LIST:
+        case VALUE_TYPE_MAP:
             return value->size;
         default:
             return 0;
@@ -766,13 +1084,17 @@ void destroy_value(value_t *value)
 {
     if (value->data)
     {
-        if (value->type == VALUE_TYPE_LIST)
+        switch (value->type)
         {
-            destroy_items(value->data, value->size);
-        }
-        else
-        {
-            free(value->data);
+            case VALUE_TYPE_LIST:
+                destroy_items(value->data, value->size);
+                break;
+            case VALUE_TYPE_MAP:
+                destroy_map(value->data);
+                break;
+            default:
+                free(value->data);
+                break;
         }
     }
 
@@ -879,4 +1201,14 @@ static int *integer_to_array(int integer)
     }
 
     return array;
+}
+
+static int compare_strings_ascending(const void *left, const void *right)
+{
+    return strcmp(*(char **) left, *(char **) right);
+}
+
+static void destroy_value_unsafe(void *value)
+{
+    destroy_value((value_t *) value);
 }

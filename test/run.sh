@@ -13,6 +13,7 @@ fi
 . test/suite/type/number.sh
 . test/suite/type/string.sh
 . test/suite/type/list.sh
+. test/suite/type/map.sh
 . test/suite/type/call.sh
 
 . test/suite/operator/evaluate.sh
