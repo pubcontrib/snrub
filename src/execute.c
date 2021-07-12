@@ -1422,35 +1422,36 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
 
 static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *collection, *index;
-    int adjusted;
+    value_t *collection;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP))
     {
         return arguments->value;
     }
 
     collection = arguments->value;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    index = arguments->value;
-    adjusted = view_number(index) - 1;
-
-    if (adjusted < 0 || adjusted >= length_value(collection))
-    {
-        return copy_value(collection);
-    }
-
     switch (collection->type)
     {
         case VALUE_TYPE_STRING:
         {
+            value_t *index;
             char *string;
+            int adjusted;
             size_t size, left, right;
+
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            {
+                return arguments->value;
+            }
+
+            index = arguments->value;
+            adjusted = view_number(index) - 1;
+
+            if (adjusted < 0 || adjusted >= length_value(collection))
+            {
+                return copy_value(collection);
+            }
 
             size = sizeof(char) * length_value(collection);
             string = malloc(size);
@@ -1474,9 +1475,23 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
         }
         case VALUE_TYPE_LIST:
         {
-            value_t *item;
+            value_t *index, *item;
             value_t **items;
+            int adjusted;
             size_t length, left, right;
+
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            {
+                return arguments->value;
+            }
+
+            index = arguments->value;
+            adjusted = view_number(index) - 1;
+
+            if (adjusted < 0 || adjusted >= length_value(collection))
+            {
+                return copy_value(collection);
+            }
 
             length = length_value(collection) - 1;
             items = malloc(sizeof(value_t *) * length);
@@ -1503,6 +1518,27 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
             }
 
             return new_list(items, length);
+        }
+        case VALUE_TYPE_MAP:
+        {
+            value_t *key, *copy;
+
+            if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+            {
+                return arguments->value;
+            }
+
+            key = arguments->value;
+            copy = copy_value(collection);
+
+            if (!copy)
+            {
+                return NULL;
+            }
+
+            remove_map_item(copy->data, view_string(key));
+
+            return copy;
         }
         default:
             return throw_error(ERROR_ARGUMENT);
