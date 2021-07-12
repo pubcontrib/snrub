@@ -1169,35 +1169,36 @@ static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *f
 
 static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *collection, *index;
-    int adjusted;
+    value_t *collection;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP))
     {
         return arguments->value;
     }
 
     collection = arguments->value;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    index = arguments->value;
-    adjusted = view_number(index) - 1;
-
-    if (adjusted < 0 || adjusted >= length_value(collection))
-    {
-        return new_null();
-    }
-
     switch (collection->type)
     {
         case VALUE_TYPE_STRING:
         {
+            value_t *index;
             char *string;
+            int adjusted;
             size_t size;
+
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            {
+                return arguments->value;
+            }
+
+            index = arguments->value;
+            adjusted = view_number(index) - 1;
+
+            if (adjusted < 0 || adjusted >= length_value(collection))
+            {
+                return new_null();
+            }
 
             size = sizeof(char) * 2;
             string = malloc(size);
@@ -1213,7 +1214,39 @@ static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *fram
             return steal_string(string, size);
         }
         case VALUE_TYPE_LIST:
+        {
+            value_t *index;
+            int adjusted;
+
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            {
+                return arguments->value;
+            }
+
+            index = arguments->value;
+            adjusted = view_number(index) - 1;
+
+            if (adjusted < 0 || adjusted >= length_value(collection))
+            {
+                return new_null();
+            }
+
             return copy_value(((value_t **) collection->data)[adjusted]);
+        }
+        case VALUE_TYPE_MAP:
+        {
+            value_t *key, *value;
+
+            if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+            {
+                return arguments->value;
+            }
+
+            key = arguments->value;
+            value = get_map_item(collection->data, view_string(key));
+
+            return value ? copy_value(value) : new_null();
+        }
         default:
             return throw_error(ERROR_ARGUMENT);
     }
