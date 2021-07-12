@@ -194,60 +194,48 @@ value_t *copy_value(value_t *this)
     }
     else if (this->type == VALUE_TYPE_MAP)
     {
-        map_t *data;
-        size_t length;
+        map_t *pairs, *data;
+        size_t index;
 
-        length = this->size;
+        pairs = this->data;
+        data = empty_map(hash_string, destroy_value_unsafe, 8);
 
-        if (length > 0)
+        for (index = 0; index < pairs->capacity; index++)
         {
-            size_t index;
-            map_t *pairs;
-
-            pairs = this->data;
-            data = empty_map(hash_string, destroy_value_unsafe, 8);
-
-            for (index = 0; index < pairs->capacity; index++)
+            if (pairs->chains[index])
             {
-                if (pairs->chains[index])
+                map_chain_t *chain;
+
+                for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
                 {
-                    map_chain_t *chain;
+                    char *key;
+                    value_t *value;
 
-                    for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
+                    key = copy_string(chain->key);
+
+                    if (!key)
                     {
-                        char *key;
-                        value_t *value;
+                        destroy_map(data);
+                        return NULL;
+                    }
 
-                        key = copy_string(chain->key);
+                    value = copy_value(chain->value);
 
-                        if (!key)
-                        {
-                            destroy_map(data);
-                            return NULL;
-                        }
+                    if (!value)
+                    {
+                        free(key);
+                        destroy_map(data);
+                        return NULL;
+                    }
 
-                        value = copy_value(chain->value);
-
-                        if (!value)
-                        {
-                            free(key);
-                            destroy_map(data);
-                            return NULL;
-                        }
-
-                        if (!set_map_item(data, key, value))
-                        {
-                            free(key);
-                            destroy_value(value);
-                            return NULL;
-                        }
+                    if (!set_map_item(data, key, value))
+                    {
+                        free(key);
+                        destroy_value(value);
+                        return NULL;
                     }
                 }
             }
-        }
-        else
-        {
-            data = NULL;
         }
 
         return new_map(data);
@@ -340,7 +328,7 @@ int hash_map(map_t *pairs)
 
     hash = 0;
 
-    if (pairs && pairs->length > 0)
+    if (pairs->length > 0)
     {
         size_t index;
 
@@ -512,7 +500,7 @@ value_t *represent_map(map_t *pairs)
         return NULL;
     }
 
-    if (pairs && pairs->length > 0)
+    if (pairs->length > 0)
     {
         char **keys;
         size_t index, placement;

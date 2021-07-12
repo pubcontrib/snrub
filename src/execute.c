@@ -335,47 +335,37 @@ static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame)
 static value_t *apply_map(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     map_t *pairs;
-    size_t length;
+    size_t length, index;
 
     length = arguments->expressions->length;
+    pairs = empty_map(hash_string, destroy_value_unsafe, 8);
 
-    if (length > 0)
+    if (!pairs)
     {
-        size_t index;
-
-        pairs = empty_map(hash_string, destroy_value_unsafe, 8);
-
-        if (!pairs)
-        {
-            return NULL;
-        }
-
-        for (index = 0; index < length; index += 2)
-        {
-            value_t *key, *value;
-
-            if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
-            {
-                destroy_map(pairs);
-                return arguments->value;
-            }
-
-            key = arguments->value;
-
-            if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-            {
-                destroy_map(pairs);
-                return arguments->value;
-            }
-
-            value = arguments->value;
-
-            set_map_item(pairs, copy_string(view_string(key)), copy_value(value));
-        }
+        return NULL;
     }
-    else
+
+    for (index = 0; index < length; index += 2)
     {
-        pairs = NULL;
+        value_t *key, *value;
+
+        if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+        {
+            destroy_map(pairs);
+            return arguments->value;
+        }
+
+        key = arguments->value;
+
+        if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+        {
+            destroy_map(pairs);
+            return arguments->value;
+        }
+
+        value = arguments->value;
+
+        set_map_item(pairs, copy_string(view_string(key)), copy_value(value));
     }
 
     return new_map(pairs);
@@ -1254,31 +1244,31 @@ static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *fram
 
 static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *collection, *index;
-    int adjusted;
+    value_t *collection;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP))
     {
         return arguments->value;
     }
 
     collection = arguments->value;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    index = arguments->value;
-    adjusted = view_number(index) - 1;
-
     switch (collection->type)
     {
         case VALUE_TYPE_STRING:
         {
-            value_t *value;
+            value_t *value, *index;
             char *string;
+            int adjusted;
             size_t size, left, right;
+
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            {
+                return arguments->value;
+            }
+
+            index = arguments->value;
+            adjusted = view_number(index) - 1;
 
             if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
             {
@@ -1321,9 +1311,18 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
         }
         case VALUE_TYPE_LIST:
         {
-            value_t *value, *item;
+            value_t *index, *value, *item;
             value_t **items;
+            int adjusted;
             size_t length, left, right;
+
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            {
+                return arguments->value;
+            }
+
+            index = arguments->value;
+            adjusted = view_number(index) - 1;
 
             if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
             {
@@ -1382,6 +1381,39 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
             }
 
             return new_list(items, length);
+        }
+        case VALUE_TYPE_MAP:
+        {
+            value_t *key, *value, *copy;
+
+            if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+            {
+                return arguments->value;
+            }
+
+            key = arguments->value;
+
+            if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+            {
+                return arguments->value;
+            }
+
+            value = arguments->value;
+            copy = copy_value(collection);
+
+            if (!copy)
+            {
+                return NULL;
+            }
+
+            remove_map_item(copy->data, view_string(key));
+
+            if (!set_map_item(copy->data, copy_string(view_string(key)), copy_value(value)))
+            {
+                return NULL;
+            }
+
+            return copy;
         }
         default:
             return throw_error(ERROR_ARGUMENT);
