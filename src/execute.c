@@ -13,6 +13,7 @@
 
 #define VALUE_TYPES_NONNULL (VALUE_TYPE_NUMBER | VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP)
 #define VALUE_TYPES_ANY (VALUE_TYPE_NULL | VALUE_TYPE_NUMBER | VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP)
+#define VALUE_TYPES_COLLECTION (VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP)
 
 typedef struct
 {
@@ -1147,7 +1148,7 @@ static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *f
 {
     value_t *solo;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP))
+    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION))
     {
         return arguments->value;
     }
@@ -1161,7 +1162,7 @@ static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *fram
 {
     value_t *collection;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP))
+    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION))
     {
         return arguments->value;
     }
@@ -1246,7 +1247,7 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
 {
     value_t *collection;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP))
+    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION))
     {
         return arguments->value;
     }
@@ -1424,7 +1425,7 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
 {
     value_t *collection;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP))
+    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION))
     {
         return arguments->value;
     }
