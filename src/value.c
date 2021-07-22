@@ -12,6 +12,7 @@ static void *copy_memory(void *memory, size_t size);
 static int *integer_to_array(int integer);
 static int compare_strings_ascending(const void *left, const void *right);
 static void destroy_value_unsafe(void *value);
+static int overflow_add(int left, int right);
 
 int is_portable(void)
 {
@@ -288,7 +289,7 @@ int hash_null(void)
 
 int hash_number(int number)
 {
-    return div(number, NUMBER_MAX).rem;
+    return number;
 }
 
 int hash_string(char *string)
@@ -301,10 +302,10 @@ int hash_string(char *string)
 
     for (index = 0; index < length; index++)
     {
-        hash += string[index];
+        hash = overflow_add(hash, string[index]);
     }
 
-    return hash_number(hash);
+    return hash;
 }
 
 int hash_list(value_t **items, size_t length)
@@ -316,10 +317,10 @@ int hash_list(value_t **items, size_t length)
 
     for (index = 0; index < length; index++)
     {
-        hash += hash_value(items[index]);
+        hash = overflow_add(hash, hash_value(items[index]));
     }
 
-    return hash_number(hash);
+    return hash;
 }
 
 int hash_map(map_t *pairs)
@@ -340,8 +341,8 @@ int hash_map(map_t *pairs)
 
                 for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
                 {
-                    hash += hash_string(chain->key);
-                    hash += hash_value(chain->value);
+                    hash = overflow_add(hash, hash_string(chain->key));
+                    hash = overflow_add(hash, hash_value(chain->value));
                 }
             }
         }
@@ -1199,4 +1200,24 @@ static int compare_strings_ascending(const void *left, const void *right)
 static void destroy_value_unsafe(void *value)
 {
     destroy_value((value_t *) value);
+}
+
+static int overflow_add(int left, int right)
+{
+    int sum;
+
+    sum = left + right;
+
+    if (sum > NUMBER_MAX)
+    {
+        return sum - NUMBER_MAX + NUMBER_MIN - 1;
+    }
+    else if (sum < NUMBER_MIN)
+    {
+        return sum - NUMBER_MIN + NUMBER_MAX + 1;
+    }
+    else
+    {
+        return sum;
+    }
 }
