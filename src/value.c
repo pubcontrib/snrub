@@ -151,115 +151,118 @@ value_t *throw_error(error_t error)
 
 value_t *copy_value(value_t *this)
 {
-    if (this->type == VALUE_TYPE_LIST)
+    switch (this->type)
     {
-        value_t **data;
-        size_t length;
-
-        length = this->size;
-
-        if (length > 0)
+        case VALUE_TYPE_LIST:
         {
-            value_t **items;
-            size_t index;
+            value_t **data;
+            size_t length;
 
-            items = this->data;
-            data = malloc(sizeof(value_t *) * length);
+            length = this->size;
 
-            if (!data)
+            if (length > 0)
             {
-                return NULL;
-            }
+                value_t **items;
+                size_t index;
 
-            for (index = 0; index < length; index++)
-            {
-                value_t *copy;
+                items = this->data;
+                data = malloc(sizeof(value_t *) * length);
 
-                copy = copy_value(items[index]);
-
-                if (!copy)
+                if (!data)
                 {
-                    destroy_items(data, index);
                     return NULL;
                 }
 
-                data[index] = copy;
-            }
-        }
-        else
-        {
-            data = NULL;
-        }
-
-        return new_list(data, length);
-    }
-    else if (this->type == VALUE_TYPE_MAP)
-    {
-        map_t *pairs, *data;
-        size_t index;
-
-        pairs = this->data;
-        data = empty_map(hash_string, destroy_value_unsafe, 8);
-
-        for (index = 0; index < pairs->capacity; index++)
-        {
-            if (pairs->chains[index])
-            {
-                map_chain_t *chain;
-
-                for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
+                for (index = 0; index < length; index++)
                 {
-                    char *key;
-                    value_t *value;
+                    value_t *copy;
 
-                    key = copy_string(chain->key);
+                    copy = copy_value(items[index]);
 
-                    if (!key)
+                    if (!copy)
                     {
-                        destroy_map(data);
+                        destroy_items(data, index);
                         return NULL;
                     }
 
-                    value = copy_value(chain->value);
+                    data[index] = copy;
+                }
+            }
+            else
+            {
+                data = NULL;
+            }
 
-                    if (!value)
-                    {
-                        free(key);
-                        destroy_map(data);
-                        return NULL;
-                    }
+            return new_list(data, length);
+        }
+        case VALUE_TYPE_MAP:
+        {
+            map_t *pairs, *data;
+            size_t index;
 
-                    if (!set_map_item(data, key, value))
+            pairs = this->data;
+            data = empty_map(hash_string, destroy_value_unsafe, 8);
+
+            for (index = 0; index < pairs->capacity; index++)
+            {
+                if (pairs->chains[index])
+                {
+                    map_chain_t *chain;
+
+                    for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
                     {
-                        free(key);
-                        destroy_value(value);
-                        return NULL;
+                        char *key;
+                        value_t *value;
+
+                        key = copy_string(chain->key);
+
+                        if (!key)
+                        {
+                            destroy_map(data);
+                            return NULL;
+                        }
+
+                        value = copy_value(chain->value);
+
+                        if (!value)
+                        {
+                            free(key);
+                            destroy_map(data);
+                            return NULL;
+                        }
+
+                        if (!set_map_item(data, key, value))
+                        {
+                            free(key);
+                            destroy_value(value);
+                            return NULL;
+                        }
                     }
                 }
             }
+
+            return new_map(data);
         }
-
-        return new_map(data);
-    }
-    else
-    {
-        void *data;
-
-        if (this->size > 0)
+        default:
         {
-            data = copy_memory(this->data, this->size);
+            void *data;
 
-            if (!data)
+            if (this->size > 0)
             {
-                return NULL;
-            }
-        }
-        else
-        {
-            data = NULL;
-        }
+                data = copy_memory(this->data, this->size);
 
-        return create_value(this->type, data, this->size, this->thrown);
+                if (!data)
+                {
+                    return NULL;
+                }
+            }
+            else
+            {
+                data = NULL;
+            }
+
+            return create_value(this->type, data, this->size, this->thrown);
+        }
     }
 }
 
