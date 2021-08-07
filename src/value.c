@@ -812,40 +812,54 @@ int compare_values(value_t *left, value_t *right)
 
             if (length > 0)
             {
-                char **keys;
+                char **leftKeys, **rightKeys;
                 map_t *leftMap, *rightMap;
                 size_t index;
 
                 leftMap = left->data;
                 rightMap = right->data;
-                keys = array_map_keys(leftMap);
+                leftKeys = array_map_keys(leftMap);
+                rightKeys = array_map_keys(rightMap);
 
                 for (index = 0; index < length; index++)
                 {
-                    int equal;
-                    char *key;
+                    int different;
+                    char *leftKey, *rightKey;
                     value_t *leftValue, *rightValue;
 
-                    key = keys[index];
-                    leftValue = get_map_item(leftMap, key);
-                    rightValue = get_map_item(rightMap, key);
+                    leftKey = leftKeys[index];
+                    rightKey = rightKeys[index];
+                    different = strcmp(leftKey, rightKey);
+
+                    if (different)
+                    {
+                        free(leftKeys);
+                        free(rightKeys);
+                        return different;
+                    }
+
+                    leftValue = get_map_item(leftMap, leftKey);
+                    rightValue = get_map_item(rightMap, rightKey);
 
                     if (!rightValue)
                     {
-                        free(keys);
+                        free(leftKeys);
+                        free(rightKeys);
                         return -1;
                     }
 
-                    equal = compare_values(leftValue, rightValue);
+                    different = compare_values(leftValue, rightValue);
 
-                    if (equal != 0)
+                    if (different)
                     {
-                        free(keys);
-                        return equal;
+                        free(leftKeys);
+                        free(rightKeys);
+                        return different;
                     }
                 }
 
-                free(keys);
+                free(leftKeys);
+                free(rightKeys);
             }
 
             return 0;
