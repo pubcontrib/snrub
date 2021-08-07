@@ -13,6 +13,7 @@ static int *integer_to_array(int integer);
 static int compare_strings_ascending(const void *left, const void *right);
 static void destroy_value_unsafe(void *value);
 static int overflow_add(int left, int right);
+static char **array_map_keys(map_t *map);
 
 int is_portable(void)
 {
@@ -507,24 +508,9 @@ value_t *represent_map(map_t *pairs)
     if (pairs->length > 0)
     {
         char **keys;
-        size_t index, placement;
+        size_t index;
 
-        keys = malloc(sizeof(char *) * pairs->length);
-
-        for (index = 0, placement = 0; index < pairs->capacity; index++)
-        {
-            if (pairs->chains[index])
-            {
-                map_chain_t *chain;
-
-                for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
-                {
-                    keys[placement++] = chain->key;
-                }
-            }
-        }
-
-        qsort(keys, pairs->length, sizeof(char *), compare_strings_ascending);
+        keys = array_map_keys(pairs);
 
         for (index = 0; index < pairs->length; index++)
         {
@@ -828,26 +814,11 @@ int compare_values(value_t *left, value_t *right)
             {
                 char **keys;
                 map_t *leftMap, *rightMap;
-                size_t index, placement;
+                size_t index;
 
-                keys = malloc(sizeof(char *) * length);
                 leftMap = left->data;
                 rightMap = right->data;
-
-                for (index = 0, placement = 0; index < leftMap->capacity; index++)
-                {
-                    if (leftMap->chains[index])
-                    {
-                        map_chain_t *chain;
-
-                        for (chain = leftMap->chains[index]; chain != NULL; chain = chain->next)
-                        {
-                            keys[placement++] = chain->key;
-                        }
-                    }
-                }
-
-                qsort(keys, length, sizeof(char *), compare_strings_ascending);
+                keys = array_map_keys(leftMap);
 
                 for (index = 0; index < length; index++)
                 {
@@ -1230,4 +1201,29 @@ static int overflow_add(int left, int right)
     {
         return sum;
     }
+}
+
+static char **array_map_keys(map_t *map)
+{
+    char **keys;
+    size_t index, placement;
+
+    keys = malloc(sizeof(char *) * map->length);
+
+    for (index = 0, placement = 0; index < map->capacity; index++)
+    {
+        if (map->chains[index])
+        {
+            map_chain_t *chain;
+
+            for (chain = map->chains[index]; chain != NULL; chain = chain->next)
+            {
+                keys[placement++] = chain->key;
+            }
+        }
+    }
+
+    qsort(keys, map->length, sizeof(char *), compare_strings_ascending);
+
+    return keys;
 }
