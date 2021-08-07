@@ -858,6 +858,12 @@ int compare_values(value_t *left, value_t *right)
                     key = keys[index];
                     leftValue = get_map_item(leftMap, key);
                     rightValue = get_map_item(rightMap, key);
+
+                    if (!rightValue)
+                    {
+                        return -1;
+                    }
+
                     equal = compare_values(leftValue, rightValue);
 
                     if (equal != 0)
