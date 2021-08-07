@@ -861,6 +861,7 @@ int compare_values(value_t *left, value_t *right)
 
                     if (!rightValue)
                     {
+                        free(keys);
                         return -1;
                     }
 
