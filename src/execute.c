@@ -51,6 +51,7 @@ static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *f
 static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_operators(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_catch(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_throw(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -531,6 +532,28 @@ static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t
     sorted = merge_lists(left, right);
     destroy_value(left);
     destroy_value(right);
+
+    if (!sorted)
+    {
+        return NULL;
+    }
+
+    sort_collection(sorted, 0);
+
+    return sorted;
+}
+
+static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *solo, *sorted;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_MAP))
+    {
+        return arguments->value;
+    }
+
+    solo = arguments->value;
+    sorted = list_map_keys(solo->data);
 
     if (!sorted)
     {
@@ -1759,6 +1782,7 @@ static map_t *default_operators(void)
         || !set_operator(operators, "<3", operator_promote)
         || !set_operator(operators, "</3", operator_demote)
         || !set_operator(operators, "x[]", operator_variables)
+        || !set_operator(operators, "$[]", operator_keys)
         || !set_operator(operators, "()[]", operator_operators)
         || !set_operator(operators, "><", operator_catch)
         || !set_operator(operators, "<>", operator_throw)

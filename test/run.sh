@@ -23,6 +23,7 @@ fi
 . test/suite/operator/promote.sh
 . test/suite/operator/demote.sh
 . test/suite/operator/variables.sh
+. test/suite/operator/keys.sh
 . test/suite/operator/operators.sh
 . test/suite/operator/catch.sh
 . test/suite/operator/throw.sh
