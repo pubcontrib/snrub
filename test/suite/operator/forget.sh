@@ -17,8 +17,9 @@ pass '("x<-" "value" #100#) ("x--" "value") ("x[]")' '["@"]'
 # Argument Error
 fail '("x--")' '#4#'
 fail '("x--" ?)' '#4#'
-fail '("x--" #100#)' '#4#'
-fail '("x--" [#1# #2# #3#])' '#4#'
+fail '("x--" ##)' '#4#'
+fail '("x--" [])' '#4#'
+fail '("x--" {})' '#4#'
 
 # Error Propogation
 fail '("x<-" ("#" "text"))' '#3#'

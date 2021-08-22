@@ -16,8 +16,9 @@ pass '("x<-" "key" "before") ("x<-" "key" #1#) ("x->" "key")' '#1#'
 # Argument Error
 fail '("x->")' '#4#'
 fail '("x->" ?)' '#4#'
-fail '("x->" #100#)' '#4#'
-fail '("x->" [#1# #2# #3#])' '#4#'
+fail '("x->" ##)' '#4#'
+fail '("x->" [])' '#4#'
+fail '("x->" {})' '#4#'
 
 # Error Propogation
 fail '("x->" ("#" "text"))' '#3#'

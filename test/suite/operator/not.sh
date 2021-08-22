@@ -10,8 +10,9 @@ pass '("!" #500#)' '#0#'
 # Argument Error
 fail '("!")' '#4#'
 fail '("!" ?)' '#4#'
-fail '("!" "word")' '#4#'
-fail '("!" [#1# #2# #3#])' '#4#'
+fail '("!" "")' '#4#'
+fail '("!" [])' '#4#'
+fail '("!" {})' '#4#'
 
 # Error Propogation
 fail '("!" ("#" "text"))' '#3#'

@@ -53,7 +53,8 @@ fail '("#" "1000000000")' '#3#'
 
 # Argument Error
 fail '("#")' '#4#'
-fail '("#" [#1# #2# #3#])' '#4#'
+fail '("#" [])' '#4#'
+fail '("#" {})' '#4#'
 
 # Error Propogation
 fail '("#" ("#" "text"))' '#3#'

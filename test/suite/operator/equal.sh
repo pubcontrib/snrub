@@ -74,7 +74,11 @@ pass '("=" {} {})' '#1#'
 
 # Argument Error
 fail '("=")' '#4#'
-fail '("=" #1#)' '#4#'
+fail '("=" ?)' '#4#'
+fail '("=" ##)' '#4#'
+fail '("=" "")' '#4#'
+fail '("=" [])' '#4#'
+fail '("=" {})' '#4#'
 
 # Error Propogation
 fail '("=" ("#" "text") ?)' '#3#'

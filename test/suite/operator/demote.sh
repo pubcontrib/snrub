@@ -19,8 +19,9 @@ pass '("x<-" "local" "word")
 # Argument Error
 fail '("</3")' '#4#'
 fail '("</3" ?)' '#4#'
-fail '("</3" #100#)' '#4#'
-fail '("</3" [#1# #2# #3#])' '#4#'
+fail '("</3" ##)' '#4#'
+fail '("</3" [])' '#4#'
+fail '("</3" {})' '#4#'
 
 # Error Propogation
 fail '("</3" ("#" "text") #0#)' '#3#'

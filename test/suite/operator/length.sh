@@ -19,7 +19,7 @@ pass '("| |" {"one" #1# "two" #2# "three" #3#})' '#3#'
 # Argument Error
 fail '("| |")' '#4#'
 fail '("| |" ?)' '#4#'
-fail '("| |" #100#)' '#4#'
+fail '("| |" ##)' '#4#'
 
 # Error Propogation
 fail '("| |" ("#" "text"))' '#3#'
