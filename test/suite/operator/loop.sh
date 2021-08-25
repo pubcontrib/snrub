@@ -14,6 +14,11 @@ pass '("x<-" "count" #0#)
     ("x<-" "count" ("+" ("x->" "count") #1#))
 )
 ("x->" "count")' '#10#'
+pass '("o" ("=" ("x->" "continue") ?) ("..." ("x<-" "continue" "no") ?))' '?'
+pass '("o" ("=" ("x->" "continue") ?) ("..." ("x<-" "continue" "no") ##))' '?'
+pass '("o" ("=" ("x->" "continue") ?) ("..." ("x<-" "continue" "no") ""))' '?'
+pass '("o" ("=" ("x->" "continue") ?) ("..." ("x<-" "continue" "no") []))' '?'
+pass '("o" ("=" ("x->" "continue") ?) ("..." ("x<-" "continue" "no") {}))' '?'
 
 # Argument Error
 fail '("o")' '#4#'
