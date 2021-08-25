@@ -15,6 +15,7 @@ pass '("x<-" "count" #0#)
 )
 ("x->" "count")' '#10#'
 pass '("o" #0#)' '?'
+pass '("o" #0# ("x<-" "touched" "yes")) ("x->" "touched")' '?'
 pass '("o" ("=" ("x->" "continue") ?) ("..." ("x<-" "continue" "no") ?))' '?'
 pass '("o" ("=" ("x->" "continue") ?) ("..." ("x<-" "continue" "no") ##))' '?'
 pass '("o" ("=" ("x->" "continue") ?) ("..." ("x<-" "continue" "no") ""))' '?'
