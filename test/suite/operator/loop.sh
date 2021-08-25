@@ -14,6 +14,7 @@ pass '("x<-" "count" #0#)
     ("x<-" "count" ("+" ("x->" "count") #1#))
 )
 ("x->" "count")' '#10#'
+pass '("o" #0#)' '?'
 pass '("o" ("=" ("x->" "continue") ?) ("..." ("x<-" "continue" "no") ?))' '?'
 pass '("o" ("=" ("x->" "continue") ?) ("..." ("x<-" "continue" "no") ##))' '?'
 pass '("o" ("=" ("x->" "continue") ?) ("..." ("x<-" "continue" "no") ""))' '?'
@@ -28,6 +29,7 @@ fail '("o" ? ##)' '#4#'
 fail '("o" ? "")' '#4#'
 fail '("o" ? [])' '#4#'
 fail '("o" ? {})' '#4#'
+fail '("o" #1#)' '#4#'
 fail '("o" "")' '#4#'
 fail '("o" "" ?)' '#4#'
 fail '("o" "" ##)' '#4#'
