@@ -943,6 +943,9 @@ static value_t *operator_loop(argument_iterator_t *arguments, stack_frame_t *fra
 static value_t *operator_chain(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *last;
+    size_t count;
+
+    count = 0;
 
     do
     {
@@ -952,7 +955,13 @@ static value_t *operator_chain(argument_iterator_t *arguments, stack_frame_t *fr
         }
 
         last = arguments->value;
+        count++;
     } while (has_next_argument(arguments));
+
+    if (count < 2)
+    {
+        return throw_error(ERROR_ARGUMENT);
+    }
 
     return copy_value(last);
 }

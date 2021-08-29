@@ -3,12 +3,11 @@
 hint 'operator/chain'
 
 # Completed Chain
-pass '("..." ?)' '?'
-pass '("..." #100#)' '#100#'
-pass '("..." "one")' '"one"'
 pass '("..." ? ? ?)' '?'
 pass '("..." #100# #200# #300#)' '#300#'
 pass '("..." "one" "two" "three")' '"three"'
+pass '("..." [#1#] [#2#] [#3#])' '[#3#]'
+pass '("..." {"a" ?} {"b" ?} {"c" ?})' '{"c" ?}'
 pass '("x<-" "count" #0#)
 ("..."
     ("x<-" "count" ("+" ("x->" "count") #1#))
@@ -19,6 +18,11 @@ pass '("x<-" "count" #0#)
 
 # Argument Error
 fail '("...")' '#4#'
+fail '("..." ?)' '#4#'
+fail '("..." ##)' '#4#'
+fail '("..." "")' '#4#'
+fail '("..." [])' '#4#'
+fail '("..." {})' '#4#'
 
 # Error Breaking
 fail '("..." ("#" "text") ("unknown" #1# #2#) ("/" #10# #0#))' '#3#'

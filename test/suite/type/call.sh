@@ -85,12 +85,12 @@ fail '"+" #10# #5#)' '#1#'
 fail '("+" #10# #5#' '#1#'
 
 # Bounds Error
-start=`repeat '("..."' 32`
+start=`repeat '("!"' 32`
 end=`repeat ')' 32`
-pass "$start?$end" '?'
-start=`repeat '("..."' 33`
+pass "$start #1#$end" '#1#'
+start=`repeat '("!"' 33`
 end=`repeat ')' 33`
-fail "$start?$end" '#2#'
+fail "$start #1#$end" '#2#'
 center=`repeat '?' 1023`
 pass "(\"...\" $center)" '?'
 center=`repeat '?' 1024`
