@@ -91,10 +91,8 @@ pass "$start #1#$end" '#1#'
 start=`repeat '("!"' 33`
 end=`repeat ')' 33`
 fail "$start #1#$end" '#2#'
-center=`repeat '?' 1023`
-pass "(\"...\" $center)" '?'
 center=`repeat '?' 1024`
-fail "(\"...\" $center)" '#2#'
+pass "(\"...\" $center)" '?'
 fail '("x<-" "recurse" "(\"~\" (\"x->\" \"recurse\") ?)")
 ("<3" "recurse")
 ("~" ("x->" "recurse") ?)' '#2#'

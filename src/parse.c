@@ -130,15 +130,6 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
 
     while (!scanner->closed && state != PARSER_STATE_ERROR && state != PARSER_STATE_SUCCESS)
     {
-        if (arguments->length > LIMIT_BREADTH)
-        {
-            destroy_value(expression->value);
-
-            state = PARSER_STATE_ERROR;
-            expression->value = throw_error(ERROR_BOUNDS);
-            break;
-        }
-
         token = token ? token : next_token(scanner);
 
         if (token)
