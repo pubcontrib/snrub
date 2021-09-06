@@ -9,6 +9,60 @@ language.
 ("x<-" "c" ("+" ("x->" "a") ("x->" "b")))
 ```
 
+## Language
+
+### Types
+| Type | Description | Example                                                 |
+|------|-------------|---------------------------------------------------------|
+| `?`  | null        | `?`                                                     |
+| `##` | number      | `#123456789#`                                           |
+| `""` | string      | `"text and words"`                                      |
+| `[]` | list        | `[? ## "" [] {}]`                                       |
+| `{}` | map         | `{"null" ? "number" ## "string" "" "list" [] "map" {}}` |
+
+### Operators
+| Operator | Description | Example                                             |
+|----------|-------------|-----------------------------------------------------|
+| `~`      | evaluate    | `("~" "(\"<\" (\"x->\" \"@\") #0#)" #-1#)`          |
+| `x->`    | recall      | `("x->" "read-me")`                                 |
+| `x<-`    | memorize    | `("x<-" "override-me" "any value")`                 |
+| `x--`    | forget      | `("x--" "remove-me")`                               |
+| `<3`     | promote     | `("<3" "make-me-global")`                           |
+| `</3`    | demote      | `("</3" "make-me-local")`                           |
+| `x[]`    | variables   | `("x[]")`                                           |
+| `$[]`    | keys        | `("$[]" {"first" #1# "second" #2# "third" #3#})`    |
+| `()[]`   | operators   | `("()[]")`                                          |
+| `><`     | catch       | `("><" ("/" #100# #0#))`                            |
+| `<>`     | throw       | `("<>" "[ERROR] invalid format")`                   |
+| `+`      | add         | `("+" #75# #25#)`                                   |
+| `-`      | subtract    | `("-" #500# #400#)`                                 |
+| `*`      | multiply    | `("*" #20# #5#)`                                    |
+| `/`      | divide      | `("/" #400# #4#)`                                   |
+| `%`      | modulo      | `("%" #1000# #900#)`                                |
+| `&`      | and         | `("&" #1# #1#)`                                     |
+| `\|`     | or          | `("\|" #0# #1#)`                                    |
+| `!`      | not         | `("!" #0#)`                                         |
+| `?`      | conditional | `("?" #1# "true" "false")`                          |
+| `o`      | loop        | `("x<-" "i" #1#) ("o" ("x->" "i") ("x<-" "i" #0#))` |
+| `...`    | chain       | `("..." "first" "second" "..." "last")`             |
+| `<`      | less        | `("<" #0# #100#)`                                   |
+| `>`      | greater     | `(">" #100# #0#)`                                   |
+| `=`      | equal       | `("=" #100# #100#)`                                 |
+| `<\|>`   | sort        | `("<\|>" [#3# #2# #5# #1# #4#])`                    |
+| `_`      | type        | `("_" "any value")`                                 |
+| `#`      | number      | `("#" "100")`                                       |
+| `"`      | string      | `("\"" #100#)`                                      |
+| `::`     | hash        | `("::" [#2# "bucket"])`                             |
+| `;`      | represent   | `(";" [#2# "code"])`                                |
+| `\| \|`  | length      | `("\| \|" "a string, list, or map")`                |
+| `$->`    | get         | `("$->" {"one" #1# "two" #2# "three" #3#} "two")`   |
+| `$<-`    | set         | `("$<-" {} "first" "value")`                        |
+| `$--`    | unset       | `("$--" {"forget" "me"} "forget")`                  |
+| `[# #]`  | slice       | `("[# #]" "find me in this text" #6# #7#)`          |
+| `[o]->`  | read        | `("[o]->" "file_to_read.txt")`                      |
+| `[o]<-`  | write       | `("[o]<-" "file_to_override.txt" "text")`           |
+| `[o]--`  | remove      | `("[o]--" "file_to_remove.txt")`                    |
+
 ## License
 Snrub is licensed under the MIT license. Review the LICENSE file included in the
 project before using Snrub to understand your rights.
