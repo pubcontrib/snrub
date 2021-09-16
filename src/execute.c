@@ -937,11 +937,7 @@ static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *fra
 
     reversed = arguments->value;
     sorted = copy_value(collection);
-
-    if (sorted)
-    {
-        sort_collection(sorted, view_number(reversed));
-    }
+    sort_collection(sorted, view_number(reversed));
 
     return sorted;
 }
