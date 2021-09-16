@@ -68,16 +68,12 @@ static scanner_t *create_scanner(char *document, size_t start, size_t end, size_
 {
     scanner_t *scanner;
 
-    scanner = malloc(sizeof(scanner_t));
-
-    if (scanner)
-    {
-        scanner->document = document;
-        scanner->start = start;
-        scanner->end = end;
-        scanner->length = length;
-        scanner->closed = closed;
-    }
+    scanner = allocate(sizeof(scanner_t));
+    scanner->document = document;
+    scanner->start = start;
+    scanner->end = end;
+    scanner->length = length;
+    scanner->closed = closed;
 
     return scanner;
 }
@@ -86,13 +82,9 @@ static token_t *create_token(token_name_t name, char *value)
 {
     token_t *token;
 
-    token = malloc(sizeof(token_t));
-
-    if (token)
-    {
-        token->name = name;
-        token->value = value;
-    }
+    token = allocate(sizeof(token_t));
+    token->name = name;
+    token->value = value;
 
     return token;
 }
@@ -141,12 +133,6 @@ static token_t *slice_token(scanner_t *scanner, token_name_t name)
     char *value;
 
     value = slice_string(scanner->document, scanner->start, scanner->end);
-
-    if (!value)
-    {
-        return NULL;
-    }
-
     scanner->closed = scanner->end >= scanner->length;
     scanner->start = scanner->end;
 

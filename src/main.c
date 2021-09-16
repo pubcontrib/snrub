@@ -9,8 +9,6 @@
 
 #define PROGRAM_NAME "snrub"
 #define PROGRAM_VERSION "v0.71.0"
-#define PROGRAM_SUCCESS 0
-#define PROGRAM_ERROR 1
 
 static int run_help(void);
 static int run_version(void);
@@ -22,7 +20,6 @@ static int print_value(value_t *value);
 static value_t *initialize_arguments(char *document);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
-static void crash(void);
 
 int main(int argc, char **argv)
 {
@@ -165,13 +162,7 @@ static int run_file(char *file, char *initial)
 
     if (!document)
     {
-        document = malloc(sizeof(char));
-
-        if (!document)
-        {
-            crash();
-        }
-
+        document = allocate(sizeof(char));
         document[0] = '\0';
     }
 
@@ -188,19 +179,7 @@ static int run_text(char *text, char *initial)
     int success;
 
     globals = empty_variables();
-
-    if (!globals)
-    {
-        crash();
-    }
-
     arguments = initialize_arguments(initial);
-
-    if (!arguments)
-    {
-        crash();
-    }
-
     success = record_script(text, globals, arguments);
     destroy_map(globals);
     destroy_value(arguments);
@@ -214,18 +193,7 @@ static int run_interactive(void)
     value_t *arguments;
 
     globals = empty_variables();
-
-    if (!globals)
-    {
-        crash();
-    }
-
     arguments = new_null();
-
-    if (!arguments)
-    {
-        crash();
-    }
 
     while (1)
     {
@@ -234,11 +202,6 @@ static int run_interactive(void)
 
         printf("> ");
         line = next_line();
-
-        if (!line)
-        {
-            crash();
-        }
 
         if (line->exit)
         {
@@ -268,12 +231,6 @@ static int record_script(char *document, map_t *globals, value_t *arguments)
     int success;
 
     value = execute_script(document, globals, arguments);
-
-    if (!value)
-    {
-        crash();
-    }
-
     success = print_value(value);
     destroy_value(value);
 
@@ -287,11 +244,6 @@ static int print_value(value_t *value)
 
     represent = represent_value(value);
     success = 0;
-
-    if (!represent)
-    {
-        crash();
-    }
 
     if (represent->thrown)
     {
@@ -324,26 +276,8 @@ static value_t *initialize_arguments(char *document)
         int success;
 
         globals = empty_variables();
-
-        if (!globals)
-        {
-            crash();
-        }
-
         null = new_null();
-
-        if (!null)
-        {
-            crash();
-        }
-
         arguments = execute_script(document, globals, null);
-
-        if (!arguments)
-        {
-            crash();
-        }
-
         success = !arguments->thrown;
         destroy_map(globals);
         destroy_value(null);
@@ -368,9 +302,4 @@ static map_t *empty_variables(void)
 static void destroy_value_unsafe(void *value)
 {
     destroy_value((value_t *) value);
-}
-
-static void crash(void)
-{
-    exit(PROGRAM_ERROR);
 }

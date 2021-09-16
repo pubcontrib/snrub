@@ -12,13 +12,9 @@ char *slice_string(char *string, size_t start, size_t end)
     size_t length;
 
     length = end - start;
-    slice = malloc(sizeof(char) * (length + 1));
-
-    if (slice)
-    {
-        strncpy(slice, string + start, length);
-        slice[length] = '\0';
-    }
+    slice = allocate(sizeof(char) * (length + 1));
+    strncpy(slice, string + start, length);
+    slice[length] = '\0';
 
     return slice;
 }
@@ -29,12 +25,8 @@ char *copy_string(char *string)
     size_t length;
 
     length = strlen(string);
-    copy = malloc(sizeof(char) * (length + 1));
-
-    if (copy)
-    {
-        strncpy(copy, string, length + 1);
-    }
+    copy = allocate(sizeof(char) * (length + 1));
+    strncpy(copy, string, length + 1);
 
     return copy;
 }
@@ -42,40 +34,34 @@ char *copy_string(char *string)
 char *integer_to_string(int integer)
 {
     char *string;
-    size_t length;
+    size_t length, index;
 
     length = integer_digits(integer) + (integer < 0 ? 1 : 0);
-    string = malloc(sizeof(char) * (length + 1));
+    string = allocate(sizeof(char) * (length + 1));
+    index = length - 1;
 
-    if (string)
+    if (integer < 0)
     {
-        size_t index;
-
-        index = length - 1;
-
-        if (integer < 0)
-        {
-            string[0] = '-';
-            integer *= -1;
-        }
-
-        if (integer == 0)
-        {
-            string[0] = '0';
-        }
-
-        while (integer > 0)
-        {
-            int next, digit;
-
-            next = integer / 10;
-            digit = integer - (next * 10);
-            string[index--] = '0' + digit;
-            integer = next;
-        }
-
-        string[length] = '\0';
+        string[0] = '-';
+        integer *= -1;
     }
+
+    if (integer == 0)
+    {
+        string[0] = '0';
+    }
+
+    while (integer > 0)
+    {
+        int next, digit;
+
+        next = integer / 10;
+        digit = integer - (next * 10);
+        string[index--] = '0' + digit;
+        integer = next;
+    }
+
+    string[length] = '\0';
 
     return string;
 }
@@ -123,6 +109,51 @@ int string_to_integer(char *string, int digits, int *out)
     (*out) = integer;
 
     return 1;
+}
+
+void *allocate(size_t size)
+{
+    void *memory;
+
+    memory = malloc(size);
+
+    if (!memory)
+    {
+        crash();
+    }
+
+    return memory;
+}
+
+void *callocate(int number, size_t size)
+{
+    void *memory;
+
+    memory = calloc(number, size);
+
+    if (!memory)
+    {
+        crash();
+    }
+
+    return memory;
+}
+
+void *reallocate(void *memory, size_t size)
+{
+    memory = realloc(memory, size);
+
+    if (!memory)
+    {
+        crash();
+    }
+
+    return memory;
+}
+
+void crash(void)
+{
+    exit(PROGRAM_ERROR);
 }
 
 static int integer_digits(int integer)

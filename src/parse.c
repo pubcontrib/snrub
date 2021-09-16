@@ -29,35 +29,16 @@ list_t *parse_expressions(scanner_t *scanner)
 
     expressions = empty_list(destroy_expression_unsafe);
 
-    if (!expressions)
-    {
-        return NULL;
-    }
-
     do
     {
         expression_t *expression;
 
         expression = next_expression(scanner, NULL, 0);
+        add_list_item(expressions, expression);
 
-        if (expression)
+        if (expression->value->thrown)
         {
-            if (!add_list_item(expressions, expression))
-            {
-                destroy_expression(expression);
-                destroy_list(expressions);
-                return NULL;
-            }
-
-            if (expression->value->thrown)
-            {
-                return expressions;
-            }
-        }
-        else
-        {
-            destroy_list(expressions);
-            return NULL;
+            return expressions;
         }
     } while (!scanner->closed);
 
@@ -88,13 +69,9 @@ static expression_t *create_expression(value_t *value, list_t *arguments)
 {
     expression_t *expression;
 
-    expression = malloc(sizeof(expression_t));
-
-    if (expression)
-    {
-        expression->value = value;
-        expression->arguments = arguments;
-    }
+    expression = allocate(sizeof(expression_t));
+    expression->value = value;
+    expression->arguments = arguments;
 
     return expression;
 }
@@ -106,21 +83,8 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     expression_t *expression;
 
     state = PARSER_STATE_START;
-
     arguments = empty_list(destroy_expression_unsafe);
-
-    if (!arguments)
-    {
-        return NULL;
-    }
-
     expression = create_expression(NULL, arguments);
-
-    if (!expression)
-    {
-        destroy_list(arguments);
-        return NULL;
-    }
 
     if (depth > LIMIT_DEPTH || scanner->length > NUMBER_MAX)
     {
@@ -173,13 +137,6 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                             break;
                     }
 
-                    if (!expression->value)
-                    {
-                        destroy_token(token);
-                        destroy_expression(expression);
-                        return NULL;
-                    }
-
                     if (expression->value->thrown)
                     {
                         state = PARSER_STATE_ERROR;
@@ -216,28 +173,15 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                         argument = next_expression(scanner, token, depth + 1);
                         token = NULL;
 
-                        if (argument)
+                        if (argument->value->thrown)
                         {
-                            if (argument->value->thrown)
-                            {
-                                destroy_value(expression->value);
+                            destroy_value(expression->value);
 
-                                state = PARSER_STATE_ERROR;
-                                expression->value = copy_value(argument->value);
-                            }
+                            state = PARSER_STATE_ERROR;
+                            expression->value = copy_value(argument->value);
+                        }
 
-                            if (!add_list_item(arguments, argument))
-                            {
-                                destroy_expression(argument);
-                                destroy_expression(expression);
-                                return NULL;
-                            }
-                        }
-                        else
-                        {
-                            destroy_expression(expression);
-                            return NULL;
-                        }
+                        add_list_item(arguments, argument);
                     }
                 }
             }
@@ -247,11 +191,6 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                 destroy_token(token);
                 token = NULL;
             }
-        }
-        else
-        {
-            destroy_expression(expression);
-            return NULL;
         }
     }
 
@@ -275,12 +214,6 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     if (token)
     {
         destroy_token(token);
-    }
-
-    if (!expression->value)
-    {
-        destroy_expression(expression);
-        return NULL;
     }
 
     return expression;
@@ -321,11 +254,6 @@ static value_t *parse_number_literal(char *value)
 
     trimmed = slice_string(value, 1, length - 1);
 
-    if (!trimmed)
-    {
-        return NULL;
-    }
-
     if (!string_to_integer(trimmed, NUMBER_DIGIT_CAPACITY, &numbered))
     {
         free(trimmed);
@@ -356,11 +284,6 @@ static value_t *parse_string_literal(char *value)
 
     trimmed = slice_string(value, 1, length - 1);
 
-    if (!trimmed)
-    {
-        return NULL;
-    }
-
     if (!is_printable(trimmed))
     {
         free(trimmed);
@@ -369,11 +292,6 @@ static value_t *parse_string_literal(char *value)
 
     escaped = escape_string(trimmed);
     free(trimmed);
-
-    if (!escaped)
-    {
-        return NULL;
-    }
 
     return steal_string(escaped, sizeof(char) * (strlen(escaped) + 1));
 }

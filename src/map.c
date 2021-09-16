@@ -1,22 +1,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include "map.h"
+#include "common.h"
 
 static void destroy_chain(map_chain_t *chain, void (*destroy)(void *));
 static map_chain_t *create_map_chain(char *key, void *value, map_chain_t *next);
 static map_t *create_map(int (*hash)(char *), void (*destroy)(void *), size_t length, size_t capacity, map_chain_t **chains);
-static int resize_map(map_t *map);
+static void resize_map(map_t *map);
 
 map_t *empty_map(int (*hash)(char *), void (*destroy)(void *), size_t capacity)
 {
     map_chain_t **chains;
 
-    chains = calloc(capacity, sizeof(map_t *));
-
-    if (!chains)
-    {
-        return NULL;
-    }
+    chains = callocate(capacity, sizeof(map_t *));
 
     return create_map(hash, destroy, 0, capacity, chains);
 }
@@ -45,7 +41,7 @@ void *get_map_item(map_t *map, char *key)
     return NULL;
 }
 
-int set_map_item(map_t *map, char *key, void *value)
+void set_map_item(map_t *map, char *key, void *value)
 {
     map_chain_t *chain, *last, *created;
     int hash, index;
@@ -60,18 +56,13 @@ int set_map_item(map_t *map, char *key, void *value)
             free(key);
             map->destroy(chain->value);
             chain->value = value;
-            return 1;
+            return;
         }
 
         last = chain;
     }
 
     created = create_map_chain(key, value, NULL);
-
-    if (!created)
-    {
-        return 0;
-    }
 
     if (last)
     {
@@ -86,10 +77,8 @@ int set_map_item(map_t *map, char *key, void *value)
 
     if (map->length == map->capacity)
     {
-        return resize_map(map);
+        resize_map(map);
     }
-
-    return 1;
 }
 
 void remove_map_item(map_t *map, char *key)
@@ -172,14 +161,10 @@ static map_chain_t *create_map_chain(char *key, void *value, map_chain_t *next)
 {
     map_chain_t *chain;
 
-    chain = malloc(sizeof(map_chain_t));
-
-    if (chain)
-    {
-        chain->key = key;
-        chain->value = value;
-        chain->next = next;
-    }
+    chain = allocate(sizeof(map_chain_t));
+    chain->key = key;
+    chain->value = value;
+    chain->next = next;
 
     return chain;
 }
@@ -188,21 +173,17 @@ static map_t *create_map(int (*hash)(char *), void (*destroy)(void *), size_t le
 {
     map_t *map;
 
-    map = malloc(sizeof(map_t));
-
-    if (map)
-    {
-        map->hash = hash;
-        map->destroy = destroy;
-        map->length = length;
-        map->capacity = capacity;
-        map->chains = chains;
-    }
+    map = allocate(sizeof(map_t));
+    map->hash = hash;
+    map->destroy = destroy;
+    map->length = length;
+    map->capacity = capacity;
+    map->chains = chains;
 
     return map;
 }
 
-static int resize_map(map_t *map)
+static void resize_map(map_t *map)
 {
     map_chain_t **existing, **chains;
     map_chain_t *chain;
@@ -211,12 +192,7 @@ static int resize_map(map_t *map)
     existing = map->chains;
     expand = map->capacity * 2;
     fill = map->capacity;
-    chains = calloc(expand, sizeof(map_chain_t *));
-
-    if (!chains)
-    {
-        return 0;
-    }
+    chains = callocate(expand, sizeof(map_chain_t *));
 
     map->capacity = expand;
     map->length = 0;
@@ -226,11 +202,7 @@ static int resize_map(map_t *map)
     {
         for (chain = existing[index]; chain != NULL; chain = chain->next)
         {
-            if (!set_map_item(map, chain->key, chain->value))
-            {
-                free(map->chains);
-                return 0;
-            }
+            set_map_item(map, chain->key, chain->value);
 
             chain->key = NULL;
             chain->value = NULL;
@@ -248,6 +220,4 @@ static int resize_map(map_t *map)
     }
 
     free(existing);
-
-    return 1;
 }

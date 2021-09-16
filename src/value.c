@@ -46,25 +46,13 @@ value_t *merge_lists(value_t *left, value_t *right)
 
     if (sumLength > 0)
     {
-        items = malloc(sizeof(value_t *) * sumLength);
-
-        if (!items)
-        {
-            return NULL;
-        }
+        items = allocate(sizeof(value_t *) * sumLength);
 
         for (index = 0; index < sumLength; index++)
         {
             value_t *copy;
 
             copy = copy_value(index < leftLength ? ((value_t **) left->data)[index] : ((value_t **) right->data)[index - leftLength]);
-
-            if (!copy)
-            {
-                destroy_items(items, index);
-                return NULL;
-            }
-
             items[index] = copy;
         }
     }
@@ -92,11 +80,6 @@ value_t *new_number(int number)
 
     data = integer_to_array(number);
 
-    if (!data)
-    {
-        return NULL;
-    }
-
     return create_value(VALUE_TYPE_NUMBER, data, sizeof(int), 0);
 }
 
@@ -105,11 +88,6 @@ value_t *new_string(char *string)
     char *data;
 
     data = copy_string(string);
-
-    if (!data)
-    {
-        return NULL;
-    }
 
     return create_value(VALUE_TYPE_STRING, data, sizeof(char) * (strlen(string) + 1), 0);
 }
@@ -139,12 +117,6 @@ value_t *throw_error(error_t error)
     value_t *number;
 
     number = new_number(error);
-
-    if (!number)
-    {
-        return NULL;
-    }
-
     number->thrown = 1;
 
     return number;
@@ -167,25 +139,13 @@ value_t *copy_value(value_t *this)
                 size_t index;
 
                 items = this->data;
-                data = malloc(sizeof(value_t *) * length);
-
-                if (!data)
-                {
-                    return NULL;
-                }
+                data = allocate(sizeof(value_t *) * length);
 
                 for (index = 0; index < length; index++)
                 {
                     value_t *copy;
 
                     copy = copy_value(items[index]);
-
-                    if (!copy)
-                    {
-                        destroy_items(data, index);
-                        return NULL;
-                    }
-
                     data[index] = copy;
                 }
             }
@@ -216,28 +176,8 @@ value_t *copy_value(value_t *this)
                         value_t *value;
 
                         key = copy_string(chain->key);
-
-                        if (!key)
-                        {
-                            destroy_map(data);
-                            return NULL;
-                        }
-
                         value = copy_value(chain->value);
-
-                        if (!value)
-                        {
-                            free(key);
-                            destroy_map(data);
-                            return NULL;
-                        }
-
-                        if (!set_map_item(data, key, value))
-                        {
-                            free(key);
-                            destroy_value(value);
-                            return NULL;
-                        }
+                        set_map_item(data, key, value);
                     }
                 }
             }
@@ -251,11 +191,6 @@ value_t *copy_value(value_t *this)
             if (this->size > 0)
             {
                 data = copy_memory(this->data, this->size);
-
-                if (!data)
-                {
-                    return NULL;
-                }
             }
             else
             {
@@ -385,11 +320,6 @@ value_t *represent_number(int number)
 
     body = integer_to_string(number);
 
-    if (!body)
-    {
-        return NULL;
-    }
-
     return quote_string(body, '#');
 }
 
@@ -398,11 +328,6 @@ value_t *represent_string(char *string)
     char *body;
 
     body = unescape_string(string);
-
-    if (!body)
-    {
-        return NULL;
-    }
 
     return quote_string(body, '\"');
 }
@@ -414,11 +339,6 @@ value_t *represent_list(value_t **items, size_t length)
     int fit;
 
     body = copy_string("[");
-
-    if (!body)
-    {
-        return NULL;
-    }
 
     for (index = 0; index < length; index++)
     {
@@ -435,22 +355,11 @@ value_t *represent_list(value_t **items, size_t length)
                 return throw_error(ERROR_BOUNDS);
             }
 
-            if (!swap)
-            {
-                return NULL;
-            }
-
             body = swap;
         }
 
         item = items[index];
         represent = represent_value(item);
-
-        if (!represent)
-        {
-            free(body);
-            return NULL;
-        }
 
         if (represent->thrown)
         {
@@ -468,11 +377,6 @@ value_t *represent_list(value_t **items, size_t length)
             return throw_error(ERROR_BOUNDS);
         }
 
-        if (!swap)
-        {
-            return NULL;
-        }
-
         body = swap;
     }
 
@@ -485,11 +389,6 @@ value_t *represent_list(value_t **items, size_t length)
         return throw_error(ERROR_BOUNDS);
     }
 
-    if (!swap)
-    {
-        return NULL;
-    }
-
     return steal_string(swap, sizeof(char) * (strlen(swap) + 1));
 }
 
@@ -499,11 +398,6 @@ value_t *represent_map(map_t *pairs)
     int fit;
 
     body = copy_string("{");
-
-    if (!body)
-    {
-        return NULL;
-    }
 
     if (pairs->length > 0)
     {
@@ -531,21 +425,10 @@ value_t *represent_map(map_t *pairs)
                     return throw_error(ERROR_BOUNDS);
                 }
 
-                if (!swap)
-                {
-                    return NULL;
-                }
-
                 body = swap;
             }
 
             represent = represent_string(key);
-
-            if (!represent)
-            {
-                free(body);
-                return NULL;
-            }
 
             if (represent->thrown)
             {
@@ -561,11 +444,6 @@ value_t *represent_map(map_t *pairs)
             {
                 free(swap);
                 return throw_error(ERROR_BOUNDS);
-            }
-
-            if (!swap)
-            {
-                return NULL;
             }
 
             body = swap;
@@ -578,19 +456,8 @@ value_t *represent_map(map_t *pairs)
                 return throw_error(ERROR_BOUNDS);
             }
 
-            if (!swap)
-            {
-                return NULL;
-            }
-
             body = swap;
             represent = represent_value(value);
-
-            if (!represent)
-            {
-                free(body);
-                return NULL;
-            }
 
             if (represent->thrown)
             {
@@ -606,11 +473,6 @@ value_t *represent_map(map_t *pairs)
             {
                 free(swap);
                 return throw_error(ERROR_BOUNDS);
-            }
-
-            if (!swap)
-            {
-                return NULL;
             }
 
             body = swap;
@@ -627,11 +489,6 @@ value_t *represent_map(map_t *pairs)
         return throw_error(ERROR_BOUNDS);
     }
 
-    if (!swap)
-    {
-        return NULL;
-    }
-
     free(body);
 
     return steal_string(swap, sizeof(char) * (strlen(swap) + 1));
@@ -640,63 +497,57 @@ value_t *represent_map(map_t *pairs)
 char *escape_string(char *string)
 {
     char *escape;
-    size_t length;
+    size_t length, left, right;
+    int escaping;
 
     length = strlen(string);
-    escape = malloc(sizeof(char) * (length + 1));
+    escape = allocate(sizeof(char) * (length + 1));
+    escaping = 0;
+    right = 0;
 
-    if (escape)
+    for (left = 0; left < length; left++)
     {
-        size_t left, right;
-        int escaping;
+        char current;
 
-        escaping = 0;
-        right = 0;
+        current = string[left];
 
-        for (left = 0; left < length; left++)
+        if (escaping)
         {
-            char current;
-
-            current = string[left];
-
-            if (escaping)
+            switch (current)
             {
-                switch (current)
-                {
-                    case '\\':
-                        escape[right++] = '\\';
-                        break;
-                    case '"':
-                        escape[right++] = '"';
-                        break;
-                    case 't':
-                        escape[right++] = '\t';
-                        break;
-                    case 'n':
-                        escape[right++] = '\n';
-                        break;
-                    case 'r':
-                        escape[right++] = '\r';
-                        break;
-                }
+                case '\\':
+                    escape[right++] = '\\';
+                    break;
+                case '"':
+                    escape[right++] = '"';
+                    break;
+                case 't':
+                    escape[right++] = '\t';
+                    break;
+                case 'n':
+                    escape[right++] = '\n';
+                    break;
+                case 'r':
+                    escape[right++] = '\r';
+                    break;
+            }
 
-                escaping = 0;
+            escaping = 0;
+        }
+        else
+        {
+            if (current == '\\')
+            {
+                escaping = 1;
             }
             else
             {
-                if (current == '\\')
-                {
-                    escaping = 1;
-                }
-                else
-                {
-                    escape[right++] = current;
-                }
+                escape[right++] = current;
             }
         }
-
-        escape[right] = '\0';
     }
+
+    escape[right] = '\0';
 
     return escape;
 }
@@ -704,7 +555,7 @@ char *escape_string(char *string)
 char *unescape_string(char *string)
 {
     char *unescape;
-    size_t length;
+    size_t length, left, right;
 
     length = strlen(string)
         + characters_in_string(string, '\\')
@@ -712,51 +563,46 @@ char *unescape_string(char *string)
         + characters_in_string(string, '\t')
         + characters_in_string(string, '\n')
         + characters_in_string(string, '\r');
-    unescape = malloc(sizeof(char) * (length + 1));
+    unescape = allocate(sizeof(char) * (length + 1));
 
-    if (unescape)
+    for (left = 0, right = 0; left < length; right++)
     {
-        size_t left, right;
+        char symbol;
 
-        for (left = 0, right = 0; left < length; right++)
+        symbol = string[right];
+
+        if (symbol == '\\')
         {
-            char symbol;
-
-            symbol = string[right];
-
-            if (symbol == '\\')
-            {
-                unescape[left++] = '\\';
-                unescape[left++] = '\\';
-            }
-            else if (symbol == '"')
-            {
-                unescape[left++] = '\\';
-                unescape[left++] = '"';
-            }
-            else if (symbol == '\t')
-            {
-                unescape[left++] = '\\';
-                unescape[left++] = 't';
-            }
-            else if (symbol == '\n')
-            {
-                unescape[left++] = '\\';
-                unescape[left++] = 'n';
-            }
-            else if (symbol == '\r')
-            {
-                unescape[left++] = '\\';
-                unescape[left++] = 'r';
-            }
-            else
-            {
-                unescape[left++] = symbol;
-            }
+            unescape[left++] = '\\';
+            unescape[left++] = '\\';
         }
-
-        unescape[length] = '\0';
+        else if (symbol == '"')
+        {
+            unescape[left++] = '\\';
+            unescape[left++] = '"';
+        }
+        else if (symbol == '\t')
+        {
+            unescape[left++] = '\\';
+            unescape[left++] = 't';
+        }
+        else if (symbol == '\n')
+        {
+            unescape[left++] = '\\';
+            unescape[left++] = 'n';
+        }
+        else if (symbol == '\r')
+        {
+            unescape[left++] = '\\';
+            unescape[left++] = 'r';
+        }
+        else
+        {
+            unescape[left++] = symbol;
+        }
     }
+
+    unescape[length] = '\0';
 
     return unescape;
 }
@@ -1051,13 +897,10 @@ int string_add(char *left, char *right, char **out)
         return 0;
     }
 
-    sum = malloc(sizeof(char) * (sumLength + 1));
+    sum = allocate(sizeof(char) * (sumLength + 1));
 
-    if (sum)
-    {
-        strncpy(sum, left, leftLength);
-        strncpy(sum + leftLength, right, rightLength + 1);
-    }
+    strncpy(sum, left, leftLength);
+    strncpy(sum + leftLength, right, rightLength + 1);
 
     (*out) = sum;
 
@@ -1101,15 +944,11 @@ static value_t *create_value(value_type_t type, void *data, size_t size, int thr
 {
     value_t *value;
 
-    value = malloc(sizeof(value_t));
-
-    if (value)
-    {
-        value->type = type;
-        value->data = data;
-        value->size = size;
-        value->thrown = thrown;
-    }
+    value = allocate(sizeof(value_t));
+    value->type = type;
+    value->data = data;
+    value->size = size;
+    value->thrown = thrown;
 
     return value;
 }
@@ -1121,13 +960,7 @@ static value_t *quote_string(char *body, char qualifier)
 
     length = strlen(body);
     size = sizeof(char) * (length + 2 + 1);
-    represent = realloc(body, size);
-
-    if (!represent)
-    {
-        free(body);
-        return NULL;
-    }
+    represent = reallocate(body, size);
 
     for (index = length; index > 0; index--)
     {
@@ -1163,12 +996,8 @@ static void *copy_memory(void *memory, size_t size)
 {
     void *copy;
 
-    copy = malloc(size);
-
-    if (copy)
-    {
-        memcpy(copy, memory, size);
-    }
+    copy = allocate(size);
+    memcpy(copy, memory, size);
 
     return copy;
 }
@@ -1177,12 +1006,8 @@ static int *integer_to_array(int integer)
 {
     int *array;
 
-    array = malloc(sizeof(int));
-
-    if (array)
-    {
-        array[0] = integer;
-    }
+    array = allocate(sizeof(int));
+    array[0] = integer;
 
     return array;
 }
@@ -1222,7 +1047,7 @@ static char **array_map_keys(map_t *map)
     char **keys;
     size_t index, placement;
 
-    keys = malloc(sizeof(char *) * map->length);
+    keys = allocate(sizeof(char *) * map->length);
 
     for (index = 0, placement = 0; index < map->capacity; index++)
     {

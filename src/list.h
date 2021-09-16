@@ -18,7 +18,7 @@ typedef struct
 } list_t;
 
 list_t *empty_list(void (*destroy)(void *));
-int add_list_item(list_t *list, void *value);
+void add_list_item(list_t *list, void *value);
 void destroy_list(list_t *list);
 
 #endif
