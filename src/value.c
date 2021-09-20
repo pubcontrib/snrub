@@ -309,20 +309,12 @@ value_t *represent_null(void)
 
 value_t *represent_number(int number)
 {
-    char *body;
-
-    body = integer_to_string(number);
-
-    return quote_string(body, '#');
+    return quote_string(integer_to_string(number), '#');
 }
 
 value_t *represent_string(char *string)
 {
-    char *body;
-
-    body = unescape_string(string);
-
-    return quote_string(body, '\"');
+    return quote_string(unescape_string(string), '\"');
 }
 
 value_t *represent_list(value_t **items, size_t length)
