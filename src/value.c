@@ -626,13 +626,13 @@ int compare_values(value_t *left, value_t *right)
 
             for (index = 0; index < left->size; index++)
             {
-                int equal;
+                int different;
 
-                equal = compare_values(((value_t **) left->data)[index], ((value_t **) right->data)[index]);
+                different = compare_values(((value_t **) left->data)[index], ((value_t **) right->data)[index]);
 
-                if (equal != 0)
+                if (different)
                 {
-                    return equal;
+                    return different;
                 }
             }
 
