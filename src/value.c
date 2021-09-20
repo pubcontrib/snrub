@@ -188,14 +188,7 @@ value_t *copy_value(value_t *this)
         {
             void *data;
 
-            if (this->size > 0)
-            {
-                data = copy_memory(this->data, this->size);
-            }
-            else
-            {
-                data = NULL;
-            }
+            data = this->size > 0 ? copy_memory(this->data, this->size) : NULL;
 
             return create_value(this->type, data, this->size, this->thrown);
         }
