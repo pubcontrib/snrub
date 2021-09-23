@@ -64,6 +64,64 @@ value_t *merge_lists(value_t *left, value_t *right)
     return new_list(items, sumLength);
 }
 
+value_t *merge_maps(value_t *left, value_t *right)
+{
+    map_t *pairs, *data;
+    size_t leftLength, rightLength, index;
+    int sumLength;
+
+    leftLength = length_value(left);
+    rightLength = length_value(right);
+
+    if (!number_add(leftLength, rightLength, &sumLength))
+    {
+        return throw_error(ERROR_BOUNDS);
+    }
+
+    data = empty_map(hash_string, destroy_value_unsafe, 8);
+    pairs = left->data;
+
+    for (index = 0; index < pairs->capacity; index++)
+    {
+        if (pairs->chains[index])
+        {
+            map_chain_t *chain;
+
+            for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
+            {
+                char *key;
+                value_t *value;
+
+                key = copy_string(chain->key);
+                value = copy_value(chain->value);
+                set_map_item(data, key, value);
+            }
+        }
+    }
+
+    pairs = right->data;
+
+    for (index = 0; index < pairs->capacity; index++)
+    {
+        if (pairs->chains[index])
+        {
+            map_chain_t *chain;
+
+            for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
+            {
+                char *key;
+                value_t *value;
+
+                key = copy_string(chain->key);
+                value = copy_value(chain->value);
+                set_map_item(data, key, value);
+            }
+        }
+    }
+
+    return new_map(data);
+}
+
 value_t *new_unset(void)
 {
     return create_value(VALUE_TYPE_UNSET, NULL, 0, 0);

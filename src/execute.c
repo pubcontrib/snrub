@@ -579,6 +579,8 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
         }
         case VALUE_TYPE_LIST:
             return merge_lists(left, right);
+        case VALUE_TYPE_MAP:
+            return merge_maps(left, right);
         default:
             return throw_error(ERROR_ARGUMENT);
     }

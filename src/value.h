@@ -39,6 +39,7 @@ typedef enum
 
 int is_portable(void);
 value_t *merge_lists(value_t *left, value_t *right);
+value_t *merge_maps(value_t *left, value_t *right);
 value_t *new_unset(void);
 value_t *new_null(void);
 value_t *new_number(int number);
