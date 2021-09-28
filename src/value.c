@@ -143,11 +143,7 @@ value_t *new_number(int number)
 
 value_t *new_string(char *string)
 {
-    char *data;
-
-    data = copy_string(string);
-
-    return create_value(VALUE_TYPE_STRING, data, sizeof(char) * (strlen(string) + 1), 0);
+    return create_value(VALUE_TYPE_STRING, string, sizeof(char) * (strlen(string) + 1), 0);
 }
 
 value_t *new_list(value_t **items, size_t length)
@@ -362,7 +358,7 @@ value_t *represent_value(value_t *this)
 
 value_t *represent_null(void)
 {
-    return new_string("?");
+    return new_string(copy_string("?"));
 }
 
 value_t *represent_number(int number)

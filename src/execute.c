@@ -958,15 +958,15 @@ static value_t *operator_type(argument_iterator_t *arguments, stack_frame_t *fra
     switch (solo->type)
     {
         case VALUE_TYPE_NULL:
-            return new_string("?");
+            return new_string(copy_string("?"));
         case VALUE_TYPE_NUMBER:
-            return new_string("##");
+            return new_string(copy_string("##"));
         case VALUE_TYPE_STRING:
-            return new_string("\"\"");
+            return new_string(copy_string("\"\""));
         case VALUE_TYPE_LIST:
-            return new_string("[]");
+            return new_string(copy_string("[]"));
         case VALUE_TYPE_MAP:
-            return new_string("{}");
+            return new_string(copy_string("{}"));
         default:
             return throw_error(ERROR_ARGUMENT);
     }
@@ -1781,7 +1781,7 @@ static value_t *list_map_keys(map_t *map)
                 {
                     value_t *item;
 
-                    item = new_string(chain->key);
+                    item = new_string(copy_string(chain->key));
                     items[placement++] = item;
                 }
             }
