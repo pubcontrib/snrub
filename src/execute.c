@@ -566,11 +566,7 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
 
             if (string_add(view_string(left), view_string(right), &sum))
             {
-                size_t size;
-
-                size = sizeof(char) * (strlen(sum) + 1);
-
-                return steal_string(sum, size);
+                return new_string(sum);
             }
             else
             {
@@ -1016,15 +1012,7 @@ static value_t *operator_string(argument_iterator_t *arguments, stack_frame_t *f
         case VALUE_TYPE_STRING:
             return copy_value(solo);
         case VALUE_TYPE_NUMBER:
-        {
-            char *string;
-            size_t size;
-
-            string = integer_to_string(view_number(solo));
-            size = sizeof(char) * (strlen(string) + 1);
-
-            return steal_string(string, size);
-        }
+            return new_string(integer_to_string(view_number(solo)));
         default:
             return throw_error(ERROR_ARGUMENT);
     }
@@ -1090,7 +1078,6 @@ static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *fram
             value_t *index;
             char *string;
             int adjusted;
-            size_t size;
 
             if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
             {
@@ -1105,12 +1092,11 @@ static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *fram
                 return new_null();
             }
 
-            size = sizeof(char) * 2;
-            string = allocate(size);
+            string = allocate(sizeof(char) * 2);
             string[0] = view_string(collection)[adjusted];
             string[1] = '\0';
 
-            return steal_string(string, size);
+            return new_string(string);
         }
         case VALUE_TYPE_LIST:
         {
@@ -1169,7 +1155,7 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
             value_t *value, *index;
             char *string;
             int adjusted;
-            size_t size, left, right;
+            size_t left, right;
 
             if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
             {
@@ -1191,8 +1177,7 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
                 return copy_value(collection);
             }
 
-            size = sizeof(char) * (length_value(collection) + length_value(value));
-            string = allocate(size);
+            string = allocate(sizeof(char) * (length_value(collection) + length_value(value)));
 
             for (left = 0, right = 0; right < adjusted; left++, right++)
             {
@@ -1209,9 +1194,9 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
                 string[left] = view_string(collection)[right];
             }
 
-            string[size - 1] = '\0';
+            string[length_value(collection) + length_value(value) - 1] = '\0';
 
-            return steal_string(string, size);
+            return new_string(string);
         }
         case VALUE_TYPE_LIST:
         {
@@ -1307,7 +1292,7 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
             value_t *index;
             char *string;
             int adjusted;
-            size_t size, left, right;
+            size_t left, right;
 
             if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
             {
@@ -1322,8 +1307,7 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
                 return copy_value(collection);
             }
 
-            size = sizeof(char) * length_value(collection);
-            string = allocate(size);
+            string = allocate(sizeof(char) * length_value(collection));
 
             for (left = 0, right = 0; right < length_value(collection); right++)
             {
@@ -1333,9 +1317,9 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
                 }
             }
 
-            string[size - 1] = '\0';
+            string[length_value(collection) - 1] = '\0';
 
-            return steal_string(string, size);
+            return new_string(string);
         }
         case VALUE_TYPE_LIST:
         {
@@ -1452,7 +1436,7 @@ static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *fr
 
             slice = slice_string(view_string(collection), adjustedStart, adjustedEnd);
 
-            return steal_string(slice, length + 1);
+            return new_string(slice);
         }
         case VALUE_TYPE_LIST:
         {
@@ -1523,7 +1507,7 @@ static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *fra
         }
     }
 
-    return steal_string(file, sizeof(char) * (length + 1));
+    return new_string(file);
 }
 
 static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame)

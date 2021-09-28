@@ -161,11 +161,6 @@ value_t *new_call(void)
     return create_value(VALUE_TYPE_CALL, NULL, 0, 0);
 }
 
-value_t *steal_string(char *string, size_t size)
-{
-    return create_value(VALUE_TYPE_STRING, string, size, 0);
-}
-
 value_t *throw_error(error_t error)
 {
     value_t *number;
@@ -428,7 +423,7 @@ value_t *represent_list(value_t **items, size_t length)
         return throw_error(ERROR_BOUNDS);
     }
 
-    return steal_string(swap, sizeof(char) * (strlen(swap) + 1));
+    return new_string(swap);
 }
 
 value_t *represent_map(map_t *pairs)
@@ -530,7 +525,7 @@ value_t *represent_map(map_t *pairs)
 
     free(body);
 
-    return steal_string(swap, sizeof(char) * (strlen(swap) + 1));
+    return new_string(swap);
 }
 
 char *escape_string(char *string)
@@ -995,11 +990,10 @@ static value_t *create_value(value_type_t type, void *data, size_t size, int thr
 static value_t *quote_string(char *body, char qualifier)
 {
     char *represent;
-    size_t length, size, index;
+    size_t length, index;
 
     length = strlen(body);
-    size = sizeof(char) * (length + 2 + 1);
-    represent = reallocate(body, size);
+    represent = reallocate(body, length + 2 + 1);
 
     for (index = length; index > 0; index--)
     {
@@ -1010,7 +1004,7 @@ static value_t *quote_string(char *body, char qualifier)
     represent[length + 1] = qualifier;
     represent[length + 2] = '\0';
 
-    return steal_string(represent, size);
+    return new_string(represent);
 }
 
 static size_t characters_in_string(char *string, char character)

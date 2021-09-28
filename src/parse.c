@@ -293,7 +293,7 @@ static value_t *parse_string_literal(char *value)
     escaped = escape_string(trimmed);
     free(trimmed);
 
-    return steal_string(escaped, sizeof(char) * (strlen(escaped) + 1));
+    return new_string(escaped);
 }
 
 static int is_printable(char *value)
