@@ -151,7 +151,7 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_
 
     last = set_scoped_variable(&frame, "@", arguments);
 
-    if (last && last->type == VALUE_TYPE_NULL)
+    if (last->type == VALUE_TYPE_NULL)
     {
         for (node = expressions->head; node != NULL; node = node->next)
         {
