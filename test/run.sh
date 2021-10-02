@@ -9,6 +9,8 @@ fi
 
 . test/assert.sh
 
+introduce
+
 . test/suite/type/null.sh
 . test/suite/type/number.sh
 . test/suite/type/string.sh

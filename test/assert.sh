@@ -15,10 +15,14 @@ fail()
     run_test "$1" "$2" 1
 }
 
+introduce()
+{
+    count=0
+}
+
 conclude()
 {
     printf '%d tests run.\n' $count
-    count=0
 }
 
 run_test()
