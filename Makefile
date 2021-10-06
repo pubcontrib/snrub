@@ -1,4 +1,5 @@
 CFLAGS = -ansi -pedantic -Wall
+LDFLAGS =
 CC = gcc
 RM = rm
 CP = cp
@@ -40,7 +41,7 @@ uninstall:
 
 $(BIN)/$(EXE): $(OBJS)
 	$(MKDIR) -p $(BIN)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(LDFLAGS) -o $@ $^
 
 $(OBJ)/%.o: $(SRC)/%.c
 	$(MKDIR) -p $(OBJ)
