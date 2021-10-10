@@ -30,7 +30,7 @@ fail '"word' '#1#'
 fail 'word"' '#1#'
 
 # Type Error
-fail "$(printf '\042\007\042')" '#3#'
-fail "$(printf '\042\011\042')" '#3#'
-fail "$(printf '\042\012\042')" '#3#'
-fail "$(printf '\042\015\042')" '#3#'
+fail "`printf '\042\007\042'`" '#3#'
+fail "`printf '\042\011\042'`" '#3#'
+fail "`printf '\042\012\042'`" '#3#'
+fail "`printf '\042\015\042'`" '#3#'
