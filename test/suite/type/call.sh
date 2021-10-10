@@ -13,7 +13,7 @@ repeat()
     while [ $index -lt $count ]
     do
         result="$result $text"
-        index=$((index + 1))
+        index=`expr $index + 1`
     done
 
     printf '%s' "$result"

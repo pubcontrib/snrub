@@ -54,5 +54,5 @@ run_test()
         exit 1
     fi
 
-    count=$((count + 1))
+    count=`expr $count + 1`
 }
