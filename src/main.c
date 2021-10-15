@@ -8,7 +8,7 @@
 #include "common.h"
 
 #define PROGRAM_NAME "snrub"
-#define PROGRAM_VERSION "v0.72.4"
+#define PROGRAM_VERSION "v0.73.0"
 
 static int run_help(void);
 static int run_version(void);
