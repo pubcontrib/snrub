@@ -686,31 +686,33 @@ int compare_values(value_t *left, value_t *right)
         }
         case VALUE_TYPE_MAP:
         {
-            size_t length;
-
-            if (left->size != right->size)
-            {
-                return left->size - right->size;
-            }
+            size_t length, index;
 
             length = left->size;
+            index = 0;
 
             if (length > 0)
             {
                 char **leftKeys, **rightKeys;
                 map_t *leftMap, *rightMap;
-                size_t index;
 
                 leftMap = left->data;
                 rightMap = right->data;
                 leftKeys = array_map_keys(leftMap);
                 rightKeys = array_map_keys(rightMap);
 
-                for (index = 0; index < length; index++)
+                for (; index < length; index++)
                 {
                     int different;
                     char *leftKey, *rightKey;
                     value_t *leftValue, *rightValue;
+
+                    if (index == right->size)
+                    {
+                        free(leftKeys);
+                        free(rightKeys);
+                        return 1;
+                    }
 
                     leftKey = leftKeys[index];
                     rightKey = rightKeys[index];
@@ -745,6 +747,11 @@ int compare_values(value_t *left, value_t *right)
 
                 free(leftKeys);
                 free(rightKeys);
+            }
+
+            if (index < right->size)
+            {
+                return -1;
             }
 
             return 0;
