@@ -1212,6 +1212,7 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
 
             index = arguments->value;
             adjusted = view_number(index) - 1;
+            length = length_value(collection);
 
             if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
             {
@@ -1220,12 +1221,11 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
 
             value = arguments->value;
 
-            if (adjusted < 0 || adjusted >= length_value(collection))
+            if (adjusted < 0 || adjusted >= length)
             {
                 return copy_value(collection);
             }
 
-            length = length_value(collection);
             items = allocate(sizeof(value_t *) * length);
 
             for (left = 0, right = 0; right < adjusted; left++, right++)
@@ -1237,7 +1237,7 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
             item = copy_value(value);
             items[left++] = item;
 
-            for (right = adjusted + 1; right < length_value(collection); left++, right++)
+            for (right = adjusted + 1; right < length; left++, right++)
             {
                 item = copy_value(((value_t **) collection->data)[right]);
                 items[left] = item;
@@ -1292,7 +1292,7 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
             value_t *index;
             char *string;
             int adjusted;
-            size_t left, right;
+            size_t length, left, right;
 
             if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
             {
@@ -1301,15 +1301,16 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
 
             index = arguments->value;
             adjusted = view_number(index) - 1;
+            length = length_value(collection);
 
-            if (adjusted < 0 || adjusted >= length_value(collection))
+            if (adjusted < 0 || adjusted >= length)
             {
                 return copy_value(collection);
             }
 
-            string = allocate(sizeof(char) * length_value(collection));
+            string = allocate(sizeof(char) * length);
 
-            for (left = 0, right = 0; right < length_value(collection); right++)
+            for (left = 0, right = 0; right < length; right++)
             {
                 if (right != adjusted)
                 {
@@ -1317,7 +1318,7 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
                 }
             }
 
-            string[length_value(collection) - 1] = '\0';
+            string[length - 1] = '\0';
 
             return new_string(string);
         }
@@ -1335,16 +1336,16 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
 
             index = arguments->value;
             adjusted = view_number(index) - 1;
+            length = length_value(collection);
 
-            if (adjusted < 0 || adjusted >= length_value(collection))
+            if (adjusted < 0 || adjusted >= length)
             {
                 return copy_value(collection);
             }
 
-            length = length_value(collection) - 1;
-            items = allocate(sizeof(value_t *) * length);
+            items = allocate(sizeof(value_t *) * (length - 1));
 
-            for (left = 0, right = 0; right < length_value(collection); right++)
+            for (left = 0, right = 0; right < length; right++)
             {
                 if (right != adjusted)
                 {
@@ -1353,7 +1354,7 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
                 }
             }
 
-            return new_list(items, length);
+            return new_list(items, length - 1);
         }
         case VALUE_TYPE_MAP:
         {
