@@ -44,17 +44,17 @@ static value_t *apply_expression(expression_t *expression, stack_frame_t *frame)
 static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *apply_map(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_recall(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_memorize(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_remove(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_operators(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_catch(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_throw(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_multiply(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -63,26 +63,26 @@ static value_t *operator_modulo(argument_iterator_t *arguments, stack_frame_t *f
 static value_t *operator_and(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_or(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_not(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_conditional(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_loop(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_chain(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_less(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_greater(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_equal(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_conditional(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_loop(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_chain(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_catch(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_throw(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_type(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_number(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_string(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_operators(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_hash(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_remove(argument_iterator_t *arguments, stack_frame_t *frame);
 static map_t *default_operators(void);
 static void set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
 static map_t *empty_variables(void);
@@ -336,29 +336,6 @@ static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
     return operator->call(arguments, frame);
 }
 
-static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *document, *initial;
-    char *copy;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
-    {
-        return arguments->value;
-    }
-
-    document = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    initial = arguments->value;
-    copy = copy_string(view_string(document));
-
-    return evaluate_script(copy, frame->globals, initial, frame->depth + 1);
-}
-
 static value_t *operator_recall(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *identifier, *value;
@@ -417,647 +394,6 @@ static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *f
     remove_map_item(variables, view_string(identifier));
 
     return new_null();
-}
-
-static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *identifier;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
-    {
-        return arguments->value;
-    }
-
-    identifier = arguments->value;
-
-    return swap_variable_scope(frame->locals, frame->globals, view_string(identifier));
-}
-
-static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *identifier;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
-    {
-        return arguments->value;
-    }
-
-    identifier = arguments->value;
-
-    return swap_variable_scope(frame->globals, frame->locals, view_string(identifier));
-}
-
-static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *left, *right, *sorted;
-
-    left = list_map_keys(frame->globals);
-    right = list_map_keys(frame->locals);
-    sorted = merge_lists(left, right);
-    destroy_value(left);
-    destroy_value(right);
-    sort_collection(sorted, 0);
-
-    return sorted;
-}
-
-static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *solo, *sorted;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_MAP))
-    {
-        return arguments->value;
-    }
-
-    solo = arguments->value;
-    sorted = list_map_keys(solo->data);
-    sort_collection(sorted, 0);
-
-    return sorted;
-}
-
-static value_t *operator_operators(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *sorted;
-
-    sorted = list_map_keys(frame->operators);
-    sort_collection(sorted, 0);
-
-    return sorted;
-}
-
-static value_t *operator_catch(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        value_t *solo;
-
-        solo = arguments->value;
-
-        if (arguments->interception)
-        {
-            solo->thrown = 0;
-        }
-
-        return solo;
-    }
-
-    return new_null();
-}
-
-static value_t *operator_throw(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *solo, *copy;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    solo = arguments->value;
-    copy = copy_value(solo);
-    copy->thrown = 1;
-
-    return copy;
-}
-
-static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *left, *right;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_NONNULL))
-    {
-        return arguments->value;
-    }
-
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_NONNULL))
-    {
-        return arguments->value;
-    }
-
-    right = arguments->value;
-
-    if (left->type != right->type)
-    {
-        return throw_error(ERROR_ARGUMENT);
-    }
-
-    switch (left->type)
-    {
-        case VALUE_TYPE_NUMBER:
-        {
-            int sum;
-
-            if (number_add(view_number(left), view_number(right), &sum))
-            {
-                return new_number(sum);
-            }
-            else
-            {
-                return throw_error(ERROR_BOUNDS);
-            }
-        }
-        case VALUE_TYPE_STRING:
-        {
-            char *sum;
-
-            if (string_add(view_string(left), view_string(right), &sum))
-            {
-                return new_string(sum);
-            }
-            else
-            {
-                return throw_error(ERROR_BOUNDS);
-            }
-        }
-        case VALUE_TYPE_LIST:
-            return merge_lists(left, right);
-        case VALUE_TYPE_MAP:
-            return merge_maps(left, right);
-        default:
-            return throw_error(ERROR_ARGUMENT);
-    }
-}
-
-static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *left, *right;
-    int difference;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    right = arguments->value;
-
-    if (number_subtract(view_number(left), view_number(right), &difference))
-    {
-        return new_number(difference);
-    }
-    else
-    {
-        return throw_error(ERROR_BOUNDS);
-    }
-}
-
-static value_t *operator_multiply(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *left, *right;
-    int product;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    right = arguments->value;
-
-    if (number_multiply(view_number(left), view_number(right), &product))
-    {
-        return new_number(product);
-    }
-    else
-    {
-        return throw_error(ERROR_BOUNDS);
-    }
-}
-
-static value_t *operator_divide(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *left, *right;
-    int quotient;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    right = arguments->value;
-
-    if (view_number(right) == 0)
-    {
-        return throw_error(ERROR_ARITHMETIC);
-    }
-
-    if (number_divide(view_number(left), view_number(right), &quotient))
-    {
-        return new_number(quotient);
-    }
-    else
-    {
-        return throw_error(ERROR_BOUNDS);
-    }
-}
-
-static value_t *operator_modulo(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *left, *right;
-    int remainder;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    right = arguments->value;
-
-    if (view_number(right) == 0)
-    {
-        return throw_error(ERROR_ARITHMETIC);
-    }
-
-    if (number_modulo(view_number(left), view_number(right), &remainder))
-    {
-        return new_number(remainder);
-    }
-    else
-    {
-        return throw_error(ERROR_BOUNDS);
-    }
-}
-
-static value_t *operator_and(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *left, *right;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    right = arguments->value;
-
-    return new_number(view_number(left) && view_number(right));
-}
-
-static value_t *operator_or(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *left, *right;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    right = arguments->value;
-
-    return new_number(view_number(left) || view_number(right));
-}
-
-static value_t *operator_not(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *solo;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    solo = arguments->value;
-
-    return new_number(!view_number(solo));
-}
-
-static value_t *operator_conditional(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *condition;
-    int first;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    condition = arguments->value;
-    first = view_number(condition);
-
-    if (!first)
-    {
-        skip_argument(arguments);
-    }
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    if (first && !has_next_argument(arguments))
-    {
-        return throw_error(ERROR_ARGUMENT);
-    }
-
-    return copy_value(arguments->value);
-}
-
-static value_t *operator_loop(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    int proceed;
-
-    proceed = 1;
-
-    while (proceed)
-    {
-        value_t *condition;
-
-        if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-        {
-            return arguments->value;
-        }
-
-        condition = arguments->value;
-        proceed = view_number(condition);
-
-        if (proceed)
-        {
-            if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-            {
-                return arguments->value;
-            }
-
-            reset_arguments(arguments);
-            skip_argument(arguments);
-        }
-    }
-
-    return new_null();
-}
-
-static value_t *operator_chain(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *last;
-    size_t count;
-
-    count = 0;
-
-    do
-    {
-        if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-        {
-            return arguments->value;
-        }
-
-        last = arguments->value;
-        count++;
-    } while (has_next_argument(arguments));
-
-    if (count < 2)
-    {
-        return throw_error(ERROR_ARGUMENT);
-    }
-
-    return copy_value(last);
-}
-
-static value_t *operator_less(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *left, *right;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    right = arguments->value;
-
-    return new_number(compare_values(left, right) < 0);
-}
-
-static value_t *operator_greater(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *left, *right;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    right = arguments->value;
-
-    return new_number(compare_values(left, right) > 0);
-}
-
-static value_t *operator_equal(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *left, *right;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    right = arguments->value;
-
-    return new_number(compare_values(left, right) == 0);
-}
-
-static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *collection, *reversed, *sorted;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_LIST))
-    {
-        return arguments->value;
-    }
-
-    collection = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
-    {
-        return arguments->value;
-    }
-
-    reversed = arguments->value;
-    sorted = copy_value(collection);
-    sort_collection(sorted, view_number(reversed));
-
-    return sorted;
-}
-
-static value_t *operator_type(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *solo;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    solo = arguments->value;
-
-    switch (solo->type)
-    {
-        case VALUE_TYPE_NULL:
-            return new_string(copy_string("?"));
-        case VALUE_TYPE_NUMBER:
-            return new_string(copy_string("##"));
-        case VALUE_TYPE_STRING:
-            return new_string(copy_string("\"\""));
-        case VALUE_TYPE_LIST:
-            return new_string(copy_string("[]"));
-        case VALUE_TYPE_MAP:
-            return new_string(copy_string("{}"));
-        default:
-            return throw_error(ERROR_ARGUMENT);
-    }
-}
-
-static value_t *operator_number(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *solo;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    solo = arguments->value;
-
-    switch (solo->type)
-    {
-        case VALUE_TYPE_NULL:
-        case VALUE_TYPE_NUMBER:
-            return copy_value(solo);
-        case VALUE_TYPE_STRING:
-        {
-            int out;
-
-            return string_to_integer(view_string(solo), NUMBER_DIGIT_CAPACITY, &out) ? new_number(out) : throw_error(ERROR_TYPE);
-        }
-        default:
-            return throw_error(ERROR_ARGUMENT);
-    }
-}
-
-static value_t *operator_string(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *solo;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    solo = arguments->value;
-
-    switch (solo->type)
-    {
-        case VALUE_TYPE_NULL:
-        case VALUE_TYPE_STRING:
-            return copy_value(solo);
-        case VALUE_TYPE_NUMBER:
-            return new_string(integer_to_string(view_number(solo)));
-        default:
-            return throw_error(ERROR_ARGUMENT);
-    }
-}
-
-static value_t *operator_hash(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *solo;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    solo = arguments->value;
-
-    return new_number(hash_value(solo));
-}
-
-static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *solo;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    solo = arguments->value;
-
-    return represent_value(solo);
-}
-
-static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *solo;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION))
-    {
-        return arguments->value;
-    }
-
-    solo = arguments->value;
-
-    return new_number(length_value(solo));
 }
 
 static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1377,6 +713,728 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
     }
 }
 
+static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *path;
+    char *file;
+    size_t length, index;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    path = arguments->value;
+    file = read_file(view_string(path));
+
+    if (!file)
+    {
+        return new_null();
+    }
+
+    length = strlen(file);
+
+    if (length > NUMBER_MAX)
+    {
+        return throw_error(ERROR_BOUNDS);
+    }
+
+    for (index = 0; index < length; index++)
+    {
+        unsigned char symbol;
+
+        symbol = file[index];
+
+        if (!(isprint(symbol) || symbol == '\t' || symbol == '\n' || symbol == '\r'))
+        {
+            free(file);
+            return throw_error(ERROR_TYPE);
+        }
+    }
+
+    return new_string(file);
+}
+
+static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *path, *text;
+    FILE *file;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    path = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    text = arguments->value;
+    file = fopen(view_string(path), "wb");
+
+    if (file)
+    {
+        fwrite(view_string(text), sizeof(char), length_value(text), file);
+        fclose(file);
+    }
+
+    return new_null();
+}
+
+static value_t *operator_remove(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *path;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    path = arguments->value;
+    remove(view_string(path));
+
+    return new_null();
+}
+
+static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *identifier;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    identifier = arguments->value;
+
+    return swap_variable_scope(frame->locals, frame->globals, view_string(identifier));
+}
+
+static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *identifier;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    identifier = arguments->value;
+
+    return swap_variable_scope(frame->globals, frame->locals, view_string(identifier));
+}
+
+static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *left, *right;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_NONNULL))
+    {
+        return arguments->value;
+    }
+
+    left = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_NONNULL))
+    {
+        return arguments->value;
+    }
+
+    right = arguments->value;
+
+    if (left->type != right->type)
+    {
+        return throw_error(ERROR_ARGUMENT);
+    }
+
+    switch (left->type)
+    {
+        case VALUE_TYPE_NUMBER:
+        {
+            int sum;
+
+            if (number_add(view_number(left), view_number(right), &sum))
+            {
+                return new_number(sum);
+            }
+            else
+            {
+                return throw_error(ERROR_BOUNDS);
+            }
+        }
+        case VALUE_TYPE_STRING:
+        {
+            char *sum;
+
+            if (string_add(view_string(left), view_string(right), &sum))
+            {
+                return new_string(sum);
+            }
+            else
+            {
+                return throw_error(ERROR_BOUNDS);
+            }
+        }
+        case VALUE_TYPE_LIST:
+            return merge_lists(left, right);
+        case VALUE_TYPE_MAP:
+            return merge_maps(left, right);
+        default:
+            return throw_error(ERROR_ARGUMENT);
+    }
+}
+
+static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *left, *right;
+    int difference;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    left = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    right = arguments->value;
+
+    if (number_subtract(view_number(left), view_number(right), &difference))
+    {
+        return new_number(difference);
+    }
+    else
+    {
+        return throw_error(ERROR_BOUNDS);
+    }
+}
+
+static value_t *operator_multiply(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *left, *right;
+    int product;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    left = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    right = arguments->value;
+
+    if (number_multiply(view_number(left), view_number(right), &product))
+    {
+        return new_number(product);
+    }
+    else
+    {
+        return throw_error(ERROR_BOUNDS);
+    }
+}
+
+static value_t *operator_divide(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *left, *right;
+    int quotient;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    left = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    right = arguments->value;
+
+    if (view_number(right) == 0)
+    {
+        return throw_error(ERROR_ARITHMETIC);
+    }
+
+    if (number_divide(view_number(left), view_number(right), &quotient))
+    {
+        return new_number(quotient);
+    }
+    else
+    {
+        return throw_error(ERROR_BOUNDS);
+    }
+}
+
+static value_t *operator_modulo(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *left, *right;
+    int remainder;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    left = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    right = arguments->value;
+
+    if (view_number(right) == 0)
+    {
+        return throw_error(ERROR_ARITHMETIC);
+    }
+
+    if (number_modulo(view_number(left), view_number(right), &remainder))
+    {
+        return new_number(remainder);
+    }
+    else
+    {
+        return throw_error(ERROR_BOUNDS);
+    }
+}
+
+static value_t *operator_and(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *left, *right;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    left = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    right = arguments->value;
+
+    return new_number(view_number(left) && view_number(right));
+}
+
+static value_t *operator_or(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *left, *right;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    left = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    right = arguments->value;
+
+    return new_number(view_number(left) || view_number(right));
+}
+
+static value_t *operator_not(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *solo;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    solo = arguments->value;
+
+    return new_number(!view_number(solo));
+}
+
+static value_t *operator_less(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *left, *right;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    left = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    right = arguments->value;
+
+    return new_number(compare_values(left, right) < 0);
+}
+
+static value_t *operator_greater(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *left, *right;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    left = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    right = arguments->value;
+
+    return new_number(compare_values(left, right) > 0);
+}
+
+static value_t *operator_equal(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *left, *right;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    left = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    right = arguments->value;
+
+    return new_number(compare_values(left, right) == 0);
+}
+
+static value_t *operator_conditional(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *condition;
+    int first;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    condition = arguments->value;
+    first = view_number(condition);
+
+    if (!first)
+    {
+        skip_argument(arguments);
+    }
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    if (first && !has_next_argument(arguments))
+    {
+        return throw_error(ERROR_ARGUMENT);
+    }
+
+    return copy_value(arguments->value);
+}
+
+static value_t *operator_loop(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    int proceed;
+
+    proceed = 1;
+
+    while (proceed)
+    {
+        value_t *condition;
+
+        if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+        {
+            return arguments->value;
+        }
+
+        condition = arguments->value;
+        proceed = view_number(condition);
+
+        if (proceed)
+        {
+            if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+            {
+                return arguments->value;
+            }
+
+            reset_arguments(arguments);
+            skip_argument(arguments);
+        }
+    }
+
+    return new_null();
+}
+
+static value_t *operator_chain(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *last;
+    size_t count;
+
+    count = 0;
+
+    do
+    {
+        if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+        {
+            return arguments->value;
+        }
+
+        last = arguments->value;
+        count++;
+    } while (has_next_argument(arguments));
+
+    if (count < 2)
+    {
+        return throw_error(ERROR_ARGUMENT);
+    }
+
+    return copy_value(last);
+}
+
+static value_t *operator_catch(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        value_t *solo;
+
+        solo = arguments->value;
+
+        if (arguments->interception)
+        {
+            solo->thrown = 0;
+        }
+
+        return solo;
+    }
+
+    return new_null();
+}
+
+static value_t *operator_throw(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *solo, *copy;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    solo = arguments->value;
+    copy = copy_value(solo);
+    copy->thrown = 1;
+
+    return copy;
+}
+
+static value_t *operator_type(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *solo;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    solo = arguments->value;
+
+    switch (solo->type)
+    {
+        case VALUE_TYPE_NULL:
+            return new_string(copy_string("?"));
+        case VALUE_TYPE_NUMBER:
+            return new_string(copy_string("##"));
+        case VALUE_TYPE_STRING:
+            return new_string(copy_string("\"\""));
+        case VALUE_TYPE_LIST:
+            return new_string(copy_string("[]"));
+        case VALUE_TYPE_MAP:
+            return new_string(copy_string("{}"));
+        default:
+            return throw_error(ERROR_ARGUMENT);
+    }
+}
+
+static value_t *operator_number(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *solo;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    solo = arguments->value;
+
+    switch (solo->type)
+    {
+        case VALUE_TYPE_NULL:
+        case VALUE_TYPE_NUMBER:
+            return copy_value(solo);
+        case VALUE_TYPE_STRING:
+        {
+            int out;
+
+            return string_to_integer(view_string(solo), NUMBER_DIGIT_CAPACITY, &out) ? new_number(out) : throw_error(ERROR_TYPE);
+        }
+        default:
+            return throw_error(ERROR_ARGUMENT);
+    }
+}
+
+static value_t *operator_string(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *solo;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    solo = arguments->value;
+
+    switch (solo->type)
+    {
+        case VALUE_TYPE_NULL:
+        case VALUE_TYPE_STRING:
+            return copy_value(solo);
+        case VALUE_TYPE_NUMBER:
+            return new_string(integer_to_string(view_number(solo)));
+        default:
+            return throw_error(ERROR_ARGUMENT);
+    }
+}
+
+static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *solo;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION))
+    {
+        return arguments->value;
+    }
+
+    solo = arguments->value;
+
+    return new_number(length_value(solo));
+}
+
+static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *document, *initial;
+    char *copy;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    document = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    {
+        return arguments->value;
+    }
+
+    initial = arguments->value;
+    copy = copy_string(view_string(document));
+
+    return evaluate_script(copy, frame->globals, initial, frame->depth + 1);
+}
+
+static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *left, *right, *sorted;
+
+    left = list_map_keys(frame->globals);
+    right = list_map_keys(frame->locals);
+    sorted = merge_lists(left, right);
+    destroy_value(left);
+    destroy_value(right);
+    sort_collection(sorted, 0);
+
+    return sorted;
+}
+
+static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *solo, *sorted;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_MAP))
+    {
+        return arguments->value;
+    }
+
+    solo = arguments->value;
+    sorted = list_map_keys(solo->data);
+    sort_collection(sorted, 0);
+
+    return sorted;
+}
+
+static value_t *operator_operators(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *sorted;
+
+    sorted = list_map_keys(frame->operators);
+    sort_collection(sorted, 0);
+
+    return sorted;
+}
+
+static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *collection, *reversed, *sorted;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_LIST))
+    {
+        return arguments->value;
+    }
+
+    collection = arguments->value;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    {
+        return arguments->value;
+    }
+
+    reversed = arguments->value;
+    sorted = copy_value(collection);
+    sort_collection(sorted, view_number(reversed));
+
+    return sorted;
+}
+
 static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *collection, *start, *end;
@@ -1469,90 +1527,32 @@ static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *fr
     }
 }
 
-static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame)
+static value_t *operator_hash(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *path;
-    char *file;
-    size_t length, index;
+    value_t *solo;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
     {
         return arguments->value;
     }
 
-    path = arguments->value;
-    file = read_file(view_string(path));
+    solo = arguments->value;
 
-    if (!file)
-    {
-        return new_null();
-    }
-
-    length = strlen(file);
-
-    if (length > NUMBER_MAX)
-    {
-        return throw_error(ERROR_BOUNDS);
-    }
-
-    for (index = 0; index < length; index++)
-    {
-        unsigned char symbol;
-
-        symbol = file[index];
-
-        if (!(isprint(symbol) || symbol == '\t' || symbol == '\n' || symbol == '\r'))
-        {
-            free(file);
-            return throw_error(ERROR_TYPE);
-        }
-    }
-
-    return new_string(file);
+    return new_number(hash_value(solo));
 }
 
-static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame)
+static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *path, *text;
-    FILE *file;
+    value_t *solo;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
     {
         return arguments->value;
     }
 
-    path = arguments->value;
+    solo = arguments->value;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
-    {
-        return arguments->value;
-    }
-
-    text = arguments->value;
-    file = fopen(view_string(path), "wb");
-
-    if (file)
-    {
-        fwrite(view_string(text), sizeof(char), length_value(text), file);
-        fclose(file);
-    }
-
-    return new_null();
-}
-
-static value_t *operator_remove(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *path;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
-    {
-        return arguments->value;
-    }
-
-    path = arguments->value;
-    remove(view_string(path));
-
-    return new_null();
+    return represent_value(solo);
 }
 
 static map_t *default_operators(void)
@@ -1561,17 +1561,17 @@ static map_t *default_operators(void)
 
     operators = empty_map(hash_string, free, 64);
 
-    set_operator(operators, "~", operator_evaluate);
     set_operator(operators, "x->", operator_recall);
     set_operator(operators, "x<-", operator_memorize);
     set_operator(operators, "x--", operator_forget);
+    set_operator(operators, "$->", operator_get);
+    set_operator(operators, "$<-", operator_set);
+    set_operator(operators, "$--", operator_unset);
+    set_operator(operators, "[o]->", operator_read);
+    set_operator(operators, "[o]<-", operator_write);
+    set_operator(operators, "[o]--", operator_remove);
     set_operator(operators, "<3", operator_promote);
     set_operator(operators, "</3", operator_demote);
-    set_operator(operators, "x[]", operator_variables);
-    set_operator(operators, "$[]", operator_keys);
-    set_operator(operators, "()[]", operator_operators);
-    set_operator(operators, "><", operator_catch);
-    set_operator(operators, "<>", operator_throw);
     set_operator(operators, "+", operator_add);
     set_operator(operators, "-", operator_subtract);
     set_operator(operators, "*", operator_multiply);
@@ -1580,26 +1580,26 @@ static map_t *default_operators(void)
     set_operator(operators, "&", operator_and);
     set_operator(operators, "|", operator_or);
     set_operator(operators, "!", operator_not);
-    set_operator(operators, "?", operator_conditional);
-    set_operator(operators, "o", operator_loop);
-    set_operator(operators, "...", operator_chain);
     set_operator(operators, "<", operator_less);
     set_operator(operators, ">", operator_greater);
     set_operator(operators, "=", operator_equal);
-    set_operator(operators, "<|>", operator_sort);
+    set_operator(operators, "?", operator_conditional);
+    set_operator(operators, "o", operator_loop);
+    set_operator(operators, "...", operator_chain);
+    set_operator(operators, "><", operator_catch);
+    set_operator(operators, "<>", operator_throw);
     set_operator(operators, "_", operator_type);
     set_operator(operators, "#", operator_number);
     set_operator(operators, "\"", operator_string);
+    set_operator(operators, "| |", operator_length);
+    set_operator(operators, "~", operator_evaluate);
+    set_operator(operators, "x[]", operator_variables);
+    set_operator(operators, "$[]", operator_keys);
+    set_operator(operators, "()[]", operator_operators);
+    set_operator(operators, "<|>", operator_sort);
+    set_operator(operators, "[# #]", operator_slice);
     set_operator(operators, "::", operator_hash);
     set_operator(operators, ";", operator_represent);
-    set_operator(operators, "| |", operator_length);
-    set_operator(operators, "$->", operator_get);
-    set_operator(operators, "$<-", operator_set);
-    set_operator(operators, "$--", operator_unset);
-    set_operator(operators, "[# #]", operator_slice);
-    set_operator(operators, "[o]->", operator_read);
-    set_operator(operators, "[o]<-", operator_write);
-    set_operator(operators, "[o]--", operator_remove);
 
     return operators;
 }

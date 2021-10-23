@@ -23,17 +23,17 @@ language.
 ### Operators
 | Operator | Description | Example                                             |
 |----------|-------------|-----------------------------------------------------|
-| `~`      | evaluate    | `("~" "(\"<\" (\"x->\" \"@\") #0#)" #-1#)`          |
 | `x->`    | recall      | `("x->" "read-me")`                                 |
 | `x<-`    | memorize    | `("x<-" "override-me" "any value")`                 |
 | `x--`    | forget      | `("x--" "remove-me")`                               |
+| `$->`    | get         | `("$->" {"one" #1# "two" #2# "three" #3#} "two")`   |
+| `$<-`    | set         | `("$<-" {} "first" "value")`                        |
+| `$--`    | unset       | `("$--" {"forget" "me"} "forget")`                  |
+| `[o]->`  | read        | `("[o]->" "file_to_read.txt")`                      |
+| `[o]<-`  | write       | `("[o]<-" "file_to_override.txt" "text")`           |
+| `[o]--`  | remove      | `("[o]--" "file_to_remove.txt")`                    |
 | `<3`     | promote     | `("<3" "make-me-global")`                           |
 | `</3`    | demote      | `("</3" "make-me-local")`                           |
-| `x[]`    | variables   | `("x[]")`                                           |
-| `$[]`    | keys        | `("$[]" {"first" #1# "second" #2# "third" #3#})`    |
-| `()[]`   | operators   | `("()[]")`                                          |
-| `><`     | catch       | `("><" ("/" #100# #0#))`                            |
-| `<>`     | throw       | `("<>" "[ERROR] invalid format")`                   |
 | `+`      | add         | `("+" #75# #25#)`                                   |
 | `-`      | subtract    | `("-" #500# #400#)`                                 |
 | `*`      | multiply    | `("*" #20# #5#)`                                    |
@@ -42,26 +42,26 @@ language.
 | `&`      | and         | `("&" #1# #1#)`                                     |
 | `\|`     | or          | `("\|" #0# #1#)`                                    |
 | `!`      | not         | `("!" #0#)`                                         |
-| `?`      | conditional | `("?" #1# "true" "false")`                          |
-| `o`      | loop        | `("x<-" "i" #1#) ("o" ("x->" "i") ("x<-" "i" #0#))` |
-| `...`    | chain       | `("..." "first" "second" "..." "last")`             |
 | `<`      | less        | `("<" #0# #100#)`                                   |
 | `>`      | greater     | `(">" #100# #0#)`                                   |
 | `=`      | equal       | `("=" #100# #100#)`                                 |
-| `<\|>`   | sort        | `("<\|>" [#3# #2# #5# #1# #4#])`                    |
+| `?`      | conditional | `("?" #1# "true" "false")`                          |
+| `o`      | loop        | `("x<-" "i" #1#) ("o" ("x->" "i") ("x<-" "i" #0#))` |
+| `...`    | chain       | `("..." "first" "second" "..." "last")`             |
+| `><`     | catch       | `("><" ("/" #100# #0#))`                            |
+| `<>`     | throw       | `("<>" "[ERROR] invalid format")`                   |
 | `_`      | type        | `("_" "any value")`                                 |
 | `#`      | number      | `("#" "100")`                                       |
 | `"`      | string      | `("\"" #100#)`                                      |
+| `\| \|`  | length      | `("\| \|" "a string, list, or map")`                |
+| `~`      | evaluate    | `("~" "(\"<\" (\"x->\" \"@\") #0#)" #-1#)`          |
+| `x[]`    | variables   | `("x[]")`                                           |
+| `$[]`    | keys        | `("$[]" {"first" #1# "second" #2# "third" #3#})`    |
+| `()[]`   | operators   | `("()[]")`                                          |
+| `<\|>`   | sort        | `("<\|>" [#3# #2# #5# #1# #4#])`                    |
+| `[# #]`  | slice       | `("[# #]" "find me in this text" #6# #7#)`          |
 | `::`     | hash        | `("::" [#2# "bucket"])`                             |
 | `;`      | represent   | `(";" [#2# "code"])`                                |
-| `\| \|`  | length      | `("\| \|" "a string, list, or map")`                |
-| `$->`    | get         | `("$->" {"one" #1# "two" #2# "three" #3#} "two")`   |
-| `$<-`    | set         | `("$<-" {} "first" "value")`                        |
-| `$--`    | unset       | `("$--" {"forget" "me"} "forget")`                  |
-| `[# #]`  | slice       | `("[# #]" "find me in this text" #6# #7#)`          |
-| `[o]->`  | read        | `("[o]->" "file_to_read.txt")`                      |
-| `[o]<-`  | write       | `("[o]<-" "file_to_override.txt" "text")`           |
-| `[o]--`  | remove      | `("[o]--" "file_to_remove.txt")`                    |
 
 ## License
 Snrub is licensed under the MIT license. Review the LICENSE file included in the
