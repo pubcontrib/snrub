@@ -605,34 +605,31 @@ char *unescape_string(char *string)
 
         symbol = string[right];
 
-        if (symbol == '\\')
+        switch (symbol)
         {
-            unescape[left++] = '\\';
-            unescape[left++] = '\\';
-        }
-        else if (symbol == '"')
-        {
-            unescape[left++] = '\\';
-            unescape[left++] = '"';
-        }
-        else if (symbol == '\t')
-        {
-            unescape[left++] = '\\';
-            unescape[left++] = 't';
-        }
-        else if (symbol == '\n')
-        {
-            unescape[left++] = '\\';
-            unescape[left++] = 'n';
-        }
-        else if (symbol == '\r')
-        {
-            unescape[left++] = '\\';
-            unescape[left++] = 'r';
-        }
-        else
-        {
-            unescape[left++] = symbol;
+            case '\\':
+                unescape[left++] = '\\';
+                unescape[left++] = '\\';
+                break;
+            case '"':
+                unescape[left++] = '\\';
+                unescape[left++] = '"';
+                break;
+            case '\t':
+                unescape[left++] = '\\';
+                unescape[left++] = 't';
+                break;
+            case '\n':
+                unescape[left++] = '\\';
+                unescape[left++] = 'n';
+                break;
+            case '\r':
+                unescape[left++] = '\\';
+                unescape[left++] = 'r';
+                break;
+            default:
+                unescape[left++] = symbol;
+                break;
         }
     }
 
