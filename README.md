@@ -90,7 +90,7 @@ make clean check install
 ```
 
 ## Running
-Once you've built and installed the project you'll have the interpreter at your
+Once you've built and installed the program you'll have the interpreter at your
 system's disposal. Try `-h` for help.
 
 Run code from a file:
