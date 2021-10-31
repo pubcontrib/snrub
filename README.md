@@ -72,9 +72,9 @@ Snrub is licensed under the MIT license. Review the LICENSE file included in the
 project before using Snrub to understand your rights.
 
 ## Building
-The codebase is written using the 1989 ANSI standard of C. An ANSI-compliant
-compiler is required to build the program from source. Consider the following
-minimums of the target data model additional requirements:
+The reference implementation is written using the 1989 ANSI standard of C. An
+ANSI-compliant compiler is required to build the program from source. Consider
+the following minimums of the target data model additional requirements:
 
 - `int` must be able to hold all values between `[-2147483647, 2147483647]`
 - `size_t` must be able to hold all values between `[0, 2147483647]`
