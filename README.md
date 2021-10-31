@@ -103,6 +103,11 @@ Run code without a file:
 snrub -t '("+" #300# #200#)'
 ```
 
+Run code with an argument:
+```shell
+snrub -t '("*" ("x->" "@") ("x->" "@"))' '#8#'
+```
+
 Start an interactive scripting shell:
 ```shell
 snrub -i
