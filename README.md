@@ -1,6 +1,6 @@
 # Snrub
-> Snrub is an open-source, platform-independent, and interpreted programming
-language.
+> Snrub is portability-focused, language-independent, scripting programming
+> language.
 
 ```
 `set numbers a and b then put their sum into c`
