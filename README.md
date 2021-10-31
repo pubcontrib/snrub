@@ -2,6 +2,10 @@
 > Snrub is portability-focused, language-independent, scripting programming
 > language.
 
+This project is the home of the Snrub programming language including a reference
+implementation, a collection of test cases demonstrating intended behavior, and
+living documentation.
+
 ```
 `set numbers a and b then put their sum into c`
 ("x<-" "a" #300#)
