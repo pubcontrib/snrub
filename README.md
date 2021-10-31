@@ -91,19 +91,24 @@ make clean check install
 
 ## Running
 Once you've built and installed the program you'll have the interpreter at your
-system's disposal. Try `-h` for help.
+system's disposal. Try the program option `-h` for usage notes.
 
 Run code from a file:
 ```shell
-snrub -f script.txt
+snrub -f hello.txt
 ```
 
-Run code without a file:
+Run code from a file with an argument:
 ```shell
-snrub -t '("+" #300# #200#)'
+snrub -f power.txt '#8#'
 ```
 
-Run code with an argument:
+Run code from text:
+```shell
+snrub -t '("+" "hello " "world")'
+```
+
+Run code from text with an argument:
 ```shell
 snrub -t '("*" ("x->" "@") ("x->" "@"))' '#8#'
 ```
