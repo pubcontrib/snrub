@@ -155,6 +155,12 @@ void *reallocate(void *memory, size_t size)
     return memory;
 }
 
+void unsupported(char *location)
+{
+    fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, location);
+    crash();
+}
+
 void crash(void)
 {
     exit(PROGRAM_ERROR);

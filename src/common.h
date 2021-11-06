@@ -12,6 +12,7 @@ int string_to_integer(char *string, int digits, int *out);
 void *allocate(size_t size);
 void *callocate(int number, size_t size);
 void *reallocate(void *memory, size_t size);
+void unsupported(char *location);
 void crash(void);
 
 #endif

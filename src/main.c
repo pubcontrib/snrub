@@ -257,8 +257,7 @@ static int print_value(value_t *value)
         }
         else
         {
-            fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, "CLI_REPRESENT_TYPE");
-            crash();
+            unsupported("CLI_REPRESENT_TYPE");
         }
     }
 

@@ -246,8 +246,7 @@ value_t *copy_value(value_t *this)
             return new_map(data);
         }
         default:
-            fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, "VALUE_COPY_TYPE");
-            crash();
+            unsupported("VALUE_COPY_TYPE");
             return NULL;
     }
 }
@@ -267,8 +266,7 @@ int hash_value(value_t *this)
         case VALUE_TYPE_MAP:
             return hash_map(this->data);
         default:
-            fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, "VALUE_HASH_TYPE");
-            crash();
+            unsupported("VALUE_HASH_TYPE");
             return 0;
     }
 }
@@ -357,8 +355,7 @@ value_t *represent_value(value_t *this)
         case VALUE_TYPE_MAP:
             return represent_map(this->data);
         default:
-            fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, "VALUE_REPRESENT_TYPE");
-            crash();
+            unsupported("VALUE_REPRESENT_TYPE");
             return NULL;
     }
 }
@@ -766,8 +763,7 @@ int compare_values(value_t *left, value_t *right)
             return 0;
         }
         default:
-            fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, "VALUE_COMPARE_TYPE");
-            crash();
+            unsupported("VALUE_COMPARE_TYPE");
             return 0;
     }
 }
@@ -782,8 +778,7 @@ size_t length_value(value_t *value)
         case VALUE_TYPE_MAP:
             return value->size;
         default:
-            fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, "VALUE_LENGTH_TYPE");
-            crash();
+            unsupported("VALUE_LENGTH_TYPE");
             return 0;
     }
 }
@@ -795,8 +790,7 @@ int view_number(value_t *value)
         case VALUE_TYPE_NUMBER:
             return ((int *) value->data)[0];
         default:
-            fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, "VALUE_NUMBER_TYPE");
-            crash();
+            unsupported("VALUE_NUMBER_TYPE");
             return 0;
     }
 }
@@ -808,8 +802,7 @@ char *view_string(value_t *value)
         case VALUE_TYPE_STRING:
             return (char *) value->data;
         default:
-            fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, "VALUE_STRING_TYPE");
-            crash();
+            unsupported("VALUE_STRING_TYPE");
             return NULL;
     }
 }
@@ -989,8 +982,7 @@ void destroy_value(value_t *value)
                 destroy_map(value->data);
                 break;
             default:
-                fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, "VALUE_DESTROY_TYPE");
-                crash();
+                unsupported("VALUE_DESTROY_TYPE");
                 break;
         }
     }
