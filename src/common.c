@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -119,6 +120,7 @@ void *allocate(size_t size)
 
     if (!memory)
     {
+        fprintf(stderr, "%s: memory allocation failed\n", PROGRAM_NAME);
         crash();
     }
 
@@ -133,6 +135,7 @@ void *callocate(int number, size_t size)
 
     if (!memory)
     {
+        fprintf(stderr, "%s: memory allocation failed\n", PROGRAM_NAME);
         crash();
     }
 
@@ -145,6 +148,7 @@ void *reallocate(void *memory, size_t size)
 
     if (!memory)
     {
+        fprintf(stderr, "%s: memory allocation failed\n", PROGRAM_NAME);
         crash();
     }
 

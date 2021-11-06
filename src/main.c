@@ -7,7 +7,6 @@
 #include "map.h"
 #include "common.h"
 
-#define PROGRAM_NAME "snrub"
 #define PROGRAM_VERSION "v0.73.4"
 
 static int run_help(void);
@@ -258,6 +257,7 @@ static int print_value(value_t *value)
         }
         else
         {
+            fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, "CLI_REPRESENT_TYPE");
             crash();
         }
     }
