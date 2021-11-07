@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
 #include "common.h"
@@ -120,8 +121,7 @@ void *allocate(size_t size)
 
     if (!memory)
     {
-        fprintf(stderr, "%s: memory allocation failed\n", PROGRAM_NAME);
-        crash();
+        crash_with_message("memory allocation failed");
     }
 
     return memory;
@@ -135,8 +135,7 @@ void *callocate(int number, size_t size)
 
     if (!memory)
     {
-        fprintf(stderr, "%s: memory allocation failed\n", PROGRAM_NAME);
-        crash();
+        crash_with_message("memory allocation failed");
     }
 
     return memory;
@@ -148,16 +147,22 @@ void *reallocate(void *memory, size_t size)
 
     if (!memory)
     {
-        fprintf(stderr, "%s: memory allocation failed\n", PROGRAM_NAME);
-        crash();
+        crash_with_message("memory allocation failed");
     }
 
     return memory;
 }
 
-void unsupported(char *location)
+void crash_with_message(char *format, ...)
 {
-    fprintf(stderr, "%s: unsupported branch %s\n", PROGRAM_NAME, location);
+    va_list arguments;
+
+    va_start(arguments, format);
+    fprintf(stderr, "%s: ", PROGRAM_NAME);
+    vfprintf(stderr, format, arguments);
+    fprintf(stderr, "\n");
+    va_end(arguments);
+
     crash();
 }
 

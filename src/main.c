@@ -56,8 +56,8 @@ int main(int argc, char **argv)
                     interactive = 1;
                     break;
                 default:
-                    fprintf(stderr, "%s: illegal option %c\n", PROGRAM_NAME, argv[argument][character]);
-                    crash();
+                    crash_with_message("illegal option %c", argv[argument][character]);
+                    break;
             }
         }
     }
@@ -66,8 +66,7 @@ int main(int argc, char **argv)
 
     if (modes > 1)
     {
-        fprintf(stderr, "%s: modes are mutually exclusive\n", PROGRAM_NAME);
-        crash();
+        crash_with_message("modes are mutually exclusive");
     }
 
     if (help)
@@ -82,16 +81,14 @@ int main(int argc, char **argv)
 
     if (!is_portable())
     {
-        fprintf(stderr, "%s: not portable\n", PROGRAM_NAME);
-        crash();
+        crash_with_message("not portable");
     }
 
     if (!modes || file)
     {
         if (argument == argc)
         {
-            fprintf(stderr, "%s: missing operand\n", PROGRAM_NAME);
-            crash();
+            crash_with_message("missing operand");
         }
 
         if (argc - argument > 1)
@@ -108,8 +105,7 @@ int main(int argc, char **argv)
     {
         if (argument == argc)
         {
-            fprintf(stderr, "%s: missing operand\n", PROGRAM_NAME);
-            crash();
+            crash_with_message("missing operand");
         }
 
         if (argc - argument > 1)
@@ -257,7 +253,7 @@ static int print_value(value_t *value)
         }
         else
         {
-            unsupported("CLI_REPRESENT_TYPE");
+            crash_with_message("unsupported branch %s", "CLI_REPRESENT_TYPE");
         }
     }
 

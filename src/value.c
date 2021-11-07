@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -246,7 +245,7 @@ value_t *copy_value(value_t *this)
             return new_map(data);
         }
         default:
-            unsupported("VALUE_COPY_TYPE");
+            crash_with_message("unsupported branch %s", "VALUE_COPY_TYPE");
             return NULL;
     }
 }
@@ -266,7 +265,7 @@ int hash_value(value_t *this)
         case VALUE_TYPE_MAP:
             return hash_map(this->data);
         default:
-            unsupported("VALUE_HASH_TYPE");
+            crash_with_message("unsupported branch %s", "VALUE_HASH_TYPE");
             return 0;
     }
 }
@@ -355,7 +354,7 @@ value_t *represent_value(value_t *this)
         case VALUE_TYPE_MAP:
             return represent_map(this->data);
         default:
-            unsupported("VALUE_REPRESENT_TYPE");
+            crash_with_message("unsupported branch %s", "VALUE_REPRESENT_TYPE");
             return NULL;
     }
 }
@@ -763,7 +762,7 @@ int compare_values(value_t *left, value_t *right)
             return 0;
         }
         default:
-            unsupported("VALUE_COMPARE_TYPE");
+            crash_with_message("unsupported branch %s", "VALUE_COMPARE_TYPE");
             return 0;
     }
 }
@@ -778,7 +777,7 @@ size_t length_value(value_t *value)
         case VALUE_TYPE_MAP:
             return value->size;
         default:
-            unsupported("VALUE_LENGTH_TYPE");
+            crash_with_message("unsupported branch %s", "VALUE_LENGTH_TYPE");
             return 0;
     }
 }
@@ -790,7 +789,7 @@ int view_number(value_t *value)
         case VALUE_TYPE_NUMBER:
             return ((int *) value->data)[0];
         default:
-            unsupported("VALUE_NUMBER_TYPE");
+            crash_with_message("unsupported branch %s", "VALUE_NUMBER_TYPE");
             return 0;
     }
 }
@@ -802,7 +801,7 @@ char *view_string(value_t *value)
         case VALUE_TYPE_STRING:
             return (char *) value->data;
         default:
-            unsupported("VALUE_STRING_TYPE");
+            crash_with_message("unsupported branch %s", "VALUE_STRING_TYPE");
             return NULL;
     }
 }
@@ -982,7 +981,7 @@ void destroy_value(value_t *value)
                 destroy_map(value->data);
                 break;
             default:
-                unsupported("VALUE_DESTROY_TYPE");
+                crash_with_message("unsupported branch %s", "VALUE_DESTROY_TYPE");
                 break;
         }
     }

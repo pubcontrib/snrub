@@ -220,7 +220,7 @@ static value_t *apply_expression(expression_t *expression, stack_frame_t *frame)
             result = apply_call(&arguments, frame);
             break;
         default:
-            unsupported("EXECUTE_EXPRESSION_TYPE");
+            crash_with_message("unsupported branch %s", "EXECUTE_EXPRESSION_TYPE");
             break;
     }
 
