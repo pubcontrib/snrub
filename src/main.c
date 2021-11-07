@@ -66,7 +66,7 @@ int main(int argc, char **argv)
 
     if (modes > 1)
     {
-        crash_with_message("modes are mutually exclusive");
+        crash_with_message("too many modes selected");
     }
 
     if (help)
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 
     if (!is_portable())
     {
-        crash_with_message("not portable");
+        crash_with_message("interpreter is not portable");
     }
 
     if (!modes || file)
