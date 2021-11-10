@@ -986,7 +986,16 @@ char *read_file(char *path)
 
         buffer = allocate(sizeof(char) * (length + 1));
         fread(buffer, 1, length, file);
-        buffer[length] = '\0';
+
+        if (ferror(file))
+        {
+            free(buffer);
+            buffer = NULL;
+        }
+        else
+        {
+            buffer[length] = '\0';
+        }
 
         fclose(file);
 
