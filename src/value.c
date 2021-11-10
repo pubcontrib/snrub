@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -960,6 +961,33 @@ int string_add(char *left, char *right, char **out)
     (*out) = sum;
 
     return 1;
+}
+
+char *read_file(char *path)
+{
+    FILE *file;
+
+    file = fopen(path, "rb");
+
+    if (file)
+    {
+        char *buffer;
+        long length;
+
+        fseek(file, 0, SEEK_END);
+        length = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        buffer = allocate(sizeof(char) * (length + 1));
+        fread(buffer, 1, length, file);
+        buffer[length] = '\0';
+
+        fclose(file);
+
+        return buffer;
+    }
+
+    return NULL;
 }
 
 void destroy_value(value_t *value)

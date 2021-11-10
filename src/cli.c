@@ -6,33 +6,6 @@
 static line_t *create_line(char *document, size_t size, size_t capacity, int exit);
 static line_t *empty_line(void);
 
-char *read_file(char *path)
-{
-    FILE *file;
-
-    file = fopen(path, "rb");
-
-    if (file)
-    {
-        char *buffer;
-        long length;
-
-        fseek(file, 0, SEEK_END);
-        length = ftell(file);
-        fseek(file, 0, SEEK_SET);
-
-        buffer = allocate(sizeof(char) * (length + 1));
-        fread(buffer, 1, length, file);
-        buffer[length] = '\0';
-
-        fclose(file);
-
-        return buffer;
-    }
-
-    return NULL;
-}
-
 line_t *next_line(void)
 {
     line_t *line;

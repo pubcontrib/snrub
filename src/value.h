@@ -73,6 +73,7 @@ int number_multiply(int left, int right, int *out);
 int number_divide(int left, int right, int *out);
 int number_modulo(int left, int right, int *out);
 int string_add(char *left, char *right, char **out);
+char *read_file(char *path);
 void destroy_value(value_t *value);
 void destroy_items(value_t **items, size_t length);
 
