@@ -734,11 +734,6 @@ static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *fra
 
     length = strlen(file);
 
-    if (length > NUMBER_MAX)
-    {
-        return throw_error(ERROR_BOUNDS);
-    }
-
     for (index = 0; index < length; index++)
     {
         unsigned char symbol;

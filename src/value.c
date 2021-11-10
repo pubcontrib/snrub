@@ -978,6 +978,12 @@ char *read_file(char *path)
         length = ftell(file);
         fseek(file, 0, SEEK_SET);
 
+        if (length > NUMBER_MAX)
+        {
+            fclose(file);
+            return NULL;
+        }
+
         buffer = allocate(sizeof(char) * (length + 1));
         fread(buffer, 1, length, file);
         buffer[length] = '\0';
