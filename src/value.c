@@ -123,11 +123,6 @@ value_t *merge_maps(value_t *left, value_t *right)
     return new_map(data);
 }
 
-value_t *new_unset(void)
-{
-    return create_value(VALUE_TYPE_UNSET, NULL, 0, 0);
-}
-
 value_t *new_null(void)
 {
     return create_value(VALUE_TYPE_NULL, NULL, 0, 0);
@@ -157,11 +152,6 @@ value_t *new_map(map_t *pairs)
     return create_value(VALUE_TYPE_MAP, pairs, pairs ? pairs->length : 0, 0);
 }
 
-value_t *new_call(void)
-{
-    return create_value(VALUE_TYPE_CALL, NULL, 0, 0);
-}
-
 value_t *throw_error(error_t error)
 {
     value_t *number;
@@ -176,7 +166,6 @@ value_t *copy_value(value_t *this)
 {
     switch (this->type)
     {
-        case VALUE_TYPE_UNSET:
         case VALUE_TYPE_NULL:
         case VALUE_TYPE_NUMBER:
         case VALUE_TYPE_STRING:
@@ -1011,7 +1000,6 @@ void destroy_value(value_t *value)
     {
         switch (value->type)
         {
-            case VALUE_TYPE_UNSET:
             case VALUE_TYPE_NULL:
             case VALUE_TYPE_NUMBER:
             case VALUE_TYPE_STRING:

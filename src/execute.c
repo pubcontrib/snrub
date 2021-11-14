@@ -138,7 +138,7 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_
 
         expression = node->value;
 
-        if (expression->value->thrown)
+        if (expression->type == EXPRESSION_TYPE_VALUE && expression->value->thrown)
         {
             return copy_value(expression->value);
         }
@@ -156,24 +156,21 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_
         for (node = expressions->head; node != NULL; node = node->next)
         {
             expression_t *expression;
-            value_t *value;
 
             expression = node->value;
-            value = apply_expression(expression, &frame);
 
-            if (value->type == VALUE_TYPE_UNSET)
+            if (expression->type != EXPRESSION_TYPE_UNSET)
             {
-                destroy_value(value);
-            }
-            else
-            {
+                value_t *value;
+
+                value = apply_expression(expression, &frame);
                 destroy_value(last);
                 last = value;
-            }
 
-            if (last->thrown)
-            {
-                break;
+                if (last->thrown)
+                {
+                    break;
+                }
             }
         }
     }
@@ -190,11 +187,11 @@ static value_t *apply_expression(expression_t *expression, stack_frame_t *frame)
     value_t *result;
 
     arguments.expressions = expression->arguments;
-    arguments.current = expression->arguments->head;
     arguments.index = 0;
 
-    if (arguments.expressions->length > 0)
+    if (arguments.expressions && arguments.expressions->length > 0)
     {
+        arguments.current = expression->arguments->head;
         arguments.evaluated = allocate(sizeof(value_t *) * arguments.expressions->length);
     }
     else
@@ -202,21 +199,18 @@ static value_t *apply_expression(expression_t *expression, stack_frame_t *frame)
         arguments.evaluated = NULL;
     }
 
-    switch (expression->value->type)
+    switch (expression->type)
     {
-        case VALUE_TYPE_UNSET:
-        case VALUE_TYPE_NULL:
-        case VALUE_TYPE_NUMBER:
-        case VALUE_TYPE_STRING:
+        case EXPRESSION_TYPE_VALUE:
             result = copy_value(expression->value);
             break;
-        case VALUE_TYPE_LIST:
+        case EXPRESSION_TYPE_LIST:
             result = apply_list(&arguments, frame);
             break;
-        case VALUE_TYPE_MAP:
+        case EXPRESSION_TYPE_MAP:
             result = apply_map(&arguments, frame);
             break;
-        case VALUE_TYPE_CALL:
+        case EXPRESSION_TYPE_CALL:
             result = apply_call(&arguments, frame);
             break;
         default:

@@ -16,7 +16,7 @@ typedef enum
 } parser_state_t;
 
 static void destroy_expression_unsafe(void *expression);
-static expression_t *create_expression(value_t *value, list_t *arguments);
+static expression_t *create_expression(expression_type_t type, value_t *value, list_t *arguments);
 static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth);
 static value_t *parse_null_literal(char *value);
 static value_t *parse_number_literal(char *value);
@@ -36,7 +36,7 @@ list_t *parse_expressions(scanner_t *scanner)
         expression = next_expression(scanner, NULL, 0);
         add_list_item(expressions, expression);
 
-        if (expression->value->thrown)
+        if (expression->type == EXPRESSION_TYPE_VALUE && expression->value->thrown)
         {
             return expressions;
         }
@@ -65,11 +65,12 @@ static void destroy_expression_unsafe(void *expression)
     destroy_expression((expression_t *) expression);
 }
 
-static expression_t *create_expression(value_t *value, list_t *arguments)
+static expression_t *create_expression(expression_type_t type, value_t *value, list_t *arguments)
 {
     expression_t *expression;
 
     expression = allocate(sizeof(expression_t));
+    expression->type = type;
     expression->value = value;
     expression->arguments = arguments;
 
@@ -79,17 +80,15 @@ static expression_t *create_expression(value_t *value, list_t *arguments)
 static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth)
 {
     parser_state_t state;
-    list_t *arguments;
     expression_t *expression;
 
     state = PARSER_STATE_START;
-    arguments = empty_list(destroy_expression_unsafe);
-    expression = create_expression(NULL, arguments);
+    expression = NULL;
 
     if (depth > LIMIT_DEPTH || scanner->length > NUMBER_MAX)
     {
         state = PARSER_STATE_ERROR;
-        expression->value = throw_error(ERROR_BOUNDS);
+        expression = create_expression(EXPRESSION_TYPE_VALUE, throw_error(ERROR_BOUNDS), NULL);
     }
 
     while (!scanner->closed && state != PARSER_STATE_ERROR && state != PARSER_STATE_SUCCESS)
@@ -101,7 +100,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
             if (token->name == TOKEN_NAME_UNKNOWN)
             {
                 state = PARSER_STATE_ERROR;
-                expression->value = throw_error(ERROR_SYNTAX);
+                expression = create_expression(EXPRESSION_TYPE_VALUE, throw_error(ERROR_SYNTAX), NULL);
             }
             else if (token->name != TOKEN_NAME_WHITESPACE && token->name != TOKEN_NAME_COMMENT)
             {
@@ -112,58 +111,57 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                     switch (token->name)
                     {
                         case TOKEN_NAME_NULL:
-                            expression->value = parse_null_literal(token->value);
+                            expression = create_expression(EXPRESSION_TYPE_VALUE, parse_null_literal(token->value), NULL);
                             break;
                         case TOKEN_NAME_NUMBER:
-                            expression->value = parse_number_literal(token->value);
+                            expression = create_expression(EXPRESSION_TYPE_VALUE, parse_number_literal(token->value), NULL);
                             break;
                         case TOKEN_NAME_STRING:
-                            expression->value = parse_string_literal(token->value);
+                            expression = create_expression(EXPRESSION_TYPE_VALUE, parse_string_literal(token->value), NULL);
                             break;
                         case TOKEN_NAME_LIST_START:
                             state = PARSER_STATE_ARGUMENTS;
-                            expression->value = new_list(NULL, 0);
+                            expression = create_expression(EXPRESSION_TYPE_LIST, NULL, empty_list(destroy_expression_unsafe));
                             break;
                         case TOKEN_NAME_MAP_START:
                             state = PARSER_STATE_ARGUMENTS;
-                            expression->value = new_map(NULL);
+                            expression = create_expression(EXPRESSION_TYPE_MAP, NULL, empty_list(destroy_expression_unsafe));
                             break;
                         case TOKEN_NAME_CALL_START:
                             state = PARSER_STATE_ARGUMENTS;
-                            expression->value = new_call();
+                            expression = create_expression(EXPRESSION_TYPE_CALL, NULL, empty_list(destroy_expression_unsafe));
                             break;
                         default:
-                            expression->value = throw_error(ERROR_SYNTAX);
+                            expression = create_expression(EXPRESSION_TYPE_VALUE, throw_error(ERROR_SYNTAX), NULL);
                             break;
                     }
 
-                    if (expression->value->thrown)
+                    if (expression->type == EXPRESSION_TYPE_VALUE && expression->value->thrown)
                     {
                         state = PARSER_STATE_ERROR;
                     }
                 }
                 else if (state == PARSER_STATE_ARGUMENTS)
                 {
-                    if (expression->value->type == VALUE_TYPE_LIST && token->name == TOKEN_NAME_LIST_END)
+                    if (expression->type == EXPRESSION_TYPE_LIST && token->name == TOKEN_NAME_LIST_END)
                     {
                         state = PARSER_STATE_SUCCESS;
                     }
-                    else if (expression->value->type == VALUE_TYPE_MAP && token->name == TOKEN_NAME_MAP_END)
+                    else if (expression->type == EXPRESSION_TYPE_MAP && token->name == TOKEN_NAME_MAP_END)
                     {
                         state = PARSER_STATE_SUCCESS;
                     }
-                    else if (expression->value->type == VALUE_TYPE_CALL && token->name == TOKEN_NAME_CALL_END)
+                    else if (expression->type == EXPRESSION_TYPE_CALL && token->name == TOKEN_NAME_CALL_END)
                     {
-                        if (arguments->length > 0)
+                        if (expression->arguments->length > 0)
                         {
                             state = PARSER_STATE_SUCCESS;
                         }
                         else
                         {
-                            destroy_value(expression->value);
-
                             state = PARSER_STATE_ERROR;
-                            expression->value = throw_error(ERROR_ARGUMENT);
+                            destroy_expression(expression);
+                            expression = create_expression(EXPRESSION_TYPE_VALUE, throw_error(ERROR_ARGUMENT), NULL);
                         }
                     }
                     else
@@ -173,15 +171,16 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                         argument = next_expression(scanner, token, depth + 1);
                         token = NULL;
 
-                        if (argument->value->thrown)
+                        if (argument->type == EXPRESSION_TYPE_VALUE && argument->value->thrown)
                         {
-                            destroy_value(expression->value);
-
                             state = PARSER_STATE_ERROR;
-                            expression->value = copy_value(argument->value);
+                            destroy_expression(expression);
+                            expression = argument;
                         }
-
-                        add_list_item(arguments, argument);
+                        else
+                        {
+                            add_list_item(expression->arguments, argument);
+                        }
                     }
                 }
             }
@@ -194,21 +193,14 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
         }
     }
 
-    if (state == PARSER_STATE_SUCCESS || state == PARSER_STATE_START)
+    if (state == PARSER_STATE_START)
     {
-        if (!expression->value)
-        {
-            expression->value = new_unset();
-        }
+        expression = create_expression(EXPRESSION_TYPE_UNSET, NULL, NULL);
     }
     else if (state == PARSER_STATE_ARGUMENTS)
     {
-        if (expression->value)
-        {
-            destroy_value(expression->value);
-        }
-
-        expression->value = throw_error(ERROR_SYNTAX);
+        destroy_expression(expression);
+        expression = create_expression(EXPRESSION_TYPE_VALUE, throw_error(ERROR_SYNTAX), NULL);
     }
 
     if (token)

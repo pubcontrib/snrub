@@ -10,13 +10,11 @@
 
 typedef enum
 {
-    VALUE_TYPE_UNSET = 0x00,
     VALUE_TYPE_NULL = 0x01,
     VALUE_TYPE_NUMBER = 0x02,
     VALUE_TYPE_STRING = 0x04,
     VALUE_TYPE_LIST = 0x08,
-    VALUE_TYPE_MAP = 0x10,
-    VALUE_TYPE_CALL = 0x20
+    VALUE_TYPE_MAP = 0x10
 } value_type_t;
 
 typedef struct
@@ -29,24 +27,21 @@ typedef struct
 
 typedef enum
 {
-    ERROR_UNSET,
-    ERROR_SYNTAX,
-    ERROR_BOUNDS,
-    ERROR_TYPE,
-    ERROR_ARGUMENT,
-    ERROR_ARITHMETIC
+    ERROR_SYNTAX = 1,
+    ERROR_BOUNDS = 2,
+    ERROR_TYPE = 3,
+    ERROR_ARGUMENT = 4,
+    ERROR_ARITHMETIC = 5
 } error_t;
 
 int is_portable(void);
 value_t *merge_lists(value_t *left, value_t *right);
 value_t *merge_maps(value_t *left, value_t *right);
-value_t *new_unset(void);
 value_t *new_null(void);
 value_t *new_number(int number);
 value_t *new_string(char *string);
 value_t *new_list(value_t **items, size_t length);
 value_t *new_map(map_t *pairs);
-value_t *new_call(void);
 value_t *throw_error(error_t error);
 value_t *copy_value(value_t *this);
 int hash_value(value_t *this);
