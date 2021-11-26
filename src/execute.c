@@ -485,7 +485,7 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
             value_t *value, *index;
             char *string;
             int adjusted;
-            size_t left, right;
+            size_t collectionLength, valueLength;
 
             if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
             {
@@ -501,30 +501,19 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
             }
 
             value = arguments->value;
+            valueLength = length_value(value);
+            collectionLength = length_value(collection);
 
-            if (adjusted < 0 || adjusted >= length_value(collection))
+            if (adjusted < 0 || adjusted >= collectionLength)
             {
                 return copy_value(collection);
             }
 
-            string = allocate(sizeof(char) * (length_value(collection) + length_value(value)));
-
-            for (left = 0, right = 0; right < adjusted; left++, right++)
-            {
-                string[left] = view_string(collection)[right];
-            }
-
-            for (right = 0; right < length_value(value); left++, right++)
-            {
-                string[left] = view_string(value)[right];
-            }
-
-            for (right = adjusted + 1; right < length_value(collection); left++, right++)
-            {
-                string[left] = view_string(collection)[right];
-            }
-
-            string[length_value(collection) + length_value(value) - 1] = '\0';
+            string = allocate(sizeof(char) * (collectionLength + valueLength));
+            memcpy(string, view_string(collection), adjusted);
+            memcpy(string + adjusted, view_string(value), valueLength);
+            memcpy(string + adjusted + valueLength, view_string(collection) + adjusted + 1, collectionLength - adjusted);
+            string[collectionLength + valueLength - 1] = '\0';
 
             return new_string(string);
         }
@@ -622,7 +611,7 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
             value_t *index;
             char *string;
             int adjusted;
-            size_t length, left, right;
+            size_t length;
 
             if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
             {
@@ -639,15 +628,8 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
             }
 
             string = allocate(sizeof(char) * length);
-
-            for (left = 0, right = 0; right < length; right++)
-            {
-                if (right != adjusted)
-                {
-                    string[left++] = view_string(collection)[right];
-                }
-            }
-
+            memcpy(string, view_string(collection), adjusted);
+            memcpy(string + adjusted, view_string(collection) + adjusted + 1, length - adjusted);
             string[length - 1] = '\0';
 
             return new_string(string);
