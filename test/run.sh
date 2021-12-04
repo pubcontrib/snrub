@@ -49,6 +49,7 @@ introduce
 . test/suite/operator/number.sh
 . test/suite/operator/string.sh
 . test/suite/operator/length.sh
+. test/suite/operator/overload.sh
 . test/suite/operator/evaluate.sh
 . test/suite/operator/variables.sh
 . test/suite/operator/keys.sh
