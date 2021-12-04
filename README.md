@@ -58,6 +58,7 @@ living documentation.
 | `#`      | number      | `("#" "100")`                                       |
 | `"`      | string      | `("\"" #100#)`                                      |
 | `\| \|`  | length      | `("\| \|" "a string, list, or map")`                |
+| `^`      | overload    | `("^" "WRAP" "[(\"x->\" \"@\")]") ("WRAP" "item")`  |
 | `~`      | evaluate    | `("~" "(\"<\" (\"x->\" \"@\") #0#)" #-1#)`          |
 | `x[]`    | variables   | `("x[]")`                                           |
 | `$[]`    | keys        | `("$[]" {"first" #1# "second" #2# "third" #3#})`    |
