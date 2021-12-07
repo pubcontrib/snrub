@@ -7,7 +7,7 @@
 #include "map.h"
 #include "common.h"
 
-#define PROGRAM_VERSION "v0.74.1"
+#define PROGRAM_VERSION "v0.74.2"
 
 static int run_help(void);
 static int run_version(void);
