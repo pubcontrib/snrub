@@ -2,6 +2,9 @@
 
 hint 'operator/overload'
 
+# Operator Overloading
+pass '("^" "OP" "\"first\"") ("^" "OP" "\"last\"") ("OP" ?)' '"last"'
+
 # Literal Evaluation
 pass '("^" "OP" "?") ("OP" ?)' '?'
 pass '("^" "OP" "#100#") ("OP" ?)' '#100#'
@@ -62,4 +65,3 @@ fail '("^" {} {})' '#4#'
 
 # Error Propogation
 fail '("^" ("#" "text") "(\"#\" \"100\")")' '#3#'
-fail '("^" "OP" ("#" "text"))' '#3#'

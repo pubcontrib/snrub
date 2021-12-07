@@ -107,7 +107,7 @@ value_t *execute_script(char *document, map_t *globals, value_t *arguments)
 {
     document = copy_string(document);
 
-    return evaluate_script(document, globals, arguments, 1);
+    return evaluate_script(document, globals, arguments, 0);
 }
 
 static value_t *evaluate_script(char *document, map_t *globals, value_t *arguments, int depth)
@@ -130,6 +130,8 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_
     list_node_t *node;
     stack_frame_t frame;
     value_t *last;
+
+    depth += 1;
 
     if (depth > LIMIT_DEPTH)
     {
@@ -1391,7 +1393,7 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
     initial = arguments->value;
     copy = copy_string(view_string(document));
 
-    return evaluate_script(copy, frame->globals, initial, frame->depth + 1);
+    return evaluate_script(copy, frame->globals, initial, frame->depth);
 }
 
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame)

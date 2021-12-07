@@ -96,12 +96,19 @@ pass "(\"...\" $center)" '?'
 fail '("x<-" "recurse" "(\"~\" (\"x->\" \"recurse\") ?)")
 ("<3" "recurse")
 ("~" ("x->" "recurse") ?)' '#2#'
+fail '("x<-" "code" "(\"^\" \"OP\" (\"x->\" \"code\")) (\"OP\" ?)")
+("<3" "code")
+("^" "OP" ("x->" "code"))
+("OP" ?)' '#2#'
 
 # Argument Error
 fail '()' '#4#'
 fail '(?)' '#4#'
 fail '(#1#)' '#4#'
 fail '("unknown")' '#4#'
+fail '("^" "OP" "") ("OP")' '#4#'
 
 # Error Propogation
 fail '(("#" "text"))' '#3#'
+fail '("^" "OP" ("#" "text"))' '#3#'
+fail '("^" "OP" "") ("OP" ("#" "text"))' '#3#'
