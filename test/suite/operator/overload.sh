@@ -4,6 +4,7 @@ hint 'operator/overload'
 
 # Operator Overloading
 pass '("^" "OP" "\"first\"") ("^" "OP" "\"last\"") ("OP" ?)' '"last"'
+pass '("^" "!" "(\"+\" (\"x->\" \"@\") \"!!!\")") ("!" "hello")' '"hello!!!"'
 
 # Literal Evaluation
 pass '("^" "OP" "?") ("OP" ?)' '?'
