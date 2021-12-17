@@ -1,4 +1,5 @@
 # Snrub
+
 > Snrub is portability-focused, language-independent, scripting programming
 > language.
 
@@ -16,6 +17,7 @@ living documentation.
 ## Language
 
 ### Types
+
 | Type | Description | Example                                                 |
 |------|-------------|---------------------------------------------------------|
 | `?`  | null        | `?`                                                     |
@@ -25,6 +27,7 @@ living documentation.
 | `{}` | map         | `{"null" ? "number" ## "string" "" "list" [] "map" {}}` |
 
 ### Operators
+
 | Operator | Description | Example                                             |
 |----------|-------------|-----------------------------------------------------|
 | `x->`    | recall      | `("x->" "read-me")`                                 |
@@ -69,10 +72,12 @@ living documentation.
 | `;`      | represent   | `(";" [#2# "code"])`                                |
 
 ## License
+
 Snrub is licensed under the MIT license. Review the LICENSE file included in the
 project before using Snrub to understand your rights.
 
 ## Building
+
 The reference implementation is written using the 1989 ANSI standard of C. An
 ANSI-compliant compiler is required to build the program from source. Consider
 the following minimums of the target data model additional requirements:
@@ -91,6 +96,7 @@ make clean check install
 ```
 
 ## Running
+
 Once you've built and installed the program you'll have the interpreter at your
 system's disposal. Try the program option `-h` for usage notes.
 
@@ -120,5 +126,6 @@ snrub -i
 ```
 
 ## Support
+
 Please forward all bug reports and feature requests via email. See the AUTHORS
 file for contact information.
