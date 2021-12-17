@@ -7,12 +7,10 @@ This project is the home of the Snrub programming language including a reference
 implementation, a collection of test cases demonstrating intended behavior, and
 living documentation.
 
-```
-`set numbers a and b then put their sum into c`
-("x<-" "a" #300#)
-("x<-" "b" #200#)
-("x<-" "c" ("+" ("x->" "a") ("x->" "b")))
-```
+    `set numbers a and b then put their sum into c`
+    ("x<-" "a" #300#)
+    ("x<-" "b" #200#)
+    ("x<-" "c" ("+" ("x->" "a") ("x->" "b")))
 
 ## Language
 
@@ -91,9 +89,8 @@ the GNU Makefile conventions.
 
 Perform a fresh build of the program, check build passes tests, then install it
 to the system:
-```shell
-make clean check install
-```
+
+    make clean check install
 
 ## Running
 
@@ -101,29 +98,24 @@ Once you've built and installed the program you'll have the interpreter at your
 system's disposal. Try the program option `-h` for usage notes.
 
 Run code from a file:
-```shell
-snrub -f hello.txt
-```
+
+    snrub -f hello.txt
 
 Run code from a file with an argument:
-```shell
-snrub -f power.txt '#8#'
-```
+
+    snrub -f power.txt '#8#'
 
 Run code from text:
-```shell
-snrub -t '("+" "hello " "world")'
-```
+
+    snrub -t '("+" "hello " "world")'
 
 Run code from text with an argument:
-```shell
-snrub -t '("*" ("x->" "@") ("x->" "@"))' '#8#'
-```
+
+    snrub -t '("*" ("x->" "@") ("x->" "@"))' '#8#'
 
 Start an interactive scripting shell:
-```shell
-snrub -i
-```
+
+    snrub -i
 
 ## Support
 
