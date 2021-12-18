@@ -161,7 +161,8 @@ living documentation.
 - `o`
 
         `loop`
-        ("x<-" "i" #1#) ("o" ("x->" "i") ("x<-" "i" #0#))
+        ("x<-" "i" #1#)
+        ("o" ("x->" "i") ("x<-" "i" #0#))
 
 - `...`
 
@@ -201,7 +202,8 @@ living documentation.
 - `^`
 
         `overload`
-        ("^" "WRAP" "[(\"x->\" \"@\")]") ("WRAP" "item")
+        ("^" "WRAP" "[(\"x->\" \"@\")]")
+        ("WRAP" "item")
 
 - `~`
 
