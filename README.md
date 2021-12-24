@@ -14,6 +14,17 @@ living documentation.
 
 ## Language
 
+### Comments
+
+    ` one-line comments `
+
+    `
+        multi-line
+        comments
+    `
+
+    ` \` nested comments \` `
+
 ### Types
 
 - `?`
