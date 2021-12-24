@@ -25,6 +25,17 @@ living documentation.
 
     ` \` nested comments \` `
 
+### Whitespace
+
+    `equivalent expressions`
+    ("+"#1##2#)
+    ("+" #1# #2#)
+    (
+        "+"
+        #1#
+        #2#
+    )
+
 ### Types
 
 - `?`
