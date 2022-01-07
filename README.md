@@ -14,16 +14,16 @@ living documentation.
 
 ## Language
 
-### Comments
+### Comment
 
-    `one-line comments`
+    `one-line comment`
 
     `
         multi-line
-        comments
+        comment
     `
 
-    `\`nested comments\``
+    `\`nested comment\``
 
 ### Whitespace
 

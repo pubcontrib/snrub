@@ -3,13 +3,13 @@
 hint 'comment'
 
 # Comment Expression
-pass '`one-line comments`' '?'
+pass '`one-line comment`' '?'
 pass '`
     multi-line
-    comments
+    comment
 `' '?'
 pass '`\``' '?'
-pass '`\`nested comments\``' '?'
+pass '`\`nested comment\``' '?'
 
 # Comment Precedence
 pass '`comment` "after"' '"after"'
