@@ -18,16 +18,21 @@ pass '"word\tword\tword"' '"word\tword\tword"'
 pass '"word\nword\nword"' '"word\nword\nword"'
 pass '"word\rword\rword"' '"word\rword\rword"'
 pass '"1"' '"1"'
-pass '"`comments`"' '"`comments`"'
+
+# Code String
+pass '"`comment`"' '"`comment`"'
 pass '"?"' '"?"'
 pass '"#1#"' '"#1#"'
-pass '"[#1# \"one\"]"' '"[#1# \"one\"]"'
-pass '"(\"#\" \"1\")"' '"(\"#\" \"1\")"'
+pass '"\"word\""' '"\"word\""'
+pass '"[#1# #2# #3#]"' '"[#1# #2# #3#]"'
+pass '"{\"key\" \"value\"}"' '"{\"key\" \"value\"}"'
+pass '"(\"<>\" \"error\")"' '"(\"<>\" \"error\")"'
 
 # Syntax Error
 fail '"' '#1#'
 fail '"word' '#1#'
 fail 'word"' '#1#'
+fail "`printf '\007'`" '#1#'
 
 # Type Error
 fail "`printf '\042\007\042'`" '#3#'

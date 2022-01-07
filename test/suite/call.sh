@@ -1,6 +1,6 @@
 . test/assert.sh
 
-hint 'type/call'
+hint 'call'
 
 repeat()
 {
@@ -25,17 +25,6 @@ pass '("x<-" "number" #1#)
 ("x->" "number")' '#2#'
 pass '("x<-" "operator" "+")
 (("x->" "operator") #10# #5#)' '#15#'
-pass '`comments` "after"' '"after"'
-pass '"before" `comments`' '"before"'
-pass '"before" `comments` "after"' '"after"'
-pass '`comments` `comments`' '?'
-pass '(`comments` "+" #10# #20#)' '#30#'
-pass '("+" `comments` #10# #20#)' '#30#'
-pass '("+" #10# `comments` #20#)' '#30#'
-pass '("+" #10# #20# `comments`)' '#30#'
-pass '`("x<-" "number" #1#) ("x->" "number")`' '?'
-pass '`("#" "text")`' '?'
-pass '`\``' '?'
 pass '("x<-" "path" "none")
 ("?" #1#
     ("..."
@@ -63,24 +52,9 @@ pass '("x<-" "path" "none")
     )
     ?
 )' '"pass"'
-pass '("x<-""string""word")("x->""string")' '"word"'
-pass ' ( "x<-" "string" "word" ) ( "x->" "string" ) ' '"word"'
-pass '	(	"x<-"	"string"	"word"	)	(	"x->"	"string"	)	' '"word"'
-pass '
-(
-"x<-"
-"string"
-"word"
-)
-(
-"x->"
-"string"
-)
-' '"word"'
 pass '("+" #1# #2# #3#)' '#3#'
 
 # Syntax Error
-fail '`' '#1#'
 fail '"+" #10# #5#)' '#1#'
 fail '("+" #10# #5#' '#1#'
 

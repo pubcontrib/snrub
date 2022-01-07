@@ -11,12 +11,15 @@ fi
 
 introduce
 
+. test/suite/whitespace.sh
+. test/suite/comment.sh
+. test/suite/call.sh
+
 . test/suite/type/null.sh
 . test/suite/type/number.sh
 . test/suite/type/string.sh
 . test/suite/type/list.sh
 . test/suite/type/map.sh
-. test/suite/type/call.sh
 
 . test/suite/operator/recall.sh
 . test/suite/operator/memorize.sh
