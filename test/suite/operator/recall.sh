@@ -5,7 +5,7 @@ hint 'operator/recall'
 # Recall Variable
 pass '("x->" "key")' '?'
 pass '("x<-" "null" ?) ("x->" "null")' '?'
-pass '("x<-" "number" #1#) ("x->" "number")' '#1#'
+pass '("x<-" "number" #100#) ("x->" "number")' '#100#'
 pass '("x<-" "string" "word") ("x->" "string")' '"word"'
 pass '("x<-" "list" [#1# #2# #3#]) ("x->" "list")' '[#1# #2# #3#]'
 pass '("x<-" "map" {"key" "value"}) ("x->" "map")' '{"key" "value"}'

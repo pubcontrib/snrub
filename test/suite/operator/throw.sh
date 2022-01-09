@@ -5,8 +5,8 @@ hint 'operator/throw'
 # Error Throwing
 fail '("<>" ?)' '?'
 fail '("<>" #100#)' '#100#'
-fail '("<>" "text")' '"text"'
-fail '("<>" [])' '[]'
+fail '("<>" "word")' '"word"'
+fail '("<>" [#1# #2# #3#])' '[#1# #2# #3#]'
 fail '("<>" {"key" "value"})' '{"key" "value"}'
 fail '("x<-" "error" ("><" ("#" "text")))
 ("<>" ("x->" "error"))' '#3#'

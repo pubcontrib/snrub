@@ -5,8 +5,8 @@ hint 'operator/represent'
 # Value Representation
 pass '(";" ?)' '"?"'
 pass '(";" #100#)' '"#100#"'
-pass '(";" "text")' '"\"text\""'
-pass '(";" [#1# #0# #0#])' '"[#1# #0# #0#]"'
+pass '(";" "word")' '"\"word\""'
+pass '(";" [#1# #2# #3#])' '"[#1# #2# #3#]"'
 pass '(";" {"key" "value"})' '"{\"key\" \"value\"}"'
 
 # Argument Error

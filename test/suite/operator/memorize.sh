@@ -5,8 +5,8 @@ hint 'operator/memorize'
 # Memorize Variable
 pass '("x<-" "null" ?)' '?'
 pass '("x<-" "number" #100#)' '?'
-pass '("x<-" "string" "one hundred")' '?'
-pass '("x<-" "list" [#1# #0# #0#])' '?'
+pass '("x<-" "string" "word")' '?'
+pass '("x<-" "list" [#1# #2# #3#])' '?'
 pass '("x<-" "map" {"key" "value"})' '?'
 pass '("x<-" "index" #0#)
 ("x<-" "goal" #1024#)

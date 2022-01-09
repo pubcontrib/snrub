@@ -5,8 +5,8 @@ hint 'operator/type'
 # Value Type
 pass '("_" ?)' '"?"'
 pass '("_" #100#)' '"##"'
-pass '("_" "text")' '"\"\""'
-pass '("_" [#1# #0# #0#])' '"[]"'
+pass '("_" "word")' '"\"\""'
+pass '("_" [#1# #2# #3#])' '"[]"'
 pass '("_" {"key" "value"})' '"{}"'
 
 # Argument Error
