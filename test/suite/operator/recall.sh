@@ -21,4 +21,4 @@ fail '("x->" [])' '#4#'
 fail '("x->" {})' '#4#'
 
 # Error Propogation
-fail '("x->" ("#" "text"))' '#3#'
+fail '("x->" ("<>" "ERROR"))' '"ERROR"'

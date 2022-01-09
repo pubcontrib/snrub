@@ -28,7 +28,7 @@ pass '`#1#`' '?'
 pass '`"word"`' '?'
 pass '`[#1# #2# #3#]`' '?'
 pass '`{"key" "value"}`' '?'
-pass '`("<>" "error")`' '?'
+pass '`("<>" "ERROR")`' '?'
 
 # Syntax Error
 fail '`' '#1#'

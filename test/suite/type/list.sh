@@ -18,4 +18,4 @@ fail '[' '#1#'
 fail ']' '#1#'
 
 # Error Propogation
-fail '[("#" "10") ("#" "text") ("#" "30")]' '#3#'
+fail '[("#" "10") ("<>" "ERROR") ("#" "30")]' '"ERROR"'

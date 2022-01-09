@@ -24,4 +24,4 @@ fail '("<3" [])' '#4#'
 fail '("<3" {})' '#4#'
 
 # Error Propogation
-fail '("<3" ("#" "text") #0#)' '#3#'
+fail '("<3" ("<>" "ERROR") #0#)' '"ERROR"'

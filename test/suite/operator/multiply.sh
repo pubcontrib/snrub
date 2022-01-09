@@ -58,5 +58,5 @@ fail '("*" {} [])' '#4#'
 fail '("*" {} {})' '#4#'
 
 # Error Propogation
-fail '("*" ("#" "text") #5#)' '#3#'
-fail '("*" #10# ("#" "text"))' '#3#'
+fail '("*" ("<>" "ERROR") #5#)' '"ERROR"'
+fail '("*" #10# ("<>" "ERROR"))' '"ERROR"'

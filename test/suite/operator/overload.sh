@@ -69,5 +69,5 @@ fail '("^" {} [])' '#4#'
 fail '("^" {} {})' '#4#'
 
 # Error Propogation
-fail '("^" ("#" "text") "(\"#\" \"100\")")' '#3#'
-fail '("^" "OP" ("#" "text"))' '#3#'
+fail '("^" ("<>" "ERROR") "(\"#\" \"100\")")' '"ERROR"'
+fail '("^" "OP" ("<>" "ERROR"))' '"ERROR"'

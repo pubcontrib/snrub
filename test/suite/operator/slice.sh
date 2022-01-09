@@ -175,6 +175,6 @@ fail '("[# #]" {} {} [])' '#4#'
 fail '("[# #]" {} {} {})' '#4#'
 
 # Error Propogation
-fail '("[# #]" ("#" "text") #2# #4#)' '#3#'
-fail '("[# #]" "abcde" ("#" "text") #4#)' '#3#'
-fail '("[# #]" "abcde" #2# ("#" "text"))' '#3#'
+fail '("[# #]" ("<>" "ERROR") #2# #4#)' '"ERROR"'
+fail '("[# #]" "abcde" ("<>" "ERROR") #4#)' '"ERROR"'
+fail '("[# #]" "abcde" #2# ("<>" "ERROR"))' '"ERROR"'

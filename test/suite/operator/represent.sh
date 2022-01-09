@@ -13,4 +13,4 @@ pass '(";" {"key" "value"})' '"{\"key\" \"value\"}"'
 fail '(";")' '#4#'
 
 # Error Propogation
-fail '(";" ("#" "text"))' '#3#'
+fail '(";" ("<>" "ERROR"))' '"ERROR"'

@@ -176,7 +176,7 @@ fail '("$<-" {} {} [])' '#4#'
 fail '("$<-" {} {} {})' '#4#'
 
 # Error Propogation
-fail '("$<-" ("#" "text") #1# "x")' '#3#'
-fail '("$<-" "abc" ("#" "text") "x")' '#3#'
-fail '("$<-" "abc" #1# ("#" "text"))' '#3#'
-fail '("$<-" [#10# #20# #30#] #1# ("#" "text"))' '#3#'
+fail '("$<-" ("<>" "ERROR") #1# "x")' '"ERROR"'
+fail '("$<-" "abc" ("<>" "ERROR") "x")' '"ERROR"'
+fail '("$<-" "abc" #1# ("<>" "ERROR"))' '"ERROR"'
+fail '("$<-" [#10# #20# #30#] #1# ("<>" "ERROR"))' '"ERROR"'

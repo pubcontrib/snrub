@@ -15,4 +15,4 @@ fail '("$[]" "word")' '#4#'
 fail '("$[]" [#1# #2# #3#])' '#4#'
 
 # Error Propogation
-fail '("$[]" ("#" "text"))' '#3#'
+fail '("$[]" ("<>" "ERROR"))' '"ERROR"'

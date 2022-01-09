@@ -27,5 +27,5 @@ fail '{[] "value"}' '#4#'
 fail '{{} "value"}' '#4#'
 
 # Error Propogation
-fail '{("#" "text") "value"}' '#3#'
-fail '{"key" ("#" "text")}' '#3#'
+fail '{("<>" "ERROR") "value"}' '"ERROR"'
+fail '{"key" ("<>" "ERROR")}' '"ERROR"'

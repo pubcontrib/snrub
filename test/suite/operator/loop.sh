@@ -53,5 +53,5 @@ fail '("o" {} [])' '#4#'
 fail '("o" {} {})' '#4#'
 
 # Error Propogation
-fail '("o" ("#" "text") ("..."))' '#3#'
-fail '("o" #1# ("#" "text"))' '#3#'
+fail '("o" ("<>" "ERROR") ("..."))' '"ERROR"'
+fail '("o" #1# ("<>" "ERROR"))' '"ERROR"'

@@ -44,5 +44,5 @@ fail '("&" {} [])' '#4#'
 fail '("&" {} {})' '#4#'
 
 # Error Propogation
-fail '("&" ("#" "text") #0#)' '#3#'
-fail '("&" #0# ("#" "text"))' '#3#'
+fail '("&" ("<>" "ERROR") #0#)' '"ERROR"'
+fail '("&" #0# ("<>" "ERROR"))' '"ERROR"'

@@ -53,4 +53,4 @@ pass '("=" ("::" {}) ("::" {}))' '#1#'
 fail '("::")' '#4#'
 
 # Error Propogation
-fail '("::" ("#" "text"))' '#3#'
+fail '("::" ("<>" "ERROR"))' '"ERROR"'

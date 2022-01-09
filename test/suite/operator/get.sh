@@ -58,5 +58,5 @@ fail '("$->" {} [])' '#4#'
 fail '("$->" {} {})' '#4#'
 
 # Error Propogation
-fail '("$->" ("#" "text") #1#)' '#3#'
-fail '("$->" "abc "("#" "text"))' '#3#'
+fail '("$->" ("<>" "ERROR") #1#)' '"ERROR"'
+fail '("$->" "abc "("<>" "ERROR"))' '"ERROR"'

@@ -35,5 +35,5 @@ fail '("[o]<-" {} [])' '#4#'
 fail '("[o]<-" {} {})' '#4#'
 
 # Error Propogation
-fail '("[o]<-" ("#" "text") "text")' '#3#'
-fail '("[o]<-" "file.txt" ("#" "text"))' '#3#'
+fail '("[o]<-" ("<>" "ERROR") "text")' '"ERROR"'
+fail '("[o]<-" "file.txt" ("<>" "ERROR"))' '"ERROR"'

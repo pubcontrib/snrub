@@ -13,4 +13,4 @@ pass '("_" {"key" "value"})' '"{}"'
 fail '("_")' '#4#'
 
 # Error Propogation
-fail '("_" ("#" "text"))' '#3#'
+fail '("_" ("<>" "ERROR"))' '"ERROR"'

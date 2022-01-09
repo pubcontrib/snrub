@@ -153,6 +153,6 @@ fail '("?" {} {} [])' '#4#'
 fail '("?" {} {} {})' '#4#'
 
 # Error Propogation
-fail '("?" ("#" "text") ? ?)' '#3#'
-fail '("?" #1# ("#" "text") ?)' '#3#'
-fail '("?" #0# ? ("#" "text"))' '#3#'
+fail '("?" ("<>" "ERROR") ? ?)' '"ERROR"'
+fail '("?" #1# ("<>" "ERROR") ?)' '"ERROR"'
+fail '("?" #0# ? ("<>" "ERROR"))' '"ERROR"'

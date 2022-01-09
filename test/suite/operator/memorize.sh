@@ -48,5 +48,5 @@ fail '("x<-" {} [])' '#4#'
 fail '("x<-" {} {})' '#4#'
 
 # Error Propogation
-fail '("x<-" ("#" "text") #100#)' '#3#'
-fail '("x<-" "key" ("#" "text"))' '#3#'
+fail '("x<-" ("<>" "ERROR") #100#)' '"ERROR"'
+fail '("x<-" "key" ("<>" "ERROR"))' '"ERROR"'

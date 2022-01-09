@@ -83,5 +83,5 @@ fail '("unknown")' '#4#'
 fail '("^" "OP" "") ("OP")' '#4#'
 
 # Error Propogation
-fail '(("#" "text"))' '#3#'
-fail '("^" "OP" "") ("OP" ("#" "text"))' '#3#'
+fail '(("<>" "ERROR"))' '"ERROR"'
+fail '("^" "OP" "") ("OP" ("<>" "ERROR"))' '"ERROR"'

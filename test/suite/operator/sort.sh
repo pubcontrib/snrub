@@ -65,5 +65,5 @@ fail '("<|>" {} [])' '#4#'
 fail '("<|>" {} {})' '#4#'
 
 # Error Propogation
-fail '("<|>" ("#" "text") #0#)' '#3#'
-fail '("<|>" [] ("#" "text"))' '#3#'
+fail '("<|>" ("<>" "ERROR") #0#)' '"ERROR"'
+fail '("<|>" [] ("<>" "ERROR"))' '"ERROR"'
