@@ -32,10 +32,33 @@ pass '"(\"<>\" \"error\")"' '"(\"<>\" \"error\")"'
 fail '"' '#1#'
 fail '"word' '#1#'
 fail 'word"' '#1#'
-fail "`printf '\007'`" '#1#'
 
 # Type Error
-fail "`printf '\042\007\042'`" '#3#'
-fail "`printf '\042\011\042'`" '#3#'
-fail "`printf '\042\012\042'`" '#3#'
-fail "`printf '\042\015\042'`" '#3#'
+index=1
+
+while [ $index -lt 256 ]
+do
+    # 9: hortizontal tab
+    # 10: line feed
+    # 13: carriage return
+    # 32 - 126 printable characters
+
+    printable=0
+
+    if [ $index -ge 32 -a $index -le 126 ]
+    then
+        printable=1
+    fi
+
+    if [ $index -ne 9 -a $index -ne 10 -a $index -ne 13 -a $printable -ne 1 ]
+    then
+        octal=`printf '\\%03o' $index`
+        byte=`printf '%b' $octal`
+        fail "$byte" '#1#'
+
+        text=`printf '"%s"' $byte`
+        fail "$text" '#3#'
+    fi
+
+    index=`expr $index + 1`
+done
