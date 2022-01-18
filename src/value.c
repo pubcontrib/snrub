@@ -7,6 +7,7 @@
 #include "common.h"
 
 static value_t *create_value(value_type_t type, void *data, size_t size, int thrown);
+static void copy_map(map_t *from, map_t *to);
 static value_t *quote_string(char *body, char qualifier);
 static size_t characters_in_string(char *string, char character);
 static void *copy_memory(void *memory, size_t size);
@@ -67,8 +68,8 @@ value_t *merge_lists(value_t *left, value_t *right)
 
 value_t *merge_maps(value_t *left, value_t *right)
 {
-    map_t *pairs, *data;
-    size_t leftLength, rightLength, index;
+    map_t *data;
+    size_t leftLength, rightLength;
     int sumLength;
 
     leftLength = length_value(left);
@@ -80,45 +81,8 @@ value_t *merge_maps(value_t *left, value_t *right)
     }
 
     data = empty_map(hash_string, destroy_value_unsafe, 8);
-    pairs = left->data;
-
-    for (index = 0; index < pairs->capacity; index++)
-    {
-        if (pairs->chains[index])
-        {
-            map_chain_t *chain;
-
-            for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
-            {
-                char *key;
-                value_t *value;
-
-                key = copy_string(chain->key);
-                value = copy_value(chain->value);
-                set_map_item(data, key, value);
-            }
-        }
-    }
-
-    pairs = right->data;
-
-    for (index = 0; index < pairs->capacity; index++)
-    {
-        if (pairs->chains[index])
-        {
-            map_chain_t *chain;
-
-            for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
-            {
-                char *key;
-                value_t *value;
-
-                key = copy_string(chain->key);
-                value = copy_value(chain->value);
-                set_map_item(data, key, value);
-            }
-        }
-    }
+    copy_map(left->data, data);
+    copy_map(right->data, data);
 
     return new_map(data);
 }
@@ -208,29 +172,10 @@ value_t *copy_value(value_t *this)
         }
         case VALUE_TYPE_MAP:
         {
-            map_t *pairs, *data;
-            size_t index;
+            map_t *data;
 
-            pairs = this->data;
             data = empty_map(hash_string, destroy_value_unsafe, 8);
-
-            for (index = 0; index < pairs->capacity; index++)
-            {
-                if (pairs->chains[index])
-                {
-                    map_chain_t *chain;
-
-                    for (chain = pairs->chains[index]; chain != NULL; chain = chain->next)
-                    {
-                        char *key;
-                        value_t *value;
-
-                        key = copy_string(chain->key);
-                        value = copy_value(chain->value);
-                        set_map_item(data, key, value);
-                    }
-                }
-            }
+            copy_map(this->data, data);
 
             return new_map(data);
         }
@@ -1043,6 +988,29 @@ static value_t *create_value(value_type_t type, void *data, size_t size, int thr
     value->thrown = thrown;
 
     return value;
+}
+
+static void copy_map(map_t *from, map_t *to)
+{
+    size_t index;
+
+    for (index = 0; index < from->capacity; index++)
+    {
+        if (from->chains[index])
+        {
+            map_chain_t *chain;
+
+            for (chain = from->chains[index]; chain != NULL; chain = chain->next)
+            {
+                char *key;
+                value_t *value;
+
+                key = copy_string(chain->key);
+                value = copy_value(chain->value);
+                set_map_item(to, key, value);
+            }
+        }
+    }
 }
 
 static value_t *quote_string(char *body, char qualifier)
