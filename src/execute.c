@@ -39,8 +39,8 @@ typedef struct
     value_t *(*call)(argument_iterator_t *, stack_frame_t *);
 } operator_t;
 
-static value_t *evaluate_script(char *document, map_t *globals, value_t *arguments, int depth);
-static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_t *arguments, int depth);
+static value_t *evaluate_script(char *document, map_t *globals, map_t *operators, value_t *arguments, int depth);
+static value_t *evaluate_expressions(list_t *expressions, map_t *globals, map_t *operators, value_t *arguments, int depth);
 static value_t *apply_expression(expression_t *expression, stack_frame_t *frame);
 static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *apply_map(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -105,12 +105,18 @@ static void destroy_list_unsafe(void *value);
 
 value_t *execute_script(char *document, map_t *globals, value_t *arguments)
 {
-    document = copy_string(document);
+    map_t *operators;
+    value_t *value;
 
-    return evaluate_script(document, globals, arguments, 0);
+    document = copy_string(document);
+    operators = default_operators();
+    value = evaluate_script(document, globals, operators, arguments, 0);
+    destroy_map(operators);
+
+    return value;
 }
 
-static value_t *evaluate_script(char *document, map_t *globals, value_t *arguments, int depth)
+static value_t *evaluate_script(char *document, map_t *globals, map_t *operators, value_t *arguments, int depth)
 {
     scanner_t *scanner;
     list_t *expressions;
@@ -119,13 +125,13 @@ static value_t *evaluate_script(char *document, map_t *globals, value_t *argumen
     scanner = start_scanner(document);
     expressions = parse_expressions(scanner);
     destroy_scanner(scanner);
-    value = evaluate_expressions(expressions, globals, arguments, depth);
+    value = evaluate_expressions(expressions, globals, operators, arguments, depth);
     destroy_list(expressions);
 
     return value;
 }
 
-static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_t *arguments, int depth)
+static value_t *evaluate_expressions(list_t *expressions, map_t *globals, map_t *operators, value_t *arguments, int depth)
 {
     list_node_t *node;
     stack_frame_t frame;
@@ -151,7 +157,7 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_
     }
 
     frame.globals = globals;
-    frame.operators = default_operators();
+    frame.operators = operators;
     frame.overloads = default_overloads();
     frame.depth = depth;
     frame.locals = empty_variables();
@@ -182,7 +188,6 @@ static value_t *evaluate_expressions(list_t *expressions, map_t *globals, value_
         }
     }
 
-    destroy_map(frame.operators);
     destroy_map(frame.overloads);
     destroy_map(frame.locals);
 
@@ -342,7 +347,7 @@ static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
 
         initial = arguments->value;
 
-        return evaluate_expressions(overload, frame->globals, initial, frame->depth);
+        return evaluate_expressions(overload, frame->globals, frame->operators, initial, frame->depth);
     }
 
     operator = get_map_item(frame->operators, view_string(name));
@@ -1393,7 +1398,7 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
     initial = arguments->value;
     copy = copy_string(view_string(document));
 
-    return evaluate_script(copy, frame->globals, initial, frame->depth);
+    return evaluate_script(copy, frame->globals, frame->operators, initial, frame->depth);
 }
 
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame)
