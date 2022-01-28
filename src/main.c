@@ -225,7 +225,7 @@ static int record_script(char *document, map_t *globals, value_t *arguments)
     value_t *value;
     int success;
 
-    value = execute_script(document, globals, arguments);
+    value = execute_script(document, arguments, globals);
     success = print_value(value);
     destroy_value(value);
 
@@ -272,7 +272,7 @@ static value_t *initialize_arguments(char *document)
 
         globals = empty_variables();
         null = new_null();
-        arguments = execute_script(document, globals, null);
+        arguments = execute_script(document, null, globals);
         success = !arguments->thrown;
         destroy_map(globals);
         destroy_value(null);
