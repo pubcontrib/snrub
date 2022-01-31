@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include "parse.h"
 #include "lex.h"
 #include "value.h"
@@ -300,7 +299,7 @@ static int is_printable(char *value)
 
         symbol = value[index];
 
-        if (!isprint(symbol))
+        if (symbol < 32 || symbol > 126)
         {
             return 0;
         }
