@@ -507,6 +507,24 @@ char *escape_string(char *string)
                 case 'r':
                     escape[right++] = '\r';
                     break;
+                case 'a':
+                    if (left < length - 3)
+                    {
+                        char *substring;
+                        int code;
+
+                        substring = slice_string(string, left + 1, left + 4);
+
+                        if (string_to_integer(substring, 3, &code) && code > 0 && code < 256)
+                        {
+                            escape[right++] = code;
+                        }
+
+                        free(substring);
+                    }
+
+                    left += 3;
+                    break;
             }
 
             escaping = 0;
@@ -532,19 +550,36 @@ char *escape_string(char *string)
 char *unescape_string(char *string)
 {
     char *unescape;
-    size_t length, left, right;
+    size_t originalLength, expandedLength, left, right;
 
-    length = strlen(string)
-        + characters_in_string(string, '\\')
-        + characters_in_string(string, '"')
-        + characters_in_string(string, '\t')
-        + characters_in_string(string, '\n')
-        + characters_in_string(string, '\r');
-    unescape = allocate(sizeof(char) * (length + 1));
+    originalLength = strlen(string);
+    expandedLength = 0;
 
-    for (left = 0, right = 0; left < length; right++)
+    for (left = 0; left < originalLength; left++)
     {
-        char symbol;
+        unsigned char symbol;
+
+        symbol = string[left];
+
+        if (symbol == '\\' || symbol == '"' || symbol == '\t' || symbol == '\n' || symbol == '\r')
+        {
+            expandedLength += 2;
+        }
+        else if (symbol >= 32 && symbol <= 126)
+        {
+            expandedLength++;
+        }
+        else
+        {
+            expandedLength += 5;
+        }
+    }
+
+    unescape = allocate(sizeof(char) * (expandedLength + 1));
+
+    for (left = 0, right = 0; left < expandedLength; right++)
+    {
+        unsigned char symbol;
 
         symbol = string[right];
 
@@ -571,12 +606,51 @@ char *unescape_string(char *string)
                 unescape[left++] = 'r';
                 break;
             default:
-                unescape[left++] = symbol;
+                if (symbol >= 32 && symbol <= 126)
+                {
+                    unescape[left++] = symbol;
+                }
+                else
+                {
+                    char *substring;
+                    size_t sublength;
+
+                    substring = integer_to_string(symbol);
+                    sublength = strlen(substring);
+                    unescape[left++] = '\\';
+                    unescape[left++] = 'a';
+
+                    if (sublength == 1)
+                    {
+                        unescape[left++] = '0';
+                        unescape[left++] = '0';
+                        unescape[left++] = substring[0];
+                    }
+                    else if (sublength == 2)
+                    {
+                        unescape[left++] = '0';
+                        unescape[left++] = substring[0];
+                        unescape[left++] = substring[1];
+                    }
+                    else if (sublength == 3)
+                    {
+                        unescape[left++] = substring[0];
+                        unescape[left++] = substring[1];
+                        unescape[left++] = substring[2];
+                    }
+                    else
+                    {
+                        crash_with_message("unsupported branch %s", "VALUE_UNESCAPE_ASCII");
+                    }
+
+                    free(substring);
+                }
+
                 break;
         }
     }
 
-    unescape[length] = '\0';
+    unescape[expandedLength] = '\0';
 
     return unescape;
 }
