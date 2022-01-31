@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include "cli.h"
 #include "execute.h"
 #include "parse.h"
@@ -723,7 +722,6 @@ static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *fra
 {
     value_t *path;
     char *file;
-    size_t length, index;
 
     if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
     {
@@ -736,21 +734,6 @@ static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *fra
     if (!file)
     {
         return new_null();
-    }
-
-    length = strlen(file);
-
-    for (index = 0; index < length; index++)
-    {
-        unsigned char symbol;
-
-        symbol = file[index];
-
-        if (!(isprint(symbol) || symbol == '\t' || symbol == '\n' || symbol == '\r'))
-        {
-            free(file);
-            return throw_error(ERROR_TYPE);
-        }
     }
 
     return new_string(file);
