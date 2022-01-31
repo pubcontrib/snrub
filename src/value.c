@@ -9,7 +9,6 @@
 static value_t *create_value(value_type_t type, void *data, size_t size, int thrown);
 static void copy_map(map_t *from, map_t *to);
 static value_t *quote_string(char *body, char qualifier);
-static size_t characters_in_string(char *string, char character);
 static void *copy_memory(void *memory, size_t size);
 static int *integer_to_array(int integer);
 static int compare_strings_ascending(const void *left, const void *right);
@@ -1105,24 +1104,6 @@ static value_t *quote_string(char *body, char qualifier)
     represent[length + 2] = '\0';
 
     return new_string(represent);
-}
-
-static size_t characters_in_string(char *string, char character)
-{
-    size_t count, length, index;
-
-    count = 0;
-    length = strlen(string);
-
-    for (index = 0; index < length; index++)
-    {
-        if (string[index] == character)
-        {
-            count += 1;
-        }
-    }
-
-    return count;
 }
 
 static void *copy_memory(void *memory, size_t size)
