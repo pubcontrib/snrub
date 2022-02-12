@@ -8,7 +8,7 @@
 #include "buffer.h"
 #include "common.h"
 
-#define PROGRAM_VERSION "v0.75.0"
+#define PROGRAM_VERSION "v0.75.1"
 
 static int run_help(void);
 static int run_version(void);
