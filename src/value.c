@@ -547,7 +547,7 @@ buffer_t *escape_string(buffer_t *string)
 
                         substring = slice_buffer(string, left + 1, left + 4);
 
-                        if (buffer_to_integer(substring, 3, &code) && code > 0 && code < 256)
+                        if (buffer_to_integer(substring, 3, &code) && code >= 0 && code <= 255)
                         {
                             bytes[right++] = code;
                         }
