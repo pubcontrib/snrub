@@ -17,10 +17,10 @@ typedef enum
 static void destroy_expression_unsafe(void *expression);
 static expression_t *create_expression(expression_type_t type, value_t *value, list_t *arguments);
 static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth);
-static value_t *parse_null_literal(char *value);
-static value_t *parse_number_literal(char *value);
-static value_t *parse_string_literal(char *value);
-static int is_printable(char *value);
+static value_t *parse_null_literal(buffer_t *value);
+static value_t *parse_number_literal(buffer_t *value);
+static value_t *parse_string_literal(buffer_t *value);
+static int is_printable(buffer_t *value);
 
 list_t *parse_expressions(scanner_t *scanner)
 {
@@ -84,7 +84,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     state = PARSER_STATE_START;
     expression = NULL;
 
-    if (depth > LIMIT_DEPTH || scanner->length > NUMBER_MAX)
+    if (depth > LIMIT_DEPTH || scanner->document->length > NUMBER_MAX)
     {
         state = PARSER_STATE_ERROR;
         expression = create_expression(EXPRESSION_TYPE_VALUE, throw_error(ERROR_BOUNDS), NULL);
@@ -210,14 +210,14 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     return expression;
 }
 
-static value_t *parse_null_literal(char *value)
+static value_t *parse_null_literal(buffer_t *value)
 {
-    if (strlen(value) != 1)
+    if (value->length != 1)
     {
         return throw_error(ERROR_TYPE);
     }
 
-    if (value[0] != SYMBOL_NULL)
+    if (value->bytes[0] != SYMBOL_NULL)
     {
         return throw_error(ERROR_TYPE);
     }
@@ -225,79 +225,71 @@ static value_t *parse_null_literal(char *value)
     return new_null();
 }
 
-static value_t *parse_number_literal(char *value)
+static value_t *parse_number_literal(buffer_t *value)
 {
-    size_t length;
-    char *trimmed;
+    buffer_t *trimmed;
     int numbered;
 
-    length = strlen(value);
-
-    if (length < 2)
+    if (value->length < 2)
     {
         return throw_error(ERROR_TYPE);
     }
 
-    if (value[0] != SYMBOL_NUMBER || value[length - 1] != SYMBOL_NUMBER)
+    if (value->bytes[0] != SYMBOL_NUMBER || value->bytes[value->length - 1] != SYMBOL_NUMBER)
     {
         return throw_error(ERROR_TYPE);
     }
 
-    trimmed = slice_string(value, 1, length - 1);
+    trimmed = slice_buffer(value, 1, value->length - 1);
 
-    if (!string_to_integer(trimmed, NUMBER_DIGIT_CAPACITY, &numbered))
+    if (!buffer_to_integer(trimmed, NUMBER_DIGIT_CAPACITY, &numbered))
     {
-        free(trimmed);
+        destroy_buffer(trimmed);
         return throw_error(ERROR_TYPE);
     }
 
-    free(trimmed);
+    destroy_buffer(trimmed);
 
     return new_number(numbered);
 }
 
-static value_t *parse_string_literal(char *value)
+static value_t *parse_string_literal(buffer_t *value)
 {
-    size_t length;
-    char *trimmed, *escaped;
+    buffer_t *trimmed, *escaped;
 
-    length = strlen(value);
-
-    if (length < 2)
+    if (value->length < 2)
     {
         return throw_error(ERROR_TYPE);
     }
 
-    if (value[0] != SYMBOL_STRING || value[length - 1] != SYMBOL_STRING)
+    if (value->bytes[0] != SYMBOL_STRING || value->bytes[value->length - 1] != SYMBOL_STRING)
     {
         return throw_error(ERROR_TYPE);
     }
 
-    trimmed = slice_string(value, 1, length - 1);
+    trimmed = slice_buffer(value, 1, value->length - 1);
 
     if (!is_printable(trimmed))
     {
-        free(trimmed);
+        destroy_buffer(trimmed);
         return throw_error(ERROR_TYPE);
     }
 
     escaped = escape_string(trimmed);
-    free(trimmed);
+    destroy_buffer(trimmed);
 
     return new_string(escaped);
 }
 
-static int is_printable(char *value)
+static int is_printable(buffer_t *value)
 {
-    size_t length, index;
+    size_t index;
 
-    length = strlen(value);
-
-    for (index = 0; index < length; index++)
+    for (index = 0; index < value->length; index++)
     {
         unsigned char symbol;
 
-        symbol = value[index];
+        symbol = value->bytes[index];
 
         if (symbol < 32 || symbol > 126)
         {

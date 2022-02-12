@@ -3,21 +3,15 @@
 #include "lex.h"
 #include "common.h"
 
-static scanner_t *create_scanner(char *document, size_t start, size_t end, size_t length, int closed);
-static token_t *create_token(token_name_t name, char *value);
+static scanner_t *create_scanner(buffer_t *document, size_t start, size_t end, int closed);
+static token_t *create_token(token_name_t name, buffer_t *value);
 static token_t *escape_token(scanner_t *scanner, char qualifier, token_name_t name);
 static token_t *slice_token(scanner_t *scanner, token_name_t name);
 static token_name_t match_name(char symbol);
 
-scanner_t *start_scanner(char *document)
+scanner_t *start_scanner(buffer_t *document)
 {
-    size_t length;
-    int closed;
-
-    length = strlen(document);
-    closed = length <= 0;
-
-    return create_scanner(document, 0, 0, length, closed);
+    return create_scanner(document, 0, 0, document->length <= 0);
 }
 
 token_t *next_token(scanner_t *scanner)
@@ -29,7 +23,7 @@ token_t *next_token(scanner_t *scanner)
         return NULL;
     }
 
-    symbol = scanner->document[scanner->end++];
+    symbol = scanner->document->bytes[scanner->end++];
 
     switch (symbol)
     {
@@ -48,7 +42,7 @@ void destroy_scanner(scanner_t *scanner)
 {
     if (scanner->document)
     {
-        free(scanner->document);
+        destroy_buffer(scanner->document);
     }
 
     free(scanner);
@@ -58,13 +52,13 @@ void destroy_token(token_t *token)
 {
     if (token->value)
     {
-        free(token->value);
+        destroy_buffer(token->value);
     }
 
     free(token);
 }
 
-static scanner_t *create_scanner(char *document, size_t start, size_t end, size_t length, int closed)
+static scanner_t *create_scanner(buffer_t *document, size_t start, size_t end, int closed)
 {
     scanner_t *scanner;
 
@@ -72,13 +66,12 @@ static scanner_t *create_scanner(char *document, size_t start, size_t end, size_
     scanner->document = document;
     scanner->start = start;
     scanner->end = end;
-    scanner->length = length;
     scanner->closed = closed;
 
     return scanner;
 }
 
-static token_t *create_token(token_name_t name, char *value)
+static token_t *create_token(token_name_t name, buffer_t *value)
 {
     token_t *token;
 
@@ -95,11 +88,11 @@ static token_t *escape_token(scanner_t *scanner, char qualifier, token_name_t na
 
     escaping = 0;
 
-    while (scanner->end < scanner->length)
+    while (scanner->end < scanner->document->length)
     {
         char symbol;
 
-        symbol = scanner->document[scanner->end++];
+        symbol = scanner->document->bytes[scanner->end++];
 
         if (symbol == qualifier)
         {
@@ -130,10 +123,10 @@ static token_t *escape_token(scanner_t *scanner, char qualifier, token_name_t na
 
 static token_t *slice_token(scanner_t *scanner, token_name_t name)
 {
-    char *value;
+    buffer_t *value;
 
-    value = slice_string(scanner->document, scanner->start, scanner->end);
-    scanner->closed = scanner->end >= scanner->length;
+    value = slice_buffer(scanner->document, scanner->start, scanner->end);
+    scanner->closed = scanner->end >= scanner->document->length;
     scanner->start = scanner->end;
 
     return create_token(name, value);

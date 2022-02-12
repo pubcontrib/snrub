@@ -2,6 +2,7 @@
 #define LEX_H
 
 #include <stdlib.h>
+#include "buffer.h"
 
 #define SYMBOL_COMMENT '`'
 #define SYMBOL_NULL '?'
@@ -11,10 +12,9 @@
 
 typedef struct
 {
-    char *document;
+    buffer_t *document;
     size_t start;
     size_t end;
-    size_t length;
     int closed;
 } scanner_t;
 
@@ -37,10 +37,10 @@ typedef enum
 typedef struct
 {
     token_name_t name;
-    char *value;
+    buffer_t *value;
 } token_t;
 
-scanner_t *start_scanner(char *document);
+scanner_t *start_scanner(buffer_t *document);
 token_t *next_token(scanner_t *scanner);
 void destroy_scanner(scanner_t *scanner);
 void destroy_token(token_t *token);

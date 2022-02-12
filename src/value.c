@@ -8,13 +8,14 @@
 
 static value_t *create_value(value_type_t type, void *data, size_t size, int thrown);
 static void copy_map(map_t *from, map_t *to);
-static value_t *quote_string(char *body, char qualifier);
+static value_t *quote_string(buffer_t *body, char qualifier);
 static void *copy_memory(void *memory, size_t size);
 static int *integer_to_array(int integer);
-static int compare_strings_ascending(const void *left, const void *right);
+static int compare_buffers_ascending(const void *left, const void *right);
 static void destroy_value_unsafe(void *value);
 static int overflow_add(int left, int right);
-static char **array_map_keys(map_t *map);
+static buffer_t **array_map_keys(map_t *map);
+static void destroy_keys(buffer_t **keys, size_t length);
 
 int is_portable(void)
 {
@@ -100,9 +101,9 @@ value_t *new_number(int number)
     return create_value(VALUE_TYPE_NUMBER, data, sizeof(int), 0);
 }
 
-value_t *new_string(char *string)
+value_t *new_string(buffer_t *string)
 {
-    return create_value(VALUE_TYPE_STRING, string, sizeof(char) * (strlen(string) + 1), 0);
+    return create_value(VALUE_TYPE_STRING, string, string->length, 0);
 }
 
 value_t *new_list(value_t **items, size_t length)
@@ -131,7 +132,6 @@ value_t *copy_value(value_t *this)
     {
         case VALUE_TYPE_NULL:
         case VALUE_TYPE_NUMBER:
-        case VALUE_TYPE_STRING:
         {
             void *data;
 
@@ -139,6 +139,8 @@ value_t *copy_value(value_t *this)
 
             return create_value(this->type, data, this->size, this->thrown);
         }
+        case VALUE_TYPE_STRING:
+            return create_value(this->type, copy_buffer(this->data), this->size, this->thrown);
         case VALUE_TYPE_LIST:
         {
             value_t **data;
@@ -214,17 +216,16 @@ int hash_number(int number)
     return number;
 }
 
-int hash_string(char *string)
+int hash_string(buffer_t *string)
 {
     int hash;
-    size_t length, index;
+    size_t index;
 
     hash = 0;
-    length = strlen(string);
 
-    for (index = 0; index < length; index++)
+    for (index = 0; index < string->length; index++)
     {
-        hash = overflow_add(hash, string[index]);
+        hash = overflow_add(hash, string->bytes[index]);
     }
 
     return hash;
@@ -295,26 +296,28 @@ value_t *represent_value(value_t *this)
 
 value_t *represent_null(void)
 {
-    return new_string(copy_string("?"));
+    return new_string(cstring_to_buffer("?"));
 }
 
 value_t *represent_number(int number)
 {
-    return quote_string(integer_to_string(number), '#');
+    return quote_string(integer_to_buffer(number), '#');
 }
 
-value_t *represent_string(char *string)
+value_t *represent_string(buffer_t *string)
 {
     return quote_string(unescape_string(string), '\"');
 }
 
 value_t *represent_list(value_t **items, size_t length)
 {
-    char *body, *swap;
+    buffer_t *body, *swap, *delimiter, *end;
     size_t index;
     int fit;
 
-    body = copy_string("[");
+    body = cstring_to_buffer("[");
+    delimiter = cstring_to_buffer(" ");
+    end = cstring_to_buffer("]");
 
     for (index = 0; index < length; index++)
     {
@@ -322,12 +325,14 @@ value_t *represent_list(value_t **items, size_t length)
 
         if (index > 0)
         {
-            fit = string_add(body, " ", &swap);
-            free(body);
+            fit = string_add(body, delimiter, &swap);
+            destroy_buffer(body);
 
             if (!fit)
             {
-                free(swap);
+                destroy_buffer(swap);
+                destroy_buffer(delimiter);
+                destroy_buffer(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
@@ -339,29 +344,35 @@ value_t *represent_list(value_t **items, size_t length)
 
         if (represent->thrown)
         {
-            free(swap);
+            destroy_buffer(swap);
+            destroy_buffer(delimiter);
+            destroy_buffer(end);
             return represent;
         }
 
         fit = string_add(body, view_string(represent), &swap);
-        free(body);
+        destroy_buffer(body);
         destroy_value(represent);
 
         if (!fit)
         {
-            free(swap);
+            destroy_buffer(swap);
+            destroy_buffer(delimiter);
+            destroy_buffer(end);
             return throw_error(ERROR_BOUNDS);
         }
 
         body = swap;
     }
 
-    fit = string_add(body, "]", &swap);
-    free(body);
+    fit = string_add(body, end, &swap);
+    destroy_buffer(body);
+    destroy_buffer(delimiter);
+    destroy_buffer(end);
 
     if (!fit)
     {
-        free(swap);
+        destroy_buffer(swap);
         return throw_error(ERROR_BOUNDS);
     }
 
@@ -370,21 +381,23 @@ value_t *represent_list(value_t **items, size_t length)
 
 value_t *represent_map(map_t *pairs)
 {
-    char *body, *swap;
+    buffer_t *body, *swap, *delimiter, *end;
     int fit;
 
-    body = copy_string("{");
+    body = cstring_to_buffer("{");
+    delimiter = cstring_to_buffer(" ");
+    end = cstring_to_buffer("}");
 
     if (pairs->length > 0)
     {
-        char **keys;
+        buffer_t **keys;
         size_t index;
 
         keys = array_map_keys(pairs);
 
         for (index = 0; index < pairs->length; index++)
         {
-            char *key;
+            buffer_t *key;
             value_t *value, *represent;
 
             key = keys[index];
@@ -392,12 +405,14 @@ value_t *represent_map(map_t *pairs)
 
             if (index > 0)
             {
-                fit = string_add(body, " ", &swap);
-                free(body);
+                fit = string_add(body, delimiter, &swap);
+                destroy_buffer(body);
 
                 if (!fit)
                 {
-                    free(swap);
+                    destroy_buffer(swap);
+                    destroy_buffer(delimiter);
+                    destroy_buffer(end);
                     return throw_error(ERROR_BOUNDS);
                 }
 
@@ -408,27 +423,33 @@ value_t *represent_map(map_t *pairs)
 
             if (represent->thrown)
             {
-                free(swap);
+                destroy_buffer(swap);
+                destroy_buffer(delimiter);
+                destroy_buffer(end);
                 return represent;
             }
 
             fit = string_add(body, view_string(represent), &swap);
-            free(body);
+            destroy_buffer(body);
             destroy_value(represent);
 
             if (!fit)
             {
-                free(swap);
+                destroy_buffer(swap);
+                destroy_buffer(delimiter);
+                destroy_buffer(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
             body = swap;
-            fit = string_add(body, " ", &swap);
-            free(body);
+            fit = string_add(body, delimiter, &swap);
+            destroy_buffer(body);
 
             if (!fit)
             {
-                free(swap);
+                destroy_buffer(swap);
+                destroy_buffer(delimiter);
+                destroy_buffer(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
@@ -437,89 +458,101 @@ value_t *represent_map(map_t *pairs)
 
             if (represent->thrown)
             {
-                free(swap);
+                destroy_buffer(swap);
+                destroy_buffer(delimiter);
+                destroy_buffer(end);
                 return represent;
             }
 
             fit = string_add(body, view_string(represent), &swap);
-            free(body);
+            destroy_buffer(body);
             destroy_value(represent);
 
             if (!fit)
             {
-                free(swap);
+                destroy_buffer(swap);
+                destroy_buffer(delimiter);
+                destroy_buffer(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
             body = swap;
         }
 
-        free(keys);
+        destroy_keys(keys, pairs->length);
     }
 
-    fit = string_add(body, "}", &swap);
+    fit = string_add(body, end, &swap);
+    destroy_buffer(body);
+    destroy_buffer(delimiter);
+    destroy_buffer(end);
 
     if (!fit)
     {
-        free(swap);
+        destroy_buffer(swap);
         return throw_error(ERROR_BOUNDS);
     }
-
-    free(body);
 
     return new_string(swap);
 }
 
-char *escape_string(char *string)
+buffer_t *escape_string(buffer_t *string)
 {
-    char *escape;
-    size_t length, left, right;
+    char *bytes;
+    size_t left, right;
     int escaping;
 
-    length = strlen(string);
-    escape = allocate(sizeof(char) * (length + 1));
+    if (string->length > 0)
+    {
+        bytes = allocate(sizeof(char) * string->length);
+    }
+    else
+    {
+        bytes = NULL;
+    }
+
     escaping = 0;
     right = 0;
 
-    for (left = 0; left < length; left++)
+    for (left = 0; left < string->length; left++)
     {
         char current;
 
-        current = string[left];
+        current = string->bytes[left];
 
         if (escaping)
         {
             switch (current)
             {
                 case '\\':
-                    escape[right++] = '\\';
+                    bytes[right++] = '\\';
                     break;
                 case '"':
-                    escape[right++] = '"';
+                    bytes[right++] = '"';
                     break;
                 case 't':
-                    escape[right++] = '\t';
+                    bytes[right++] = '\t';
                     break;
                 case 'n':
-                    escape[right++] = '\n';
+                    bytes[right++] = '\n';
                     break;
                 case 'r':
-                    escape[right++] = '\r';
+                    bytes[right++] = '\r';
                     break;
                 case 'a':
-                    if (left < length - 3)
+                    if (string->length > 2 && left < string->length - 3)
                     {
-                        char *substring;
+                        buffer_t *substring;
                         int code;
 
-                        substring = slice_string(string, left + 1, left + 4);
+                        substring = slice_buffer(string, left + 1, left + 4);
 
-                        if (string_to_integer(substring, 3, &code) && code > 0 && code < 256)
+                        if (buffer_to_integer(substring, 3, &code) && code > 0 && code < 256)
                         {
-                            escape[right++] = code;
+                            bytes[right++] = code;
                         }
 
-                        free(substring);
+                        destroy_buffer(substring);
                     }
 
                     left += 3;
@@ -536,122 +569,127 @@ char *escape_string(char *string)
             }
             else
             {
-                escape[right++] = current;
+                bytes[right++] = current;
             }
         }
     }
 
-    escape[right] = '\0';
+    if (right > 0)
+    {
+        bytes = reallocate(bytes, right);
+    }
 
-    return escape;
+    return create_buffer(bytes, right);
 }
 
-char *unescape_string(char *string)
+buffer_t *unescape_string(buffer_t *string)
 {
-    char *unescape;
-    size_t originalLength, expandedLength, left, right;
+    char *bytes;
+    size_t length, left, right;
 
-    originalLength = strlen(string);
-    expandedLength = 0;
+    length = 0;
 
-    for (left = 0; left < originalLength; left++)
+    for (left = 0; left < string->length; left++)
     {
         unsigned char symbol;
 
-        symbol = string[left];
+        symbol = string->bytes[left];
 
         if (symbol == '\\' || symbol == '"' || symbol == '\t' || symbol == '\n' || symbol == '\r')
         {
-            expandedLength += 2;
+            length += 2;
         }
         else if (symbol >= 32 && symbol <= 126)
         {
-            expandedLength++;
+            length++;
         }
         else
         {
-            expandedLength += 5;
+            length += 5;
         }
     }
 
-    unescape = allocate(sizeof(char) * (expandedLength + 1));
+    if (length > 0)
+    {
+        bytes = allocate(sizeof(char) * length);
+    }
+    else
+    {
+        bytes = NULL;
+    }
 
-    for (left = 0, right = 0; left < expandedLength; right++)
+    for (left = 0, right = 0; left < length; right++)
     {
         unsigned char symbol;
 
-        symbol = string[right];
+        symbol = string->bytes[right];
 
         switch (symbol)
         {
             case '\\':
-                unescape[left++] = '\\';
-                unescape[left++] = '\\';
+                bytes[left++] = '\\';
+                bytes[left++] = '\\';
                 break;
             case '"':
-                unescape[left++] = '\\';
-                unescape[left++] = '"';
+                bytes[left++] = '\\';
+                bytes[left++] = '"';
                 break;
             case '\t':
-                unescape[left++] = '\\';
-                unescape[left++] = 't';
+                bytes[left++] = '\\';
+                bytes[left++] = 't';
                 break;
             case '\n':
-                unescape[left++] = '\\';
-                unescape[left++] = 'n';
+                bytes[left++] = '\\';
+                bytes[left++] = 'n';
                 break;
             case '\r':
-                unescape[left++] = '\\';
-                unescape[left++] = 'r';
+                bytes[left++] = '\\';
+                bytes[left++] = 'r';
                 break;
             default:
                 if (symbol >= 32 && symbol <= 126)
                 {
-                    unescape[left++] = symbol;
+                    bytes[left++] = symbol;
                 }
                 else
                 {
-                    char *substring;
-                    size_t sublength;
+                    buffer_t *substring;
 
-                    substring = integer_to_string(symbol);
-                    sublength = strlen(substring);
-                    unescape[left++] = '\\';
-                    unescape[left++] = 'a';
+                    substring = integer_to_buffer(symbol);
+                    bytes[left++] = '\\';
+                    bytes[left++] = 'a';
 
-                    if (sublength == 1)
+                    if (substring->length == 1)
                     {
-                        unescape[left++] = '0';
-                        unescape[left++] = '0';
-                        unescape[left++] = substring[0];
+                        bytes[left++] = '0';
+                        bytes[left++] = '0';
+                        bytes[left++] = substring->bytes[0];
                     }
-                    else if (sublength == 2)
+                    else if (substring->length == 2)
                     {
-                        unescape[left++] = '0';
-                        unescape[left++] = substring[0];
-                        unescape[left++] = substring[1];
+                        bytes[left++] = '0';
+                        bytes[left++] = substring->bytes[0];
+                        bytes[left++] = substring->bytes[1];
                     }
-                    else if (sublength == 3)
+                    else if (substring->length == 3)
                     {
-                        unescape[left++] = substring[0];
-                        unescape[left++] = substring[1];
-                        unescape[left++] = substring[2];
+                        bytes[left++] = substring->bytes[0];
+                        bytes[left++] = substring->bytes[1];
+                        bytes[left++] = substring->bytes[2];
                     }
                     else
                     {
                         crash_with_message("unsupported branch %s", "VALUE_UNESCAPE_ASCII");
                     }
 
-                    free(substring);
+                    destroy_buffer(substring);
                 }
 
                 break;
         }
     }
 
-    unescape[expandedLength] = '\0';
-
-    return unescape;
+    return create_buffer(bytes, length);
 }
 
 int compare_values(value_t *left, value_t *right)
@@ -668,7 +706,7 @@ int compare_values(value_t *left, value_t *right)
         case VALUE_TYPE_NUMBER:
             return view_number(left) - view_number(right);
         case VALUE_TYPE_STRING:
-            return strcmp(view_string(left), view_string(right));
+            return compare_buffers(view_string(left), view_string(right));
         case VALUE_TYPE_LIST:
         {
             size_t index;
@@ -706,35 +744,41 @@ int compare_values(value_t *left, value_t *right)
 
             if (length > 0)
             {
-                char **leftKeys, **rightKeys;
+                buffer_t **leftKeys, **rightKeys;
                 map_t *leftMap, *rightMap;
 
                 leftMap = left->data;
                 rightMap = right->data;
+
+                if (rightMap->length == 0)
+                {
+                    return 1;
+                }
+
                 leftKeys = array_map_keys(leftMap);
                 rightKeys = array_map_keys(rightMap);
 
                 for (; index < length; index++)
                 {
                     int different;
-                    char *leftKey, *rightKey;
+                    buffer_t *leftKey, *rightKey;
                     value_t *leftValue, *rightValue;
 
                     if (index == right->size)
                     {
-                        free(leftKeys);
-                        free(rightKeys);
+                        destroy_keys(leftKeys, leftMap->length);
+                        destroy_keys(rightKeys, rightMap->length);
                         return 1;
                     }
 
                     leftKey = leftKeys[index];
                     rightKey = rightKeys[index];
-                    different = strcmp(leftKey, rightKey);
+                    different = compare_buffers(leftKey, rightKey);
 
                     if (different)
                     {
-                        free(leftKeys);
-                        free(rightKeys);
+                        destroy_keys(leftKeys, leftMap->length);
+                        destroy_keys(rightKeys, rightMap->length);
                         return different;
                     }
 
@@ -743,8 +787,8 @@ int compare_values(value_t *left, value_t *right)
 
                     if (!rightValue)
                     {
-                        free(leftKeys);
-                        free(rightKeys);
+                        destroy_keys(leftKeys, leftMap->length);
+                        destroy_keys(rightKeys, rightMap->length);
                         return -1;
                     }
 
@@ -752,14 +796,14 @@ int compare_values(value_t *left, value_t *right)
 
                     if (different)
                     {
-                        free(leftKeys);
-                        free(rightKeys);
+                        destroy_keys(leftKeys, leftMap->length);
+                        destroy_keys(rightKeys, rightMap->length);
                         return different;
                     }
                 }
 
-                free(leftKeys);
-                free(rightKeys);
+                destroy_keys(leftKeys, leftMap->length);
+                destroy_keys(rightKeys, rightMap->length);
             }
 
             if (index < right->size)
@@ -780,7 +824,6 @@ size_t length_value(value_t *value)
     switch (value->type)
     {
         case VALUE_TYPE_STRING:
-            return value->size - 1;
         case VALUE_TYPE_LIST:
         case VALUE_TYPE_MAP:
             return value->size;
@@ -802,12 +845,12 @@ int view_number(value_t *value)
     }
 }
 
-char *view_string(value_t *value)
+buffer_t *view_string(value_t *value)
 {
     switch (value->type)
     {
         case VALUE_TYPE_STRING:
-            return (char *) value->data;
+            return (buffer_t *) value->data;
         default:
             crash_with_message("unsupported branch %s", "VALUE_STRING_TYPE");
             return NULL;
@@ -946,39 +989,44 @@ int number_modulo(int left, int right, int *out)
     return 1;
 }
 
-int string_add(char *left, char *right, char **out)
+int string_add(buffer_t *left, buffer_t *right, buffer_t **out)
 {
-    char *sum;
-    size_t leftLength, rightLength;
-    int sumLength;
+    char *bytes;
+    int length;
 
-    leftLength = strlen(left);
-    rightLength = strlen(right);
-
-    if (!number_add(leftLength, rightLength, &sumLength))
+    if (!number_add(left->length, right->length, &length))
     {
         return 0;
     }
 
-    sum = allocate(sizeof(char) * (sumLength + 1));
+    if (length > 0)
+    {
+        bytes = allocate(sizeof(char) * length);
+        memcpy(bytes, left->bytes, left->length);
+        memcpy(bytes + left->length, right->bytes, right->length);
+    }
+    else
+    {
+        bytes = NULL;
+    }
 
-    strncpy(sum, left, leftLength);
-    strncpy(sum + leftLength, right, rightLength + 1);
-
-    (*out) = sum;
+    (*out) = create_buffer(bytes, length);
 
     return 1;
 }
 
-char *read_file(char *path)
+buffer_t *read_file(buffer_t *path)
 {
     FILE *file;
+    char *cPath;
 
-    file = fopen(path, "rb");
+    cPath = buffer_to_cstring(path);
+    file = fopen(cPath, "rb");
+    free(cPath);
 
     if (file)
     {
-        char *buffer;
+        char *bytes;
         long length;
 
         fseek(file, 0, SEEK_END);
@@ -991,22 +1039,31 @@ char *read_file(char *path)
             return NULL;
         }
 
-        buffer = allocate(sizeof(char) * (length + 1));
-        fread(buffer, 1, length, file);
-
-        if (ferror(file))
+        if (length > 0)
         {
-            free(buffer);
-            buffer = NULL;
+            bytes = allocate(sizeof(char) * length);
+            fread(bytes, 1, length, file);
         }
         else
         {
-            buffer[length] = '\0';
+            bytes = NULL;
         }
 
-        fclose(file);
+        if (ferror(file))
+        {
+            if (bytes)
+            {
+                free(bytes);
+            }
 
-        return buffer;
+            fclose(file);
+            return NULL;
+        }
+        else
+        {
+            fclose(file);
+            return create_buffer(bytes, length);
+        }
     }
 
     return NULL;
@@ -1020,8 +1077,10 @@ void destroy_value(value_t *value)
         {
             case VALUE_TYPE_NULL:
             case VALUE_TYPE_NUMBER:
-            case VALUE_TYPE_STRING:
                 free(value->data);
+                break;
+            case VALUE_TYPE_STRING:
+                destroy_buffer(value->data);
                 break;
             case VALUE_TYPE_LIST:
                 destroy_items(value->data, value->size);
@@ -1075,10 +1134,10 @@ static void copy_map(map_t *from, map_t *to)
 
             for (chain = from->chains[index]; chain != NULL; chain = chain->next)
             {
-                char *key;
+                buffer_t *key;
                 value_t *value;
 
-                key = copy_string(chain->key);
+                key = copy_buffer(chain->key);
                 value = copy_value(chain->value);
                 set_map_item(to, key, value);
             }
@@ -1086,24 +1145,22 @@ static void copy_map(map_t *from, map_t *to)
     }
 }
 
-static value_t *quote_string(char *body, char qualifier)
+static value_t *quote_string(buffer_t *body, char qualifier)
 {
-    char *represent;
     size_t length, index;
 
-    length = strlen(body);
-    represent = reallocate(body, length + 2 + 1);
+    length = body->length;
+    resize_buffer(body, length + 2);
 
     for (index = length; index > 0; index--)
     {
-        represent[index] = represent[index - 1];
+        body->bytes[index] = body->bytes[index - 1];
     }
 
-    represent[index] = qualifier;
-    represent[length + 1] = qualifier;
-    represent[length + 2] = '\0';
+    body->bytes[index] = qualifier;
+    body->bytes[length + 1] = qualifier;
 
-    return new_string(represent);
+    return new_string(body);
 }
 
 static void *copy_memory(void *memory, size_t size)
@@ -1126,9 +1183,9 @@ static int *integer_to_array(int integer)
     return array;
 }
 
-static int compare_strings_ascending(const void *left, const void *right)
+static int compare_buffers_ascending(const void *left, const void *right)
 {
-    return strcmp(*(char **) left, *(char **) right);
+    return compare_buffers(*(buffer_t **) left, *(buffer_t **) right);
 }
 
 static void destroy_value_unsafe(void *value)
@@ -1156,12 +1213,12 @@ static int overflow_add(int left, int right)
     }
 }
 
-static char **array_map_keys(map_t *map)
+static buffer_t **array_map_keys(map_t *map)
 {
-    char **keys;
+    buffer_t **keys;
     size_t index, placement;
 
-    keys = allocate(sizeof(char *) * map->length);
+    keys = allocate(sizeof(buffer_t *) * map->length);
 
     for (index = 0, placement = 0; index < map->capacity; index++)
     {
@@ -1171,12 +1228,24 @@ static char **array_map_keys(map_t *map)
 
             for (chain = map->chains[index]; chain != NULL; chain = chain->next)
             {
-                keys[placement++] = chain->key;
+                keys[placement++] = copy_buffer(chain->key);
             }
         }
     }
 
-    qsort(keys, map->length, sizeof(char *), compare_strings_ascending);
+    qsort(keys, map->length, sizeof(buffer_t *), compare_buffers_ascending);
 
     return keys;
+}
+
+static void destroy_keys(buffer_t **keys, size_t length)
+{
+    size_t index;
+
+    for (index = 0; index < length; index++)
+    {
+        destroy_buffer(keys[index]);
+    }
+
+    free(keys);
 }

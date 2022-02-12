@@ -21,6 +21,7 @@ OBJS = $(OBJ)/main.o \
 	$(OBJ)/value.o \
 	$(OBJ)/map.o \
 	$(OBJ)/list.o \
+	$(OBJ)/buffer.o \
 	$(OBJ)/common.o
 
 .PHONY: all clean check install uninstall

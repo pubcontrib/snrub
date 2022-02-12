@@ -1,14 +1,13 @@
 #include <stdlib.h>
-#include <string.h>
 #include "map.h"
 #include "common.h"
 
 static void destroy_chain(map_chain_t *chain, void (*destroy)(void *));
-static map_chain_t *create_map_chain(char *key, void *value, map_chain_t *next);
-static map_t *create_map(int (*hash)(char *), void (*destroy)(void *), size_t length, size_t capacity, map_chain_t **chains);
+static map_chain_t *create_map_chain(buffer_t *key, void *value, map_chain_t *next);
+static map_t *create_map(int (*hash)(buffer_t *), void (*destroy)(void *), size_t length, size_t capacity, map_chain_t **chains);
 static void resize_map(map_t *map);
 
-map_t *empty_map(int (*hash)(char *), void (*destroy)(void *), size_t capacity)
+map_t *empty_map(int (*hash)(buffer_t *), void (*destroy)(void *), size_t capacity)
 {
     map_chain_t **chains;
 
@@ -17,12 +16,12 @@ map_t *empty_map(int (*hash)(char *), void (*destroy)(void *), size_t capacity)
     return create_map(hash, destroy, 0, capacity, chains);
 }
 
-int has_map_item(map_t *map, char *key)
+int has_map_item(map_t *map, buffer_t *key)
 {
     return get_map_item(map, key) != NULL;
 }
 
-void *get_map_item(map_t *map, char *key)
+void *get_map_item(map_t *map, buffer_t *key)
 {
     map_chain_t *chain;
     int hash, index;
@@ -32,7 +31,7 @@ void *get_map_item(map_t *map, char *key)
 
     for (chain = map->chains[index]; chain != NULL; chain = chain->next)
     {
-        if (strcmp(key, chain->key) == 0)
+        if (compare_buffers(key, chain->key) == 0)
         {
             return chain->value;
         }
@@ -41,7 +40,7 @@ void *get_map_item(map_t *map, char *key)
     return NULL;
 }
 
-void set_map_item(map_t *map, char *key, void *value)
+void set_map_item(map_t *map, buffer_t *key, void *value)
 {
     map_chain_t *chain, *last, *created;
     int hash, index;
@@ -51,9 +50,9 @@ void set_map_item(map_t *map, char *key, void *value)
 
     for (chain = map->chains[index], last = NULL; chain != NULL; chain = chain->next)
     {
-        if (strcmp(key, chain->key) == 0)
+        if (compare_buffers(key, chain->key) == 0)
         {
-            free(key);
+            destroy_buffer(key);
             map->destroy(chain->value);
             chain->value = value;
             return;
@@ -81,7 +80,7 @@ void set_map_item(map_t *map, char *key, void *value)
     }
 }
 
-void remove_map_item(map_t *map, char *key)
+void remove_map_item(map_t *map, buffer_t *key)
 {
     map_chain_t *chain, *previous;
     int hash, index;
@@ -91,7 +90,7 @@ void remove_map_item(map_t *map, char *key)
 
     for (chain = map->chains[index], previous = NULL; chain != NULL; chain = chain->next)
     {
-        if (strcmp(key, chain->key) == 0)
+        if (compare_buffers(key, chain->key) == 0)
         {
             if (previous)
             {
@@ -141,7 +140,7 @@ static void destroy_chain(map_chain_t *chain, void (*destroy)(void *))
 {
     if (chain->key)
     {
-        free(chain->key);
+        destroy_buffer(chain->key);
     }
 
     if (chain->value)
@@ -157,7 +156,7 @@ static void destroy_chain(map_chain_t *chain, void (*destroy)(void *))
     free(chain);
 }
 
-static map_chain_t *create_map_chain(char *key, void *value, map_chain_t *next)
+static map_chain_t *create_map_chain(buffer_t *key, void *value, map_chain_t *next)
 {
     map_chain_t *chain;
 
@@ -169,7 +168,7 @@ static map_chain_t *create_map_chain(char *key, void *value, map_chain_t *next)
     return chain;
 }
 
-static map_t *create_map(int (*hash)(char *), void (*destroy)(void *), size_t length, size_t capacity, map_chain_t **chains)
+static map_t *create_map(int (*hash)(buffer_t *), void (*destroy)(void *), size_t length, size_t capacity, map_chain_t **chains)
 {
     map_t *map;
 

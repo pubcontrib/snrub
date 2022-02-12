@@ -3,7 +3,7 @@
 #include "cli.h"
 #include "common.h"
 
-static line_t *create_line(char *document, size_t size, size_t capacity, int exit);
+static line_t *create_line(buffer_t *string, size_t fill, int exit);
 static line_t *empty_line(void);
 
 line_t *next_line(void)
@@ -23,19 +23,16 @@ line_t *next_line(void)
         }
         else
         {
-            if (line->length == line->capacity)
+            if (line->fill == line->string->length)
             {
-                char *string;
-
-                line->capacity *= 2;
-                string = reallocate(line->string, sizeof(char) * (line->capacity + 1));
-                line->string = string;
+                resize_buffer(line->string, line->fill * 2);
             }
 
-            line->string[line->length++] = key;
-            line->string[line->length] = '\0';
+            line->string->bytes[line->fill++] = key;
         }
     } while (key != EOF && key != '\n');
+
+    resize_buffer(line->string, line->fill);
 
     return line;
 }
@@ -50,14 +47,13 @@ void destroy_line(line_t *line)
     free(line);
 }
 
-static line_t *create_line(char *string, size_t length, size_t capacity, int exit)
+static line_t *create_line(buffer_t *string, size_t fill, int exit)
 {
     line_t *line;
 
     line = allocate(sizeof(line_t));
     line->string = string;
-    line->length = length;
-    line->capacity = capacity;
+    line->fill = fill;
     line->exit = exit;
 
     return line;
@@ -65,12 +61,11 @@ static line_t *create_line(char *string, size_t length, size_t capacity, int exi
 
 static line_t *empty_line(void)
 {
-    char *string;
+    buffer_t *string;
     size_t capacity;
 
     capacity = 1024;
-    string = allocate(sizeof(char) * (capacity + 1));
-    string[0] = '\0';
+    string = create_buffer(allocate(sizeof(char) * capacity), capacity);
 
-    return create_line(string, 0, capacity, 0);
+    return create_line(string, 0, 0);
 }
