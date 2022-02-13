@@ -46,31 +46,50 @@ fail '"' '#1#'
 fail '"word' '#1#'
 fail 'word"' '#1#'
 
-# Type Error
-index=1
+# Non-printable Symbols
+index=0
 
 while [ $index -lt 256 ]
 do
-    # 9: hortizontal tab
-    # 10: line feed
-    # 13: carriage return
-    # 32 - 126 printable characters
-
+    null=0
+    whitespace=0
     printable=0
+    extended=0
+
+    if [ $index -eq 0 ]
+    then
+        null=1
+    fi
+
+    if [ $index -eq 9 -o $index -eq 10 -o $index -eq 13 ]
+    then
+        whitespace=1
+    fi
 
     if [ $index -ge 32 -a $index -le 126 ]
     then
         printable=1
     fi
 
-    if [ $index -ne 9 -a $index -ne 10 -a $index -ne 13 -a $printable -ne 1 ]
+    if [ $index -ge 128 ]
     then
-        octal=`printf '\\%03o' $index`
-        byte=`printf '%b' $octal`
-        fail "$byte" '#1#'
+        extended=1
+    fi
 
-        text=`printf '"%s"' $byte`
-        fail "$text" '#3#'
+    if [ $extended -eq 0 ]
+    then
+        if [ $null -eq 0 -a $whitespace -eq 0 -a $printable -eq 0 ]
+        then
+            octal=`printf '\\%03o' $index`
+            byte=`printf '%b' $octal`
+            fail "$byte" '#1#'
+
+            text=`printf '"%s"' $byte`
+            fail "$text" '#3#'
+        fi
+    else
+        sequence=`printf '"%sa%03d"' '\\' $index`
+        pass "$sequence" "$sequence"
     fi
 
     index=`expr $index + 1`
