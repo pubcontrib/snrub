@@ -1,49 +1,65 @@
+.POSIX:
+.SUFFIXES:
+.PHONY: all clean check install uninstall
+
 CFLAGS = -ansi -pedantic -Wall
 LDFLAGS =
-CC = gcc
+CC = cc
 RM = rm
 CP = cp
 SH = sh
 MKDIR = mkdir
-EXE = snrub
-SRC = src
-OBJ = obj
-BIN = bin
-TEST = test
 PREFIX = /usr/local
-EXEC_PREFIX = $(PREFIX)
-BINDIR = $(EXEC_PREFIX)/bin
-OBJS = $(OBJ)/main.o \
-	$(OBJ)/cli.o \
-	$(OBJ)/execute.o \
-	$(OBJ)/parse.o \
-	$(OBJ)/lex.o \
-	$(OBJ)/value.o \
-	$(OBJ)/map.o \
-	$(OBJ)/list.o \
-	$(OBJ)/buffer.o \
-	$(OBJ)/common.o
 
-.PHONY: all clean check install uninstall
-
-all: $(BIN)/$(EXE)
+all: bin/snrub
 
 clean:
-	$(RM) -f $(BIN)/$(EXE) $(OBJS)
+	$(RM) -f bin/snrub obj/main.o obj/cli.o obj/execute.o obj/parse.o obj/lex.o obj/value.o obj/map.o obj/list.o obj/buffer.o obj/common.o
 
-check: $(BIN)/$(EXE)
-	$(SH) $(TEST)/run.sh $(BIN)/$(EXE)
+check: bin/snrub
+	$(SH) test/run.sh bin/snrub
 
-install: $(BIN)/$(EXE)
-	$(CP) $(BIN)/$(EXE) $(BINDIR)/$(EXE)
+install: bin/snrub
+	$(CP) bin/snrub $(DESTDIR)$(PREFIX)/bin/snrub
 
 uninstall:
-	$(RM) -f $(BINDIR)/$(EXE)
+	$(RM) -f $(DESTDIR)$(PREFIX)/bin/snrub
 
-$(BIN)/$(EXE): $(OBJS)
-	$(MKDIR) -p $(BIN)
-	$(CC) $(LDFLAGS) -o $@ $^
+bin/snrub: bin obj obj/main.o obj/cli.o obj/execute.o obj/parse.o obj/lex.o obj/value.o obj/map.o obj/list.o obj/buffer.o obj/common.o
+	$(CC) $(LDFLAGS) -o bin/snrub obj/main.o obj/cli.o obj/execute.o obj/parse.o obj/lex.o obj/value.o obj/map.o obj/list.o obj/buffer.o obj/common.o
 
-$(OBJ)/%.o: $(SRC)/%.c
-	$(MKDIR) -p $(OBJ)
-	$(CC) $(CFLAGS) -c $< -o $@
+obj/main.o: src/main.c
+	$(CC) $(CFLAGS) -c src/main.c -o obj/main.o
+
+obj/cli.o: src/cli.c
+	$(CC) $(CFLAGS) -c src/cli.c -o obj/cli.o
+
+obj/execute.o: src/execute.c
+	$(CC) $(CFLAGS) -c src/execute.c -o obj/execute.o
+
+obj/parse.o: src/parse.c
+	$(CC) $(CFLAGS) -c src/parse.c -o obj/parse.o
+
+obj/lex.o: src/lex.c
+	$(CC) $(CFLAGS) -c src/lex.c -o obj/lex.o
+
+obj/value.o: src/value.c
+	$(CC) $(CFLAGS) -c src/value.c -o obj/value.o
+
+obj/map.o: src/map.c
+	$(CC) $(CFLAGS) -c src/map.c -o obj/map.o
+
+obj/list.o: src/list.c
+	$(CC) $(CFLAGS) -c src/list.c -o obj/list.o
+
+obj/buffer.o: src/buffer.c
+	$(CC) $(CFLAGS) -c src/buffer.c -o obj/buffer.o
+
+obj/common.o: src/common.c
+	$(CC) $(CFLAGS) -c src/common.c -o obj/common.o
+
+bin:
+	$(MKDIR) bin
+
+obj:
+	$(MKDIR) obj
