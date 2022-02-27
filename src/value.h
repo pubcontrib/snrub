@@ -1,7 +1,7 @@
 #ifndef VALUE_H
 #define VALUE_H
 
-#include <stdlib.h>
+#include <stddef.h>
 #include "map.h"
 
 #define NUMBER_MAX 999999999

@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <string.h>
 #include "lex.h"
 #include "common.h"
 

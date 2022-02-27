@@ -1,7 +1,7 @@
 #ifndef LEX_H
 #define LEX_H
 
-#include <stdlib.h>
+#include <stddef.h>
 #include "string.h"
 
 #define SYMBOL_COMMENT '`'

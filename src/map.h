@@ -1,6 +1,7 @@
 #ifndef MAP_H
 #define MAP_H
 
+#include <stddef.h>
 #include "string.h"
 
 typedef struct map_chain_t

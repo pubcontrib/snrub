@@ -1,6 +1,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <stddef.h>
+
 #define PROGRAM_NAME "snrub"
 #define PROGRAM_SUCCESS 0
 #define PROGRAM_ERROR 1
