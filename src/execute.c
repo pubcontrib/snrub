@@ -38,7 +38,7 @@ typedef struct
     value_t *(*call)(argument_iterator_t *, stack_frame_t *);
 } operator_t;
 
-static value_t *evaluate_script(buffer_t *document, value_t *arguments, map_t *globals, map_t *operators, int depth);
+static value_t *evaluate_script(string_t *document, value_t *arguments, map_t *globals, map_t *operators, int depth);
 static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, map_t *globals, map_t *operators, int depth);
 static value_t *apply_expression(expression_t *expression, stack_frame_t *frame);
 static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -88,9 +88,9 @@ static map_t *default_operators(void);
 static void set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
 static map_t *default_overloads(void);
 static map_t *empty_variables(void);
-static value_t *set_scoped_variable(stack_frame_t *frame, buffer_t *identifier, value_t *variable);
-static value_t *swap_variable_scope(map_t *before, map_t *after, buffer_t *identifier);
-static void set_variable(map_t *variables, buffer_t *identifier, value_t *variable);
+static value_t *set_scoped_variable(stack_frame_t *frame, string_t *identifier, value_t *variable);
+static value_t *swap_variable_scope(map_t *before, map_t *after, string_t *identifier);
+static void set_variable(map_t *variables, string_t *identifier, value_t *variable);
 static int has_next_argument(argument_iterator_t *arguments);
 static int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, int types);
 static void skip_argument(argument_iterator_t *arguments);
@@ -102,7 +102,7 @@ static int compare_values_descending(const void *left, const void *right);
 static void destroy_value_unsafe(void *value);
 static void destroy_list_unsafe(void *value);
 
-value_t *execute_script(buffer_t *document, value_t *arguments, map_t *globals)
+value_t *execute_script(string_t *document, value_t *arguments, map_t *globals)
 {
     map_t *operators;
     value_t *value;
@@ -114,7 +114,7 @@ value_t *execute_script(buffer_t *document, value_t *arguments, map_t *globals)
     return value;
 }
 
-static value_t *evaluate_script(buffer_t *document, value_t *arguments, map_t *globals, map_t *operators, int depth)
+static value_t *evaluate_script(string_t *document, value_t *arguments, map_t *globals, map_t *operators, int depth)
 {
     scanner_t *scanner;
     list_t *expressions;
@@ -160,7 +160,7 @@ static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, ma
     frame.overloads = default_overloads();
     frame.depth = depth;
 
-    last = set_scoped_variable(&frame, cstring_to_buffer("@"), arguments);
+    last = set_scoped_variable(&frame, cstring_to_string("@"), arguments);
 
     if (last->type == VALUE_TYPE_NULL)
     {
@@ -314,7 +314,7 @@ static value_t *apply_map(argument_iterator_t *arguments, stack_frame_t *frame)
 
         value = arguments->value;
 
-        set_map_item(pairs, copy_buffer(view_string(key)), copy_value(value));
+        set_map_item(pairs, copy_string(view_string(key)), copy_value(value));
     }
 
     return new_map(pairs);
@@ -396,7 +396,7 @@ static value_t *operator_memorize(argument_iterator_t *arguments, stack_frame_t 
 
     value = arguments->value;
 
-    return set_scoped_variable(frame, copy_buffer(view_string(identifier)), value);
+    return set_scoped_variable(frame, copy_string(view_string(identifier)), value);
 }
 
 static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -453,7 +453,7 @@ static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *fram
             bytes = allocate(sizeof(char));
             bytes[0] = view_string(collection)->bytes[adjusted];
 
-            return new_string(create_buffer(bytes, 1));
+            return new_string(create_string(bytes, 1));
         }
         case VALUE_TYPE_LIST:
         {
@@ -550,7 +550,7 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
                 bytes = NULL;
             }
 
-            return new_string(create_buffer(bytes, length));
+            return new_string(create_string(bytes, length));
         }
         case VALUE_TYPE_LIST:
         {
@@ -619,7 +619,7 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
             copy = copy_value(collection);
 
             remove_map_item(copy->data, view_string(key));
-            set_map_item(copy->data, copy_buffer(view_string(key)), copy_value(value));
+            set_map_item(copy->data, copy_string(view_string(key)), copy_value(value));
 
             return copy;
         }
@@ -673,7 +673,7 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
                 bytes = NULL;
             }
 
-            return new_string(create_buffer(bytes, length - 1));
+            return new_string(create_string(bytes, length - 1));
         }
         case VALUE_TYPE_LIST:
         {
@@ -740,7 +740,7 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
 static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *path;
-    buffer_t *file;
+    string_t *file;
 
     if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
     {
@@ -777,13 +777,13 @@ static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *fr
     }
 
     text = arguments->value;
-    cPath = buffer_to_cstring(view_string(path));
+    cPath = string_to_cstring(view_string(path));
     file = fopen(cPath, "wb");
     free(cPath);
 
     if (file)
     {
-        buffer_t *string;
+        string_t *string;
 
         string = view_string(text);
         fwrite(string->bytes, sizeof(char), string->length, file);
@@ -804,7 +804,7 @@ static value_t *operator_remove(argument_iterator_t *arguments, stack_frame_t *f
     }
 
     path = arguments->value;
-    cPath = buffer_to_cstring(view_string(path));
+    cPath = string_to_cstring(view_string(path));
     remove(cPath);
     free(cPath);
 
@@ -822,7 +822,7 @@ static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *
 
     identifier = arguments->value;
 
-    return swap_variable_scope(frame->locals, frame->globals, copy_buffer(view_string(identifier)));
+    return swap_variable_scope(frame->locals, frame->globals, copy_string(view_string(identifier)));
 }
 
 static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -836,7 +836,7 @@ static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *f
 
     identifier = arguments->value;
 
-    return swap_variable_scope(frame->globals, frame->locals, copy_buffer(view_string(identifier)));
+    return swap_variable_scope(frame->globals, frame->locals, copy_string(view_string(identifier)));
 }
 
 static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -879,7 +879,7 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
         }
         case VALUE_TYPE_STRING:
         {
-            buffer_t *sum;
+            string_t *sum;
 
             if (string_add(view_string(left), view_string(right), &sum))
             {
@@ -1283,15 +1283,15 @@ static value_t *operator_type(argument_iterator_t *arguments, stack_frame_t *fra
     switch (solo->type)
     {
         case VALUE_TYPE_NULL:
-            return new_string(cstring_to_buffer("?"));
+            return new_string(cstring_to_string("?"));
         case VALUE_TYPE_NUMBER:
-            return new_string(cstring_to_buffer("##"));
+            return new_string(cstring_to_string("##"));
         case VALUE_TYPE_STRING:
-            return new_string(cstring_to_buffer("\"\""));
+            return new_string(cstring_to_string("\"\""));
         case VALUE_TYPE_LIST:
-            return new_string(cstring_to_buffer("[]"));
+            return new_string(cstring_to_string("[]"));
         case VALUE_TYPE_MAP:
-            return new_string(cstring_to_buffer("{}"));
+            return new_string(cstring_to_string("{}"));
         default:
             return throw_error(ERROR_ARGUMENT);
     }
@@ -1317,7 +1317,7 @@ static value_t *operator_number(argument_iterator_t *arguments, stack_frame_t *f
         {
             int out;
 
-            return buffer_to_integer(view_string(solo), NUMBER_DIGIT_CAPACITY, &out) ? new_number(out) : throw_error(ERROR_TYPE);
+            return string_to_integer(view_string(solo), NUMBER_DIGIT_CAPACITY, &out) ? new_number(out) : throw_error(ERROR_TYPE);
         }
         default:
             return throw_error(ERROR_ARGUMENT);
@@ -1341,7 +1341,7 @@ static value_t *operator_string(argument_iterator_t *arguments, stack_frame_t *f
         case VALUE_TYPE_STRING:
             return copy_value(solo);
         case VALUE_TYPE_NUMBER:
-            return new_string(integer_to_buffer(view_number(solo)));
+            return new_string(integer_to_string(view_number(solo)));
         default:
             return throw_error(ERROR_ARGUMENT);
     }
@@ -1381,10 +1381,10 @@ static value_t *operator_overload(argument_iterator_t *arguments, stack_frame_t 
 
     document = arguments->value;
 
-    scanner = start_scanner(copy_buffer(view_string(document)));
+    scanner = start_scanner(copy_string(view_string(document)));
     expressions = parse_expressions(scanner);
     destroy_scanner(scanner);
-    set_map_item(frame->overloads, copy_buffer(view_string(operator)), expressions);
+    set_map_item(frame->overloads, copy_string(view_string(operator)), expressions);
 
     return new_null();
 }
@@ -1392,7 +1392,7 @@ static value_t *operator_overload(argument_iterator_t *arguments, stack_frame_t 
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *document, *initial;
-    buffer_t *copy;
+    string_t *copy;
 
     if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
     {
@@ -1407,7 +1407,7 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
     }
 
     initial = arguments->value;
-    copy = copy_buffer(view_string(document));
+    copy = copy_string(view_string(document));
 
     return evaluate_script(copy, initial, frame->globals, frame->operators, frame->depth);
 }
@@ -1531,9 +1531,9 @@ static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *fr
     {
         case VALUE_TYPE_STRING:
         {
-            buffer_t *slice;
+            string_t *slice;
 
-            slice = slice_buffer(view_string(collection), adjustedStart, adjustedEnd);
+            slice = slice_string(view_string(collection), adjustedStart, adjustedEnd);
 
             return new_string(slice);
         }
@@ -1647,10 +1647,10 @@ static map_t *default_operators(void)
 
 static void set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *))
 {
-    buffer_t *key;
+    string_t *key;
     operator_t *operator;
 
-    key = cstring_to_buffer(name);
+    key = cstring_to_string(name);
     operator = allocate(sizeof(operator_t *));
     operator->call = call;
 
@@ -1667,7 +1667,7 @@ static map_t *empty_variables(void)
     return empty_map(hash_string, destroy_value_unsafe, 64);
 }
 
-static value_t *set_scoped_variable(stack_frame_t *frame, buffer_t *identifier, value_t *variable)
+static value_t *set_scoped_variable(stack_frame_t *frame, string_t *identifier, value_t *variable)
 {
     int global, exists;
     map_t *variables;
@@ -1678,7 +1678,7 @@ static value_t *set_scoped_variable(stack_frame_t *frame, buffer_t *identifier, 
 
     if (!exists && variables->length >= NUMBER_MAX)
     {
-        destroy_buffer(identifier);
+        destroy_string(identifier);
         return throw_error(ERROR_BOUNDS);
     }
 
@@ -1687,7 +1687,7 @@ static value_t *set_scoped_variable(stack_frame_t *frame, buffer_t *identifier, 
     return new_null();
 }
 
-static value_t *swap_variable_scope(map_t *before, map_t *after, buffer_t *identifier)
+static value_t *swap_variable_scope(map_t *before, map_t *after, string_t *identifier)
 {
     value_t *value;
 
@@ -1701,7 +1701,7 @@ static value_t *swap_variable_scope(map_t *before, map_t *after, buffer_t *ident
 
         if (!exists && after->length >= NUMBER_MAX)
         {
-            destroy_buffer(identifier);
+            destroy_string(identifier);
             return throw_error(ERROR_BOUNDS);
         }
 
@@ -1711,12 +1711,12 @@ static value_t *swap_variable_scope(map_t *before, map_t *after, buffer_t *ident
         return new_null();
     }
 
-    destroy_buffer(identifier);
+    destroy_string(identifier);
 
     return new_null();
 }
 
-static void set_variable(map_t *variables, buffer_t *identifier, value_t *variable)
+static void set_variable(map_t *variables, string_t *identifier, value_t *variable)
 {
     set_map_item(variables, identifier, copy_value(variable));
 }
@@ -1813,7 +1813,7 @@ static value_t *list_map_keys(map_t *map)
                 {
                     value_t *item;
 
-                    item = new_string(copy_buffer(chain->key));
+                    item = new_string(copy_string(chain->key));
                     items[placement++] = item;
                 }
             }

@@ -3,7 +3,7 @@
 #include "cli.h"
 #include "common.h"
 
-static line_t *create_line(buffer_t *string, size_t fill, int exit);
+static line_t *create_line(string_t *string, size_t fill, int exit);
 static line_t *empty_line(void);
 
 line_t *next_line(void)
@@ -25,14 +25,14 @@ line_t *next_line(void)
         {
             if (line->fill == line->string->length)
             {
-                resize_buffer(line->string, line->fill * 2);
+                resize_string(line->string, line->fill * 2);
             }
 
             line->string->bytes[line->fill++] = key;
         }
     } while (key != EOF && key != '\n');
 
-    resize_buffer(line->string, line->fill);
+    resize_string(line->string, line->fill);
 
     return line;
 }
@@ -47,7 +47,7 @@ void destroy_line(line_t *line)
     free(line);
 }
 
-static line_t *create_line(buffer_t *string, size_t fill, int exit)
+static line_t *create_line(string_t *string, size_t fill, int exit)
 {
     line_t *line;
 
@@ -61,11 +61,11 @@ static line_t *create_line(buffer_t *string, size_t fill, int exit)
 
 static line_t *empty_line(void)
 {
-    buffer_t *string;
+    string_t *string;
     size_t capacity;
 
     capacity = 1024;
-    string = create_buffer(allocate(sizeof(char) * capacity), capacity);
+    string = create_string(allocate(sizeof(char) * capacity), capacity);
 
     return create_line(string, 0, 0);
 }

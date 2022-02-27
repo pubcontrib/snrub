@@ -17,10 +17,10 @@ typedef enum
 static void destroy_expression_unsafe(void *expression);
 static expression_t *create_expression(expression_type_t type, value_t *value, list_t *arguments);
 static expression_t *next_expression(scanner_t *scanner, token_t *token, int depth);
-static value_t *parse_null_literal(buffer_t *value);
-static value_t *parse_number_literal(buffer_t *value);
-static value_t *parse_string_literal(buffer_t *value);
-static int is_printable(buffer_t *value);
+static value_t *parse_null_literal(string_t *value);
+static value_t *parse_number_literal(string_t *value);
+static value_t *parse_string_literal(string_t *value);
+static int is_printable(string_t *value);
 
 list_t *parse_expressions(scanner_t *scanner)
 {
@@ -210,7 +210,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
     return expression;
 }
 
-static value_t *parse_null_literal(buffer_t *value)
+static value_t *parse_null_literal(string_t *value)
 {
     if (value->length != 1)
     {
@@ -225,9 +225,9 @@ static value_t *parse_null_literal(buffer_t *value)
     return new_null();
 }
 
-static value_t *parse_number_literal(buffer_t *value)
+static value_t *parse_number_literal(string_t *value)
 {
-    buffer_t *trimmed;
+    string_t *trimmed;
     int numbered;
 
     if (value->length < 2)
@@ -240,22 +240,22 @@ static value_t *parse_number_literal(buffer_t *value)
         return throw_error(ERROR_TYPE);
     }
 
-    trimmed = slice_buffer(value, 1, value->length - 1);
+    trimmed = slice_string(value, 1, value->length - 1);
 
-    if (!buffer_to_integer(trimmed, NUMBER_DIGIT_CAPACITY, &numbered))
+    if (!string_to_integer(trimmed, NUMBER_DIGIT_CAPACITY, &numbered))
     {
-        destroy_buffer(trimmed);
+        destroy_string(trimmed);
         return throw_error(ERROR_TYPE);
     }
 
-    destroy_buffer(trimmed);
+    destroy_string(trimmed);
 
     return new_number(numbered);
 }
 
-static value_t *parse_string_literal(buffer_t *value)
+static value_t *parse_string_literal(string_t *value)
 {
-    buffer_t *trimmed, *escaped;
+    string_t *trimmed, *escaped;
 
     if (value->length < 2)
     {
@@ -267,21 +267,21 @@ static value_t *parse_string_literal(buffer_t *value)
         return throw_error(ERROR_TYPE);
     }
 
-    trimmed = slice_buffer(value, 1, value->length - 1);
+    trimmed = slice_string(value, 1, value->length - 1);
 
     if (!is_printable(trimmed))
     {
-        destroy_buffer(trimmed);
+        destroy_string(trimmed);
         return throw_error(ERROR_TYPE);
     }
 
     escaped = escape_string(trimmed);
-    destroy_buffer(trimmed);
+    destroy_string(trimmed);
 
     return new_string(escaped);
 }
 
-static int is_printable(buffer_t *value)
+static int is_printable(string_t *value)
 {
     size_t index;
 

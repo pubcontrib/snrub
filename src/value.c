@@ -8,14 +8,14 @@
 
 static value_t *create_value(value_type_t type, void *data, size_t size, int thrown);
 static void copy_map(map_t *from, map_t *to);
-static value_t *quote_string(buffer_t *body, char qualifier);
+static value_t *quote_string(string_t *body, char qualifier);
 static void *copy_memory(void *memory, size_t size);
 static int *integer_to_array(int integer);
-static int compare_buffers_ascending(const void *left, const void *right);
+static int compare_strings_ascending(const void *left, const void *right);
 static void destroy_value_unsafe(void *value);
 static int overflow_add(int left, int right);
-static buffer_t **array_map_keys(map_t *map);
-static void destroy_keys(buffer_t **keys, size_t length);
+static string_t **array_map_keys(map_t *map);
+static void destroy_keys(string_t **keys, size_t length);
 
 int is_portable(void)
 {
@@ -101,7 +101,7 @@ value_t *new_number(int number)
     return create_value(VALUE_TYPE_NUMBER, data, sizeof(int), 0);
 }
 
-value_t *new_string(buffer_t *string)
+value_t *new_string(string_t *string)
 {
     return create_value(VALUE_TYPE_STRING, string, string->length, 0);
 }
@@ -140,7 +140,7 @@ value_t *copy_value(value_t *this)
             return create_value(this->type, data, this->size, this->thrown);
         }
         case VALUE_TYPE_STRING:
-            return create_value(this->type, copy_buffer(this->data), this->size, this->thrown);
+            return create_value(this->type, copy_string(this->data), this->size, this->thrown);
         case VALUE_TYPE_LIST:
         {
             value_t **data;
@@ -216,7 +216,7 @@ int hash_number(int number)
     return number;
 }
 
-int hash_string(buffer_t *string)
+int hash_string(string_t *string)
 {
     int hash;
     size_t index;
@@ -296,28 +296,28 @@ value_t *represent_value(value_t *this)
 
 value_t *represent_null(void)
 {
-    return new_string(cstring_to_buffer("?"));
+    return new_string(cstring_to_string("?"));
 }
 
 value_t *represent_number(int number)
 {
-    return quote_string(integer_to_buffer(number), '#');
+    return quote_string(integer_to_string(number), '#');
 }
 
-value_t *represent_string(buffer_t *string)
+value_t *represent_string(string_t *string)
 {
     return quote_string(unescape_string(string), '\"');
 }
 
 value_t *represent_list(value_t **items, size_t length)
 {
-    buffer_t *body, *swap, *delimiter, *end;
+    string_t *body, *swap, *delimiter, *end;
     size_t index;
     int fit;
 
-    body = cstring_to_buffer("[");
-    delimiter = cstring_to_buffer(" ");
-    end = cstring_to_buffer("]");
+    body = cstring_to_string("[");
+    delimiter = cstring_to_string(" ");
+    end = cstring_to_string("]");
 
     for (index = 0; index < length; index++)
     {
@@ -326,13 +326,13 @@ value_t *represent_list(value_t **items, size_t length)
         if (index > 0)
         {
             fit = string_add(body, delimiter, &swap);
-            destroy_buffer(body);
+            destroy_string(body);
 
             if (!fit)
             {
-                destroy_buffer(swap);
-                destroy_buffer(delimiter);
-                destroy_buffer(end);
+                destroy_string(swap);
+                destroy_string(delimiter);
+                destroy_string(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
@@ -344,21 +344,21 @@ value_t *represent_list(value_t **items, size_t length)
 
         if (represent->thrown)
         {
-            destroy_buffer(swap);
-            destroy_buffer(delimiter);
-            destroy_buffer(end);
+            destroy_string(swap);
+            destroy_string(delimiter);
+            destroy_string(end);
             return represent;
         }
 
         fit = string_add(body, view_string(represent), &swap);
-        destroy_buffer(body);
+        destroy_string(body);
         destroy_value(represent);
 
         if (!fit)
         {
-            destroy_buffer(swap);
-            destroy_buffer(delimiter);
-            destroy_buffer(end);
+            destroy_string(swap);
+            destroy_string(delimiter);
+            destroy_string(end);
             return throw_error(ERROR_BOUNDS);
         }
 
@@ -366,13 +366,13 @@ value_t *represent_list(value_t **items, size_t length)
     }
 
     fit = string_add(body, end, &swap);
-    destroy_buffer(body);
-    destroy_buffer(delimiter);
-    destroy_buffer(end);
+    destroy_string(body);
+    destroy_string(delimiter);
+    destroy_string(end);
 
     if (!fit)
     {
-        destroy_buffer(swap);
+        destroy_string(swap);
         return throw_error(ERROR_BOUNDS);
     }
 
@@ -381,23 +381,23 @@ value_t *represent_list(value_t **items, size_t length)
 
 value_t *represent_map(map_t *pairs)
 {
-    buffer_t *body, *swap, *delimiter, *end;
+    string_t *body, *swap, *delimiter, *end;
     int fit;
 
-    body = cstring_to_buffer("{");
-    delimiter = cstring_to_buffer(" ");
-    end = cstring_to_buffer("}");
+    body = cstring_to_string("{");
+    delimiter = cstring_to_string(" ");
+    end = cstring_to_string("}");
 
     if (pairs->length > 0)
     {
-        buffer_t **keys;
+        string_t **keys;
         size_t index;
 
         keys = array_map_keys(pairs);
 
         for (index = 0; index < pairs->length; index++)
         {
-            buffer_t *key;
+            string_t *key;
             value_t *value, *represent;
 
             key = keys[index];
@@ -406,13 +406,13 @@ value_t *represent_map(map_t *pairs)
             if (index > 0)
             {
                 fit = string_add(body, delimiter, &swap);
-                destroy_buffer(body);
+                destroy_string(body);
 
                 if (!fit)
                 {
-                    destroy_buffer(swap);
-                    destroy_buffer(delimiter);
-                    destroy_buffer(end);
+                    destroy_string(swap);
+                    destroy_string(delimiter);
+                    destroy_string(end);
                     return throw_error(ERROR_BOUNDS);
                 }
 
@@ -423,33 +423,33 @@ value_t *represent_map(map_t *pairs)
 
             if (represent->thrown)
             {
-                destroy_buffer(swap);
-                destroy_buffer(delimiter);
-                destroy_buffer(end);
+                destroy_string(swap);
+                destroy_string(delimiter);
+                destroy_string(end);
                 return represent;
             }
 
             fit = string_add(body, view_string(represent), &swap);
-            destroy_buffer(body);
+            destroy_string(body);
             destroy_value(represent);
 
             if (!fit)
             {
-                destroy_buffer(swap);
-                destroy_buffer(delimiter);
-                destroy_buffer(end);
+                destroy_string(swap);
+                destroy_string(delimiter);
+                destroy_string(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
             body = swap;
             fit = string_add(body, delimiter, &swap);
-            destroy_buffer(body);
+            destroy_string(body);
 
             if (!fit)
             {
-                destroy_buffer(swap);
-                destroy_buffer(delimiter);
-                destroy_buffer(end);
+                destroy_string(swap);
+                destroy_string(delimiter);
+                destroy_string(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
@@ -458,21 +458,21 @@ value_t *represent_map(map_t *pairs)
 
             if (represent->thrown)
             {
-                destroy_buffer(swap);
-                destroy_buffer(delimiter);
-                destroy_buffer(end);
+                destroy_string(swap);
+                destroy_string(delimiter);
+                destroy_string(end);
                 return represent;
             }
 
             fit = string_add(body, view_string(represent), &swap);
-            destroy_buffer(body);
+            destroy_string(body);
             destroy_value(represent);
 
             if (!fit)
             {
-                destroy_buffer(swap);
-                destroy_buffer(delimiter);
-                destroy_buffer(end);
+                destroy_string(swap);
+                destroy_string(delimiter);
+                destroy_string(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
@@ -483,20 +483,20 @@ value_t *represent_map(map_t *pairs)
     }
 
     fit = string_add(body, end, &swap);
-    destroy_buffer(body);
-    destroy_buffer(delimiter);
-    destroy_buffer(end);
+    destroy_string(body);
+    destroy_string(delimiter);
+    destroy_string(end);
 
     if (!fit)
     {
-        destroy_buffer(swap);
+        destroy_string(swap);
         return throw_error(ERROR_BOUNDS);
     }
 
     return new_string(swap);
 }
 
-buffer_t *escape_string(buffer_t *string)
+string_t *escape_string(string_t *string)
 {
     char *bytes;
     size_t left, right;
@@ -542,17 +542,17 @@ buffer_t *escape_string(buffer_t *string)
                 case 'a':
                     if (string->length > 2 && left < string->length - 3)
                     {
-                        buffer_t *substring;
+                        string_t *substring;
                         int code;
 
-                        substring = slice_buffer(string, left + 1, left + 4);
+                        substring = slice_string(string, left + 1, left + 4);
 
-                        if (buffer_to_integer(substring, 3, &code) && code >= 0 && code <= 255)
+                        if (string_to_integer(substring, 3, &code) && code >= 0 && code <= 255)
                         {
                             bytes[right++] = code;
                         }
 
-                        destroy_buffer(substring);
+                        destroy_string(substring);
                     }
 
                     left += 3;
@@ -579,10 +579,10 @@ buffer_t *escape_string(buffer_t *string)
         bytes = reallocate(bytes, right);
     }
 
-    return create_buffer(bytes, right);
+    return create_string(bytes, right);
 }
 
-buffer_t *unescape_string(buffer_t *string)
+string_t *unescape_string(string_t *string)
 {
     char *bytes;
     size_t length, left, right;
@@ -653,9 +653,9 @@ buffer_t *unescape_string(buffer_t *string)
                 }
                 else
                 {
-                    buffer_t *substring;
+                    string_t *substring;
 
-                    substring = integer_to_buffer(symbol);
+                    substring = integer_to_string(symbol);
                     bytes[left++] = '\\';
                     bytes[left++] = 'a';
 
@@ -682,14 +682,14 @@ buffer_t *unescape_string(buffer_t *string)
                         crash_with_message("unsupported branch %s", "VALUE_UNESCAPE_ASCII");
                     }
 
-                    destroy_buffer(substring);
+                    destroy_string(substring);
                 }
 
                 break;
         }
     }
 
-    return create_buffer(bytes, length);
+    return create_string(bytes, length);
 }
 
 int compare_values(value_t *left, value_t *right)
@@ -706,7 +706,7 @@ int compare_values(value_t *left, value_t *right)
         case VALUE_TYPE_NUMBER:
             return view_number(left) - view_number(right);
         case VALUE_TYPE_STRING:
-            return compare_buffers(view_string(left), view_string(right));
+            return compare_strings(view_string(left), view_string(right));
         case VALUE_TYPE_LIST:
         {
             size_t index;
@@ -744,7 +744,7 @@ int compare_values(value_t *left, value_t *right)
 
             if (length > 0)
             {
-                buffer_t **leftKeys, **rightKeys;
+                string_t **leftKeys, **rightKeys;
                 map_t *leftMap, *rightMap;
 
                 leftMap = left->data;
@@ -761,7 +761,7 @@ int compare_values(value_t *left, value_t *right)
                 for (; index < length; index++)
                 {
                     int different;
-                    buffer_t *leftKey, *rightKey;
+                    string_t *leftKey, *rightKey;
                     value_t *leftValue, *rightValue;
 
                     if (index == right->size)
@@ -773,7 +773,7 @@ int compare_values(value_t *left, value_t *right)
 
                     leftKey = leftKeys[index];
                     rightKey = rightKeys[index];
-                    different = compare_buffers(leftKey, rightKey);
+                    different = compare_strings(leftKey, rightKey);
 
                     if (different)
                     {
@@ -845,12 +845,12 @@ int view_number(value_t *value)
     }
 }
 
-buffer_t *view_string(value_t *value)
+string_t *view_string(value_t *value)
 {
     switch (value->type)
     {
         case VALUE_TYPE_STRING:
-            return (buffer_t *) value->data;
+            return (string_t *) value->data;
         default:
             crash_with_message("unsupported branch %s", "VALUE_STRING_TYPE");
             return NULL;
@@ -989,7 +989,7 @@ int number_modulo(int left, int right, int *out)
     return 1;
 }
 
-int string_add(buffer_t *left, buffer_t *right, buffer_t **out)
+int string_add(string_t *left, string_t *right, string_t **out)
 {
     char *bytes;
     int length;
@@ -1010,17 +1010,17 @@ int string_add(buffer_t *left, buffer_t *right, buffer_t **out)
         bytes = NULL;
     }
 
-    (*out) = create_buffer(bytes, length);
+    (*out) = create_string(bytes, length);
 
     return 1;
 }
 
-buffer_t *read_file(buffer_t *path)
+string_t *read_file(string_t *path)
 {
     FILE *file;
     char *cPath;
 
-    cPath = buffer_to_cstring(path);
+    cPath = string_to_cstring(path);
     file = fopen(cPath, "rb");
     free(cPath);
 
@@ -1062,7 +1062,7 @@ buffer_t *read_file(buffer_t *path)
         else
         {
             fclose(file);
-            return create_buffer(bytes, length);
+            return create_string(bytes, length);
         }
     }
 
@@ -1080,7 +1080,7 @@ void destroy_value(value_t *value)
                 free(value->data);
                 break;
             case VALUE_TYPE_STRING:
-                destroy_buffer(value->data);
+                destroy_string(value->data);
                 break;
             case VALUE_TYPE_LIST:
                 destroy_items(value->data, value->size);
@@ -1134,10 +1134,10 @@ static void copy_map(map_t *from, map_t *to)
 
             for (chain = from->chains[index]; chain != NULL; chain = chain->next)
             {
-                buffer_t *key;
+                string_t *key;
                 value_t *value;
 
-                key = copy_buffer(chain->key);
+                key = copy_string(chain->key);
                 value = copy_value(chain->value);
                 set_map_item(to, key, value);
             }
@@ -1145,12 +1145,12 @@ static void copy_map(map_t *from, map_t *to)
     }
 }
 
-static value_t *quote_string(buffer_t *body, char qualifier)
+static value_t *quote_string(string_t *body, char qualifier)
 {
     size_t length, index;
 
     length = body->length;
-    resize_buffer(body, length + 2);
+    resize_string(body, length + 2);
 
     for (index = length; index > 0; index--)
     {
@@ -1183,9 +1183,9 @@ static int *integer_to_array(int integer)
     return array;
 }
 
-static int compare_buffers_ascending(const void *left, const void *right)
+static int compare_strings_ascending(const void *left, const void *right)
 {
-    return compare_buffers(*(buffer_t **) left, *(buffer_t **) right);
+    return compare_strings(*(string_t **) left, *(string_t **) right);
 }
 
 static void destroy_value_unsafe(void *value)
@@ -1213,12 +1213,12 @@ static int overflow_add(int left, int right)
     }
 }
 
-static buffer_t **array_map_keys(map_t *map)
+static string_t **array_map_keys(map_t *map)
 {
-    buffer_t **keys;
+    string_t **keys;
     size_t index, placement;
 
-    keys = allocate(sizeof(buffer_t *) * map->length);
+    keys = allocate(sizeof(string_t *) * map->length);
 
     for (index = 0, placement = 0; index < map->capacity; index++)
     {
@@ -1228,23 +1228,23 @@ static buffer_t **array_map_keys(map_t *map)
 
             for (chain = map->chains[index]; chain != NULL; chain = chain->next)
             {
-                keys[placement++] = copy_buffer(chain->key);
+                keys[placement++] = copy_string(chain->key);
             }
         }
     }
 
-    qsort(keys, map->length, sizeof(buffer_t *), compare_buffers_ascending);
+    qsort(keys, map->length, sizeof(string_t *), compare_strings_ascending);
 
     return keys;
 }
 
-static void destroy_keys(buffer_t **keys, size_t length)
+static void destroy_keys(string_t **keys, size_t length)
 {
     size_t index;
 
     for (index = 0; index < length; index++)
     {
-        destroy_buffer(keys[index]);
+        destroy_string(keys[index]);
     }
 
     free(keys);

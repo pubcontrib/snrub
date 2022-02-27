@@ -3,8 +3,8 @@
 
 #include "value.h"
 #include "map.h"
-#include "buffer.h"
+#include "string.h"
 
-value_t *execute_script(buffer_t *document, value_t *arguments, map_t *globals);
+value_t *execute_script(string_t *document, value_t *arguments, map_t *globals);
 
 #endif

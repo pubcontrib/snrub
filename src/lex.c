@@ -3,13 +3,13 @@
 #include "lex.h"
 #include "common.h"
 
-static scanner_t *create_scanner(buffer_t *document, size_t start, size_t end, int closed);
-static token_t *create_token(token_name_t name, buffer_t *value);
+static scanner_t *create_scanner(string_t *document, size_t start, size_t end, int closed);
+static token_t *create_token(token_name_t name, string_t *value);
 static token_t *escape_token(scanner_t *scanner, char qualifier, token_name_t name);
 static token_t *slice_token(scanner_t *scanner, token_name_t name);
 static token_name_t match_name(char symbol);
 
-scanner_t *start_scanner(buffer_t *document)
+scanner_t *start_scanner(string_t *document)
 {
     return create_scanner(document, 0, 0, document->length <= 0);
 }
@@ -42,7 +42,7 @@ void destroy_scanner(scanner_t *scanner)
 {
     if (scanner->document)
     {
-        destroy_buffer(scanner->document);
+        destroy_string(scanner->document);
     }
 
     free(scanner);
@@ -52,13 +52,13 @@ void destroy_token(token_t *token)
 {
     if (token->value)
     {
-        destroy_buffer(token->value);
+        destroy_string(token->value);
     }
 
     free(token);
 }
 
-static scanner_t *create_scanner(buffer_t *document, size_t start, size_t end, int closed)
+static scanner_t *create_scanner(string_t *document, size_t start, size_t end, int closed)
 {
     scanner_t *scanner;
 
@@ -71,7 +71,7 @@ static scanner_t *create_scanner(buffer_t *document, size_t start, size_t end, i
     return scanner;
 }
 
-static token_t *create_token(token_name_t name, buffer_t *value)
+static token_t *create_token(token_name_t name, string_t *value)
 {
     token_t *token;
 
@@ -123,9 +123,9 @@ static token_t *escape_token(scanner_t *scanner, char qualifier, token_name_t na
 
 static token_t *slice_token(scanner_t *scanner, token_name_t name)
 {
-    buffer_t *value;
+    string_t *value;
 
-    value = slice_buffer(scanner->document, scanner->start, scanner->end);
+    value = slice_string(scanner->document, scanner->start, scanner->end);
     scanner->closed = scanner->end >= scanner->document->length;
     scanner->start = scanner->end;
 

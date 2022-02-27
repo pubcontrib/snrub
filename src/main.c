@@ -5,19 +5,19 @@
 #include "execute.h"
 #include "value.h"
 #include "map.h"
-#include "buffer.h"
+#include "string.h"
 #include "common.h"
 
 #define PROGRAM_VERSION "v0.76.2"
 
 static int run_help(void);
 static int run_version(void);
-static int run_file(buffer_t *file, buffer_t *initial);
-static int run_text(buffer_t *text, buffer_t *initial);
+static int run_file(string_t *file, string_t *initial);
+static int run_text(string_t *text, string_t *initial);
 static int run_interactive(void);
-static int record_script(buffer_t *document, map_t *globals, value_t *arguments);
+static int record_script(string_t *document, map_t *globals, value_t *arguments);
 static int print_value(value_t *value);
-static value_t *initialize_arguments(buffer_t *document);
+static value_t *initialize_arguments(string_t *document);
 static map_t *empty_variables(void);
 static void destroy_value_unsafe(void *value);
 
@@ -94,11 +94,11 @@ int main(int argc, char **argv)
 
         if (argc - argument > 1)
         {
-            return run_file(cstring_to_buffer(argv[argument]), cstring_to_buffer(argv[argument + 1]));
+            return run_file(cstring_to_string(argv[argument]), cstring_to_string(argv[argument + 1]));
         }
         else
         {
-            return run_file(cstring_to_buffer(argv[argument]), NULL);
+            return run_file(cstring_to_string(argv[argument]), NULL);
         }
     }
 
@@ -111,11 +111,11 @@ int main(int argc, char **argv)
 
         if (argc - argument > 1)
         {
-            return run_text(cstring_to_buffer(argv[argument]), cstring_to_buffer(argv[argument + 1]));
+            return run_text(cstring_to_string(argv[argument]), cstring_to_string(argv[argument + 1]));
         }
         else
         {
-            return run_text(cstring_to_buffer(argv[argument]), NULL);
+            return run_text(cstring_to_string(argv[argument]), NULL);
         }
     }
 
@@ -149,16 +149,16 @@ static int run_version(void)
     return PROGRAM_SUCCESS;
 }
 
-static int run_file(buffer_t *file, buffer_t *initial)
+static int run_file(string_t *file, string_t *initial)
 {
-    buffer_t *document;
+    string_t *document;
     int exit;
 
     document = read_file(file);
 
     if (!document)
     {
-        document = create_buffer(NULL, 0);
+        document = create_string(NULL, 0);
     }
 
     exit = run_text(document, initial);
@@ -166,7 +166,7 @@ static int run_file(buffer_t *file, buffer_t *initial)
     return exit;
 }
 
-static int run_text(buffer_t *text, buffer_t *initial)
+static int run_text(string_t *text, string_t *initial)
 {
     map_t *globals;
     value_t *arguments;
@@ -220,7 +220,7 @@ static int run_interactive(void)
     }
 }
 
-static int record_script(buffer_t *document, map_t *globals, value_t *arguments)
+static int record_script(string_t *document, map_t *globals, value_t *arguments)
 {
     value_t *value;
     int success;
@@ -248,7 +248,7 @@ static int print_value(value_t *value)
     {
         if (represent->type == VALUE_TYPE_STRING)
         {
-            buffer_t *string;
+            string_t *string;
 
             string = view_string(represent);
             fwrite(string->bytes, string->length, 1, stdout);
@@ -266,7 +266,7 @@ static int print_value(value_t *value)
     return success;
 }
 
-static value_t *initialize_arguments(buffer_t *document)
+static value_t *initialize_arguments(string_t *document)
 {
     if (document)
     {

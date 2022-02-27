@@ -1,13 +1,13 @@
 #include <stdlib.h>
 #include <string.h>
-#include "buffer.h"
+#include "string.h"
 #include "common.h"
 
 static int integer_digits(int integer);
 static int shift_digit(int digit, int places);
 static int is_digit(char symbol);
 
-int compare_buffers(buffer_t *left, buffer_t *right)
+int compare_strings(string_t *left, string_t *right)
 {
     size_t index;
 
@@ -36,36 +36,36 @@ int compare_buffers(buffer_t *left, buffer_t *right)
     return 0;
 }
 
-int buffer_to_integer(buffer_t *buffer, int digits, int *out)
+int string_to_integer(string_t *string, int digits, int *out)
 {
     int integer;
 
     integer = 0;
 
-    if (buffer->length > 0)
+    if (string->length > 0)
     {
         size_t index;
         int negative;
 
-        negative = buffer->bytes[0] == '-';
+        negative = string->bytes[0] == '-';
 
-        if (buffer->length > (negative ? digits + 1 : digits) || (buffer->length == 1 && negative))
+        if (string->length > (negative ? digits + 1 : digits) || (string->length == 1 && negative))
         {
             return 0;
         }
 
-        for (index = negative ? 1 : 0; index < buffer->length; index++)
+        for (index = negative ? 1 : 0; index < string->length; index++)
         {
             unsigned char symbol;
 
-            symbol = buffer->bytes[index];
+            symbol = string->bytes[index];
 
             if (!is_digit(symbol))
             {
                 return 0;
             }
 
-            integer += shift_digit(symbol - '0', buffer->length - index - 1);
+            integer += shift_digit(symbol - '0', string->length - index - 1);
         }
 
         if (negative)
@@ -79,7 +79,7 @@ int buffer_to_integer(buffer_t *buffer, int digits, int *out)
     return 1;
 }
 
-buffer_t *integer_to_buffer(int integer)
+string_t *integer_to_string(int integer)
 {
     char *bytes;
     size_t length, index;
@@ -109,46 +109,46 @@ buffer_t *integer_to_buffer(int integer)
         integer = next;
     }
 
-    return create_buffer(bytes, length);
+    return create_string(bytes, length);
 }
 
-char *buffer_to_cstring(buffer_t *buffer)
+char *string_to_cstring(string_t *string)
 {
-    char *string;
+    char *cstring;
 
-    string = allocate(sizeof(char) * (buffer->length + 1));
+    cstring = allocate(sizeof(char) * (string->length + 1));
 
-    if (buffer->length > 0)
+    if (string->length > 0)
     {
-        memcpy(string, buffer->bytes, buffer->length);
+        memcpy(cstring, string->bytes, string->length);
     }
 
-    string[buffer->length] = '\0';
+    cstring[string->length] = '\0';
 
-    return string;
+    return cstring;
 }
 
-buffer_t *cstring_to_buffer(char *string)
+string_t *cstring_to_string(char *cstring)
 {
     char *bytes;
     size_t length;
 
-    length = strlen(string);
+    length = strlen(cstring);
 
     if (length > 0)
     {
         bytes = allocate(sizeof(char) * length);
-        memcpy(bytes, string, length);
+        memcpy(bytes, cstring, length);
     }
     else
     {
         bytes = NULL;
     }
 
-    return create_buffer(bytes, length);
+    return create_string(bytes, length);
 }
 
-buffer_t *slice_buffer(buffer_t *buffer, size_t start, size_t end)
+string_t *slice_string(string_t *string, size_t start, size_t end)
 {
     char *bytes;
     size_t length;
@@ -158,84 +158,84 @@ buffer_t *slice_buffer(buffer_t *buffer, size_t start, size_t end)
     if (length > 0)
     {
         bytes = allocate(sizeof(char) * length);
-        memcpy(bytes, buffer->bytes + start, length);
+        memcpy(bytes, string->bytes + start, length);
     }
     else
     {
         bytes = NULL;
     }
 
-    return create_buffer(bytes, length);
+    return create_string(bytes, length);
 }
 
-buffer_t *copy_buffer(buffer_t *buffer)
+string_t *copy_string(string_t *string)
 {
     char *bytes;
     size_t length;
 
-    length = buffer->length;
+    length = string->length;
 
     if (length > 0)
     {
         bytes = allocate(sizeof(char) * length);
-        memcpy(bytes, buffer->bytes, length);
+        memcpy(bytes, string->bytes, length);
     }
     else
     {
         bytes = NULL;
     }
 
-    return create_buffer(bytes, length);
+    return create_string(bytes, length);
 }
 
-void resize_buffer(buffer_t *buffer, size_t length)
+void resize_string(string_t *string, size_t length)
 {
-    if (buffer->length > 0)
+    if (string->length > 0)
     {
         if (length > 0)
         {
-            buffer->bytes = reallocate(buffer->bytes, length);
+            string->bytes = reallocate(string->bytes, length);
         }
         else
         {
-            free(buffer->bytes);
-            buffer->bytes = NULL;
+            free(string->bytes);
+            string->bytes = NULL;
         }
     }
     else
     {
         if (length > 0)
         {
-            buffer->bytes = allocate(length);
+            string->bytes = allocate(length);
         }
         else
         {
-            buffer->bytes = NULL;
+            string->bytes = NULL;
         }
     }
 
-    buffer->length = length;
+    string->length = length;
 }
 
-buffer_t *create_buffer(char *bytes, size_t length)
+string_t *create_string(char *bytes, size_t length)
 {
-    buffer_t *buffer;
+    string_t *string;
 
-    buffer = allocate(sizeof(buffer_t));
-    buffer->bytes = bytes;
-    buffer->length = length;
+    string = allocate(sizeof(string_t));
+    string->bytes = bytes;
+    string->length = length;
 
-    return buffer;
+    return string;
 }
 
-void destroy_buffer(buffer_t *buffer)
+void destroy_string(string_t *string)
 {
-    if (buffer->bytes)
+    if (string->bytes)
     {
-        free(buffer->bytes);
+        free(string->bytes);
     }
 
-    free(buffer);
+    free(string);
 }
 
 static int integer_digits(int integer)

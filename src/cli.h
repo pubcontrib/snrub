@@ -1,11 +1,11 @@
 #ifndef CLI_H
 #define CLI_H
 
-#include "buffer.h"
+#include "string.h"
 
 typedef struct
 {
-    buffer_t *string;
+    string_t *string;
     size_t fill;
     int exit;
 } line_t;
