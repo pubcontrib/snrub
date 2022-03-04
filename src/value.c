@@ -306,7 +306,20 @@ value_t *represent_number(int number)
 
 value_t *represent_string(string_t *string)
 {
-    return quote_string(unescape_string(string), '\"');
+    value_t *unescaped;
+    string_t *body;
+
+    unescaped = unescape_string(string);
+
+    if (unescaped->thrown)
+    {
+        return unescaped;
+    }
+
+    body = copy_string(view_string(unescaped));
+    destroy_value(unescaped);
+
+    return quote_string(body, '\"');
 }
 
 value_t *represent_list(value_t **items, size_t length)
@@ -496,7 +509,7 @@ value_t *represent_map(map_t *pairs)
     return new_string(swap);
 }
 
-string_t *escape_string(string_t *string)
+value_t *escape_string(string_t *string)
 {
     char *bytes;
     size_t left, right;
@@ -551,12 +564,26 @@ string_t *escape_string(string_t *string)
                         {
                             bytes[right++] = code;
                         }
+                        else
+                        {
+                            destroy_string(substring);
+                            free(bytes);
+                            return throw_error(ERROR_TYPE);
+                        }
 
                         destroy_string(substring);
+                    }
+                    else
+                    {
+                        free(bytes);
+                        return throw_error(ERROR_TYPE);
                     }
 
                     left += 3;
                     break;
+                default:
+                    free(bytes);
+                    return throw_error(ERROR_TYPE);
             }
 
             escaping = 0;
@@ -579,10 +606,10 @@ string_t *escape_string(string_t *string)
         bytes = reallocate(bytes, right);
     }
 
-    return create_string(bytes, right);
+    return new_string(create_string(bytes, right));
 }
 
-string_t *unescape_string(string_t *string)
+value_t *unescape_string(string_t *string)
 {
     char *bytes;
     size_t length, left, right;
@@ -689,7 +716,7 @@ string_t *unescape_string(string_t *string)
         }
     }
 
-    return create_string(bytes, length);
+    return new_string(create_string(bytes, length));
 }
 
 int compare_values(value_t *left, value_t *right)

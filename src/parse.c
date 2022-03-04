@@ -254,7 +254,8 @@ static value_t *parse_number_literal(string_t *value)
 
 static value_t *parse_string_literal(string_t *value)
 {
-    string_t *trimmed, *escaped;
+    value_t *escaped;
+    string_t *trimmed;
 
     if (value->length < 2)
     {
@@ -277,7 +278,7 @@ static value_t *parse_string_literal(string_t *value)
     escaped = escape_string(trimmed);
     destroy_string(trimmed);
 
-    return new_string(escaped);
+    return escaped;
 }
 
 static int is_printable(string_t *value)
