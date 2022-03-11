@@ -1366,6 +1366,7 @@ static value_t *operator_overload(argument_iterator_t *arguments, stack_frame_t 
     value_t *operator, *document;
     scanner_t *scanner;
     list_t *expressions;
+    int exists;
 
     if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
     {
@@ -1380,6 +1381,12 @@ static value_t *operator_overload(argument_iterator_t *arguments, stack_frame_t 
     }
 
     document = arguments->value;
+    exists = has_map_item(frame->overloads, view_string(operator));
+
+    if (!exists && frame->overloads->length >= NUMBER_MAX)
+    {
+        return throw_error(ERROR_BOUNDS);
+    }
 
     scanner = start_scanner(copy_string(view_string(document)));
     expressions = parse_expressions(scanner);
