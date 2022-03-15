@@ -110,16 +110,6 @@ living documentation.
         `remove`
         ("[o]--" "file_to_remove.txt")
 
-- `<3`
-
-        `promote`
-        ("<3" "make-me-global")
-
-- `</3`
-
-        `demote`
-        ("</3" "make-me-local")
-
 - `+`
 
         `add`
@@ -226,6 +216,18 @@ living documentation.
         `overload`
         ("^" "WRAP" "[(\"x->\" \"@\")]")
         ("WRAP" "item")
+
+- `x^`
+
+        `ripoff`
+        ("x<-" "var" "val")
+        ("~" "(\"x^\" \"var\") (\"x->\" \"var\")" ?)
+
+- `()^`
+
+        `mime`
+        ("^" "fn" "(\"+\" #5# #8#)")
+        ("~" "(\"()^\" \"fn\") (\"fn\" ?)" ?)
 
 - `~`
 

@@ -15,11 +15,9 @@ static int run_version(void);
 static int run_file(string_t *file, string_t *initial);
 static int run_text(string_t *text, string_t *initial);
 static int run_interactive(void);
-static int record_script(string_t *document, map_t *globals, value_t *arguments);
+static int record_script(string_t *document, value_t *arguments, map_t *variables, map_t *overloads);
 static int print_value(value_t *value);
 static value_t *initialize_arguments(string_t *document);
-static map_t *empty_variables(void);
-static void destroy_value_unsafe(void *value);
 
 int main(int argc, char **argv)
 {
@@ -168,26 +166,29 @@ static int run_file(string_t *file, string_t *initial)
 
 static int run_text(string_t *text, string_t *initial)
 {
-    map_t *globals;
     value_t *arguments;
+    map_t *variables, *overloads;
     int success;
 
-    globals = empty_variables();
     arguments = initialize_arguments(initial);
-    success = record_script(text, globals, arguments);
-    destroy_map(globals);
+    variables = empty_variables();
+    overloads = empty_overloads();
+    success = record_script(text, arguments, variables, overloads);
     destroy_value(arguments);
+    destroy_map(variables);
+    destroy_map(overloads);
 
     return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
 }
 
 static int run_interactive(void)
 {
-    map_t *globals;
     value_t *arguments;
+    map_t *variables, *overloads;
 
-    globals = empty_variables();
     arguments = new_null();
+    variables = empty_variables();
+    overloads = empty_overloads();
 
     while (1)
     {
@@ -199,20 +200,22 @@ static int run_interactive(void)
 
         if (line->exit)
         {
-            destroy_map(globals);
             destroy_value(arguments);
+            destroy_map(variables);
+            destroy_map(overloads);
             destroy_line(line);
             return PROGRAM_SUCCESS;
         }
 
-        success = record_script(line->string, globals, arguments);
+        success = record_script(line->string, arguments, variables, overloads);
         line->string = NULL;
         destroy_line(line);
 
         if (!success)
         {
-            destroy_map(globals);
             destroy_value(arguments);
+            destroy_map(variables);
+            destroy_map(overloads);
             return PROGRAM_ERROR;
         }
 
@@ -220,12 +223,12 @@ static int run_interactive(void)
     }
 }
 
-static int record_script(string_t *document, map_t *globals, value_t *arguments)
+static int record_script(string_t *document, value_t *arguments, map_t *variables, map_t *overloads)
 {
     value_t *value;
     int success;
 
-    value = execute_script(document, arguments, globals);
+    value = execute_script(document, arguments, variables, overloads);
     success = print_value(value);
     destroy_value(value);
 
@@ -270,16 +273,18 @@ static value_t *initialize_arguments(string_t *document)
 {
     if (document)
     {
-        map_t *globals;
         value_t *null, *arguments;
+        map_t *variables, *overloads;
         int success;
 
-        globals = empty_variables();
         null = new_null();
-        arguments = execute_script(document, null, globals);
+        variables = empty_variables();
+        overloads = empty_overloads();
+        arguments = execute_script(document, null, variables, overloads);
         success = !arguments->thrown;
-        destroy_map(globals);
         destroy_value(null);
+        destroy_map(variables);
+        destroy_map(overloads);
 
         if (!success)
         {
@@ -291,14 +296,4 @@ static value_t *initialize_arguments(string_t *document)
     }
 
     return new_null();
-}
-
-static map_t *empty_variables(void)
-{
-    return empty_map(hash_string, destroy_value_unsafe, 64);
-}
-
-static void destroy_value_unsafe(void *value)
-{
-    destroy_value((value_t *) value);
 }

@@ -30,8 +30,6 @@ introduce
 . test/suite/operator/read.sh
 . test/suite/operator/write.sh
 . test/suite/operator/remove.sh
-. test/suite/operator/promote.sh
-. test/suite/operator/demote.sh
 . test/suite/operator/add.sh
 . test/suite/operator/subtract.sh
 . test/suite/operator/multiply.sh
@@ -53,6 +51,8 @@ introduce
 . test/suite/operator/string.sh
 . test/suite/operator/length.sh
 . test/suite/operator/overload.sh
+. test/suite/operator/ripoff.sh
+. test/suite/operator/mime.sh
 . test/suite/operator/evaluate.sh
 . test/suite/operator/variables.sh
 . test/suite/operator/keys.sh

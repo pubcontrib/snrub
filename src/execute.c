@@ -24,13 +24,13 @@ typedef struct
     int interception;
 } argument_iterator_t;
 
-typedef struct
+typedef struct stack_frame_t
 {
-    map_t *globals;
-    map_t *locals;
-    map_t *operators;
+    map_t *variables;
     map_t *overloads;
+    map_t *operators;
     int depth;
+    struct stack_frame_t *caller;
 } stack_frame_t;
 
 typedef struct
@@ -38,8 +38,8 @@ typedef struct
     value_t *(*call)(argument_iterator_t *, stack_frame_t *);
 } operator_t;
 
-static value_t *evaluate_script(string_t *document, value_t *arguments, map_t *globals, map_t *operators, int depth);
-static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, map_t *globals, map_t *operators, int depth);
+static value_t *evaluate_script(string_t *document, value_t *arguments, stack_frame_t *caller);
+static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, stack_frame_t *caller);
 static value_t *apply_expression(expression_t *expression, stack_frame_t *frame);
 static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *apply_map(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -53,8 +53,6 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
 static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_remove(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_multiply(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -76,6 +74,8 @@ static value_t *operator_number(argument_iterator_t *arguments, stack_frame_t *f
 static value_t *operator_string(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_overload(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_ripoff(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_mime(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -85,36 +85,52 @@ static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *fr
 static value_t *operator_hash(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t *frame);
 static map_t *default_operators(void);
+static value_t *set_overload(map_t *overloads, string_t *identifier, list_t *overload);
 static void set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
-static map_t *default_overloads(void);
-static map_t *empty_variables(void);
-static value_t *set_scoped_variable(stack_frame_t *frame, string_t *identifier, value_t *variable);
-static value_t *swap_variable_scope(map_t *before, map_t *after, string_t *identifier);
-static void set_variable(map_t *variables, string_t *identifier, value_t *variable);
+static value_t *set_variable(map_t *variables, string_t *identifier, value_t *variable);
 static int has_next_argument(argument_iterator_t *arguments);
 static int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, int types);
 static void skip_argument(argument_iterator_t *arguments);
 static void reset_arguments(argument_iterator_t *arguments);
 static value_t *list_map_keys(map_t *map);
 static void sort_collection(value_t *collection, int reversed);
+static list_t *copy_expressions(list_t *this);
+static expression_t *copy_expression(expression_t *this);
 static int compare_values_ascending(const void *left, const void *right);
 static int compare_values_descending(const void *left, const void *right);
 static void destroy_value_unsafe(void *value);
 static void destroy_list_unsafe(void *value);
+static void destroy_expression_unsafe(void *expression);
 
-value_t *execute_script(string_t *document, value_t *arguments, map_t *globals)
+map_t *empty_overloads(void)
 {
-    map_t *operators;
+    return empty_map(hash_string, destroy_list_unsafe, 64);
+}
+
+map_t *empty_variables(void)
+{
+    return empty_map(hash_string, destroy_value_unsafe, 64);
+}
+
+value_t *execute_script(string_t *document, value_t *arguments, map_t *variables, map_t *overloads)
+{
+    stack_frame_t frame;
     value_t *value;
 
-    operators = default_operators();
-    value = evaluate_script(document, arguments, globals, operators, 0);
-    destroy_map(operators);
+    frame.variables = variables;
+    frame.overloads = overloads;
+    frame.operators = default_operators();
+    frame.depth = 0;
+    frame.caller = NULL;
+
+    value = evaluate_script(document, arguments, &frame);
+
+    destroy_map(frame.operators);
 
     return value;
 }
 
-static value_t *evaluate_script(string_t *document, value_t *arguments, map_t *globals, map_t *operators, int depth)
+static value_t *evaluate_script(string_t *document, value_t *arguments, stack_frame_t *caller)
 {
     scanner_t *scanner;
     list_t *expressions;
@@ -123,21 +139,19 @@ static value_t *evaluate_script(string_t *document, value_t *arguments, map_t *g
     scanner = start_scanner(document);
     expressions = parse_expressions(scanner);
     destroy_scanner(scanner);
-    value = evaluate_expressions(expressions, arguments, globals, operators, depth);
+    value = evaluate_expressions(expressions, arguments, caller);
     destroy_list(expressions);
 
     return value;
 }
 
-static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, map_t *globals, map_t *operators, int depth)
+static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, stack_frame_t *caller)
 {
     list_node_t *node;
     stack_frame_t frame;
     value_t *last;
 
-    depth += 1;
-
-    if (depth > LIMIT_DEPTH)
+    if (caller->depth + 1 > LIMIT_DEPTH)
     {
         return throw_error(ERROR_BOUNDS);
     }
@@ -154,13 +168,13 @@ static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, ma
         }
     }
 
-    frame.globals = globals;
-    frame.locals = empty_variables();
-    frame.operators = operators;
-    frame.overloads = default_overloads();
-    frame.depth = depth;
+    frame.variables = empty_variables();
+    frame.overloads = empty_overloads();
+    frame.operators = caller->operators;
+    frame.depth = caller->depth + 1;
+    frame.caller = caller;
 
-    last = set_scoped_variable(&frame, cstring_to_string("@"), arguments);
+    last = set_variable(frame.variables, cstring_to_string("@"), arguments);
 
     if (last->type == VALUE_TYPE_NULL)
     {
@@ -186,7 +200,7 @@ static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, ma
         }
     }
 
-    destroy_map(frame.locals);
+    destroy_map(frame.variables);
     destroy_map(frame.overloads);
 
     return last;
@@ -345,7 +359,7 @@ static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
 
         initial = arguments->value;
 
-        return evaluate_expressions(overload, initial, frame->globals, frame->operators, frame->depth);
+        return evaluate_expressions(overload, initial, frame);
     }
 
     operator = get_map_item(frame->operators, view_string(name));
@@ -368,12 +382,7 @@ static value_t *operator_recall(argument_iterator_t *arguments, stack_frame_t *f
     }
 
     identifier = arguments->value;
-    value = get_map_item(frame->globals, view_string(identifier));
-
-    if (!value)
-    {
-        value = get_map_item(frame->locals, view_string(identifier));
-    }
+    value = get_map_item(frame->variables, view_string(identifier));
 
     return value ? copy_value(value) : new_null();
 }
@@ -396,14 +405,12 @@ static value_t *operator_memorize(argument_iterator_t *arguments, stack_frame_t 
 
     value = arguments->value;
 
-    return set_scoped_variable(frame, copy_string(view_string(identifier)), value);
+    return set_variable(frame->variables, copy_string(view_string(identifier)), value);
 }
 
 static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *identifier;
-    int global;
-    map_t *variables;
 
     if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
     {
@@ -411,9 +418,7 @@ static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *f
     }
 
     identifier = arguments->value;
-    global = has_map_item(frame->globals, view_string(identifier));
-    variables = global ? frame->globals : frame->locals;
-    remove_map_item(variables, view_string(identifier));
+    remove_map_item(frame->variables, view_string(identifier));
 
     return new_null();
 }
@@ -809,34 +814,6 @@ static value_t *operator_remove(argument_iterator_t *arguments, stack_frame_t *f
     free(cPath);
 
     return new_null();
-}
-
-static value_t *operator_promote(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *identifier;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
-    {
-        return arguments->value;
-    }
-
-    identifier = arguments->value;
-
-    return swap_variable_scope(frame->locals, frame->globals, copy_string(view_string(identifier)));
-}
-
-static value_t *operator_demote(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *identifier;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
-    {
-        return arguments->value;
-    }
-
-    identifier = arguments->value;
-
-    return swap_variable_scope(frame->globals, frame->locals, copy_string(view_string(identifier)));
 }
 
 static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1363,17 +1340,16 @@ static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *f
 
 static value_t *operator_overload(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *operator, *document;
+    value_t *identifier, *document, *result;
     scanner_t *scanner;
     list_t *expressions;
-    int exists;
 
     if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
     {
         return arguments->value;
     }
 
-    operator = arguments->value;
+    identifier = arguments->value;
 
     if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
     {
@@ -1381,17 +1357,76 @@ static value_t *operator_overload(argument_iterator_t *arguments, stack_frame_t 
     }
 
     document = arguments->value;
-    exists = has_map_item(frame->overloads, view_string(operator));
-
-    if (!exists && frame->overloads->length >= NUMBER_MAX)
-    {
-        return throw_error(ERROR_BOUNDS);
-    }
 
     scanner = start_scanner(copy_string(view_string(document)));
     expressions = parse_expressions(scanner);
     destroy_scanner(scanner);
-    set_map_item(frame->overloads, copy_string(view_string(operator)), expressions);
+    result = set_overload(frame->overloads, copy_string(view_string(identifier)), expressions);
+    destroy_list(expressions);
+
+    return result;
+}
+
+static value_t *operator_ripoff(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *identifier;
+    stack_frame_t *level;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    identifier = arguments->value;
+    level = frame->caller;
+
+    while (level != NULL)
+    {
+        value_t *variable;
+
+        variable = get_map_item(level->variables, view_string(identifier));
+
+        if (variable == NULL)
+        {
+            level = level->caller;
+        }
+        else
+        {
+            return set_variable(frame->variables, copy_string(view_string(identifier)), variable);
+        }
+    }
+
+    return new_null();
+}
+
+static value_t *operator_mime(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *identifier;
+    stack_frame_t *level;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    identifier = arguments->value;
+    level = frame->caller;
+
+    while (level != NULL)
+    {
+        list_t *overload;
+
+        overload = get_map_item(level->overloads, view_string(identifier));
+
+        if (overload == NULL)
+        {
+            level = level->caller;
+        }
+        else
+        {
+            return set_overload(frame->overloads, copy_string(view_string(identifier)), overload);
+        }
+    }
 
     return new_null();
 }
@@ -1416,18 +1451,14 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
     initial = arguments->value;
     copy = copy_string(view_string(document));
 
-    return evaluate_script(copy, initial, frame->globals, frame->operators, frame->depth);
+    return evaluate_script(copy, initial, frame);
 }
 
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *left, *right, *sorted;
+    value_t *sorted;
 
-    left = list_map_keys(frame->globals);
-    right = list_map_keys(frame->locals);
-    sorted = merge_lists(left, right);
-    destroy_value(left);
-    destroy_value(right);
+    sorted = list_map_keys(frame->variables);
     sort_collection(sorted, 0);
 
     return sorted;
@@ -1617,8 +1648,6 @@ static map_t *default_operators(void)
     set_operator(operators, "[o]->", operator_read);
     set_operator(operators, "[o]<-", operator_write);
     set_operator(operators, "[o]--", operator_remove);
-    set_operator(operators, "<3", operator_promote);
-    set_operator(operators, "</3", operator_demote);
     set_operator(operators, "+", operator_add);
     set_operator(operators, "-", operator_subtract);
     set_operator(operators, "*", operator_multiply);
@@ -1640,6 +1669,8 @@ static map_t *default_operators(void)
     set_operator(operators, "\"", operator_string);
     set_operator(operators, "| |", operator_length);
     set_operator(operators, "^", operator_overload);
+    set_operator(operators, "x^", operator_ripoff);
+    set_operator(operators, "()^", operator_mime);
     set_operator(operators, "~", operator_evaluate);
     set_operator(operators, "x[]", operator_variables);
     set_operator(operators, "$[]", operator_keys);
@@ -1650,6 +1681,22 @@ static map_t *default_operators(void)
     set_operator(operators, ";", operator_represent);
 
     return operators;
+}
+
+static value_t *set_overload(map_t *overloads, string_t *identifier, list_t *overload)
+{
+    int exists;
+
+    exists = has_map_item(overloads, identifier);
+
+    if (!exists && overloads->length >= NUMBER_MAX)
+    {
+        return throw_error(ERROR_BOUNDS);
+    }
+
+    set_map_item(overloads, identifier, copy_expressions(overload));
+
+    return new_null();
 }
 
 static void set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *))
@@ -1664,24 +1711,11 @@ static void set_operator(map_t *operators, char *name, value_t *(*call)(argument
     set_map_item(operators, key, operator);
 }
 
-static map_t *default_overloads(void)
+static value_t *set_variable(map_t *variables, string_t *identifier, value_t *variable)
 {
-    return empty_map(hash_string, destroy_list_unsafe, 64);
-}
+    int exists;
 
-static map_t *empty_variables(void)
-{
-    return empty_map(hash_string, destroy_value_unsafe, 64);
-}
-
-static value_t *set_scoped_variable(stack_frame_t *frame, string_t *identifier, value_t *variable)
-{
-    int global, exists;
-    map_t *variables;
-
-    global = has_map_item(frame->globals, identifier);
-    variables = global ? frame->globals : frame->locals;
-    exists = global || has_map_item(variables, identifier);
+    exists = has_map_item(variables, identifier);
 
     if (!exists && variables->length >= NUMBER_MAX)
     {
@@ -1689,43 +1723,9 @@ static value_t *set_scoped_variable(stack_frame_t *frame, string_t *identifier, 
         return throw_error(ERROR_BOUNDS);
     }
 
-    set_variable(variables, identifier, variable);
-
-    return new_null();
-}
-
-static value_t *swap_variable_scope(map_t *before, map_t *after, string_t *identifier)
-{
-    value_t *value;
-
-    value = get_map_item(before, identifier);
-
-    if (value)
-    {
-        int exists;
-
-        exists = has_map_item(after, identifier);
-
-        if (!exists && after->length >= NUMBER_MAX)
-        {
-            destroy_string(identifier);
-            return throw_error(ERROR_BOUNDS);
-        }
-
-        set_variable(after, identifier, value);
-        remove_map_item(before, identifier);
-
-        return new_null();
-    }
-
-    destroy_string(identifier);
-
-    return new_null();
-}
-
-static void set_variable(map_t *variables, string_t *identifier, value_t *variable)
-{
     set_map_item(variables, identifier, copy_value(variable));
+
+    return new_null();
 }
 
 static int has_next_argument(argument_iterator_t *arguments)
@@ -1846,6 +1846,56 @@ static void sort_collection(value_t *collection, int reversed)
     }
 }
 
+static list_t *copy_expressions(list_t *this)
+{
+    list_t *copy;
+    list_node_t *node;
+
+    copy = empty_list(destroy_expression_unsafe);
+
+    for (node = this->head; node != NULL; node = node->next)
+    {
+        add_list_item(copy, copy_expression(node->value));
+    }
+
+    return copy;
+}
+
+static expression_t *copy_expression(expression_t *this)
+{
+    expression_t *copy;
+
+    copy = allocate(sizeof(expression_t));
+    copy->type = this->type;
+
+    if (this->value)
+    {
+        copy->value = copy_value(this->value);
+    }
+    else
+    {
+        copy->value = NULL;
+    }
+
+    if (this->arguments)
+    {
+        list_node_t *node;
+
+        copy->arguments = empty_list(destroy_expression_unsafe);
+
+        for (node = this->arguments->head; node != NULL; node = node->next)
+        {
+            add_list_item(copy->arguments, copy_expression(node->value));
+        }
+    }
+    else
+    {
+        copy->arguments = NULL;
+    }
+
+    return copy;
+}
+
 static int compare_values_ascending(const void *left, const void *right)
 {
     return compare_values(*(value_t **) left, *(value_t **) right);
@@ -1864,4 +1914,9 @@ static void destroy_value_unsafe(void *value)
 static void destroy_list_unsafe(void *value)
 {
     destroy_list((list_t *) value);
+}
+
+static void destroy_expression_unsafe(void *expression)
+{
+    destroy_expression((expression_t *) expression);
 }

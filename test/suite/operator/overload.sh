@@ -8,7 +8,8 @@ fail '("^" "SQ" "(\"*\" (\"x->\" \"@\") (\"x->\" \"@\"))") ("~" "(\"SQ\" #10#)" 
 fail '("^" "SQ" "(\"*\" (\"x->\" \"@\") (\"x->\" \"@\"))") ("^" "DO" "(\"SQ\" #10#)") ("DO" ?)' '#4#'
 pass '("^" "OP" "\"first\"") ("^" "OP" "\"last\"") ("OP" ?)' '"last"'
 pass '("^" "!" "(\"+\" (\"x->\" \"@\") \"!!!\")") ("!" "hello")' '"hello!!!"'
-pass '("^" "x<-" "(\"x<-\" \"global\" (\"x->\" \"@\")) (\"<3\" \"global\")") ("x<-" "word") ("x->" "global")' '"word"'
+pass '("^" "OP" "#123#") ("OP" ?)' '#123#'
+pass '("^" "OP" "#123#") ("OP" ?) ("OP" ?) ("OP" ?)' '#123#'
 
 # Literal Evaluation
 pass '("^" "OP" "?") ("OP" ?)' '?'
@@ -35,10 +36,6 @@ pass '("^" "OP" "(\"x->\" \"@\")") ("OP" [#1# #2# #3#])' '[#1# #2# #3#]'
 pass '("^" "OP" "(\"x->\" \"@\")") ("OP" {"key" "value"})' '{"key" "value"}'
 pass '("^" "OP" "") ("x<-" "@" "before") ("OP" "after") ("x->" "@")' '"before"'
 pass '("^" "OP" "(\"x<-\" \"@\" \"lastly\")") ("x<-" "@" "before") ("OP" "after") ("x->" "@")' '"before"'
-pass '("^" "OP" "") ("x<-" "@" "before") ("<3" "@") ("OP" "after") ("x->" "@")' '"after"'
-pass '("^" "OP" "") ("x<-" "@" "before") ("<3" "@") ("OP" "after") ("OP" "lastly") ("x->" "@")' '"lastly"'
-pass '("^" "OP" "(\"x<-\" \"@\" \"lastly\")") ("x<-" "@" "before") ("<3" "@") ("OP" "after") ("x->" "@")' '"lastly"'
-pass '("^" "OP" "(\"<3\" \"@\")") ("x<-" "@" "before") ("OP" "after") ("x->" "@")' '"after"'
 
 # Argument Error
 fail '("^")' '#4#'

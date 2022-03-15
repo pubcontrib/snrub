@@ -27,10 +27,6 @@ pass '("~" "(\"x->\" \"@\")" [#1# #2# #3#])' '[#1# #2# #3#]'
 pass '("~" "(\"x->\" \"@\")" {"key" "value"})' '{"key" "value"}'
 pass '("x<-" "@" "before") ("~" "" "after") ("x->" "@")' '"before"'
 pass '("x<-" "@" "before") ("~" "(\"x<-\" \"@\" \"lastly\")" "after") ("x->" "@")' '"before"'
-pass '("x<-" "@" "before") ("<3" "@") ("~" "" "after") ("x->" "@")' '"after"'
-pass '("x<-" "@" "before") ("<3" "@") ("~" "" "after") ("~" "" "lastly") ("x->" "@")' '"lastly"'
-pass '("x<-" "@" "before") ("<3" "@") ("~" "(\"x<-\" \"@\" \"lastly\")" "after") ("x->" "@")' '"lastly"'
-pass '("x<-" "@" "before") ("~" "(\"<3\" \"@\")" "after") ("x->" "@")' '"after"'
 
 # Argument Error
 fail '("~")' '#4#'

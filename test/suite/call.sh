@@ -67,13 +67,10 @@ end=`repeat ')' 33`
 fail "$start #1#$end" '#2#'
 center=`repeat '?' 1024`
 pass "(\"...\" $center)" '?'
-fail '("x<-" "recurse" "(\"~\" (\"x->\" \"recurse\") ?)")
-("<3" "recurse")
-("~" ("x->" "recurse") ?)' '#2#'
-fail '("x<-" "code" "(\"^\" \"OP\" (\"x->\" \"code\")) (\"OP\" ?)")
-("<3" "code")
-("^" "OP" ("x->" "code"))
-("OP" ?)' '#2#'
+fail '("x<-" "code" "(\"x^\" \"code\") (\"~\" (\"x->\" \"code\") ?)")
+("~" ("x->" "code") ?)' '#2#'
+fail '("^" "recurse" "(\"()^\" \"recurse\") (\"recurse\" ?)")
+("recurse" ?)' '#2#'
 
 # Argument Error
 fail '()' '#4#'
