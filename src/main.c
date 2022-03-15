@@ -8,7 +8,7 @@
 #include "string.h"
 #include "common.h"
 
-#define PROGRAM_VERSION "v0.77.1"
+#define PROGRAM_VERSION "v0.78.0"
 
 static int run_help(void);
 static int run_version(void);
