@@ -53,6 +53,7 @@ introduce
 . test/suite/operator/overload.sh
 . test/suite/operator/ripoff.sh
 . test/suite/operator/mime.sh
+. test/suite/operator/resume.sh
 . test/suite/operator/evaluate.sh
 . test/suite/operator/variables.sh
 . test/suite/operator/keys.sh

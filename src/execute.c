@@ -76,6 +76,7 @@ static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *f
 static value_t *operator_overload(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_ripoff(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_mime(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_resume(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -1431,6 +1432,22 @@ static value_t *operator_mime(argument_iterator_t *arguments, stack_frame_t *fra
     return new_null();
 }
 
+static value_t *operator_resume(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    value_t *identifier;
+
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    {
+        return arguments->value;
+    }
+
+    identifier = arguments->value;
+
+    remove_map_item(frame->overloads, view_string(identifier));
+
+    return new_null();
+}
+
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *document, *initial;
@@ -1671,6 +1688,7 @@ static map_t *default_operators(void)
     set_operator(operators, "()<-", operator_overload);
     set_operator(operators, "x^", operator_ripoff);
     set_operator(operators, "()^", operator_mime);
+    set_operator(operators, "()--", operator_resume);
     set_operator(operators, "~", operator_evaluate);
     set_operator(operators, "x[]", operator_variables);
     set_operator(operators, "$[]", operator_keys);
