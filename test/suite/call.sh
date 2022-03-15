@@ -69,7 +69,7 @@ center=`repeat '?' 1024`
 pass "(\"...\" $center)" '?'
 fail '("x<-" "code" "(\"x^\" \"code\") (\"~\" (\"x->\" \"code\") ?)")
 ("~" ("x->" "code") ?)' '#2#'
-fail '("^" "recurse" "(\"()^\" \"recurse\") (\"recurse\" ?)")
+fail '("()<-" "recurse" "(\"()^\" \"recurse\") (\"recurse\" ?)")
 ("recurse" ?)' '#2#'
 
 # Argument Error
@@ -77,8 +77,8 @@ fail '()' '#4#'
 fail '(?)' '#4#'
 fail '(#1#)' '#4#'
 fail '("unknown")' '#4#'
-fail '("^" "OP" "") ("OP")' '#4#'
+fail '("()<-" "OP" "") ("OP")' '#4#'
 
 # Error Propogation
 fail '(("<>" "ERROR"))' '"ERROR"'
-fail '("^" "OP" "") ("OP" ("<>" "ERROR"))' '"ERROR"'
+fail '("()<-" "OP" "") ("OP" ("<>" "ERROR"))' '"ERROR"'

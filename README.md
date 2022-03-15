@@ -211,10 +211,10 @@ living documentation.
         `length`
         ("| |" "a string, list, or map")
 
-- `^`
+- `()<-`
 
         `overload`
-        ("^" "WRAP" "[(\"x->\" \"@\")]")
+        ("()<-" "WRAP" "[(\"x->\" \"@\")]")
         ("WRAP" "item")
 
 - `x^`
@@ -226,7 +226,7 @@ living documentation.
 - `()^`
 
         `mime`
-        ("^" "fn" "(\"+\" #5# #8#)")
+        ("()<-" "fn" "(\"+\" #5# #8#)")
         ("~" "(\"()^\" \"fn\") (\"fn\" ?)" ?)
 
 - `~`

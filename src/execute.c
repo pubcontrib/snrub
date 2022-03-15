@@ -1668,7 +1668,7 @@ static map_t *default_operators(void)
     set_operator(operators, "#", operator_number);
     set_operator(operators, "\"", operator_string);
     set_operator(operators, "| |", operator_length);
-    set_operator(operators, "^", operator_overload);
+    set_operator(operators, "()<-", operator_overload);
     set_operator(operators, "x^", operator_ripoff);
     set_operator(operators, "()^", operator_mime);
     set_operator(operators, "~", operator_evaluate);
