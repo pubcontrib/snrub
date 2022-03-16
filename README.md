@@ -40,241 +40,241 @@ living documentation.
 
 - `?`
 
-        `null`
+        `NULL`
         ?
 
 - `##`
 
-        `number`
+        `NUMBER`
         #123456789#
 
 - `""`
 
-        `string`
+        `STRING`
         "text and words"
 
 - `[]`
 
-        `list`
+        `LIST`
         [? ## "" [] {}]
 
 - `{}`
 
-        `map`
+        `MAP`
         {"null" ? "number" ## "string" "" "list" [] "map" {}}
 
 ### Operators
 
 - `x->`
 
-        `recall`
+        `RECALL`
         ("x->" "read-me")
 
 - `x<-`
 
-        `memorize`
+        `MEMORIZE`
         ("x<-" "override-me" "any value")
 
 - `x--`
 
-        `forget`
+        `FORGET`
         ("x--" "remove-me")
 
 - `$->`
 
-        `get`
+        `GET`
         ("$->" {"one" #1# "two" #2# "three" #3#} "two")
 
 - `$<-`
 
-        `set`
+        `SET`
         ("$<-" {} "first" "value")
 
 - `$--`
 
-        `unset`
+        `UNSET`
         ("$--" {"forget" "me"} "forget")
 
 - `[o]->`
 
-        `read`
+        `READ`
         ("[o]->" "file_to_read.txt")
 
 - `[o]<-`
 
-        `write`
+        `WRITE`
         ("[o]<-" "file_to_override.txt" "text")
 
 - `[o]--`
 
-        `remove`
+        `REMOVE`
         ("[o]--" "file_to_remove.txt")
 
 - `+`
 
-        `add`
+        `ADD`
         ("+" #75# #25#)
 
 - `-`
 
-        `subtract`
+        `SUBTRACT`
         ("-" #500# #400#)
 
 - `*`
 
-        `multiply`
+        `MULTIPLY`
         ("*" #20# #5#)
 
 - `/`
 
-        `divide`
+        `DIVIDE`
         ("/" #400# #4#)
 
 - `%`
 
-        `modulo`
+        `MODULO`
         ("%" #1000# #900#)
 
 - `&`
 
-        `and`
+        `AND`
         ("&" #1# #1#)
 
 - `|`
 
-        `or`
+        `OR`
         ("|" #0# #1#)
 
 - `!`
 
-        `not`
+        `NOT`
         ("!" #0#)
 
 - `<`
 
-        `less`
+        `LESS`
         ("<" #0# #100#)
 
 - `>`
 
-        `greater`
+        `GREATER`
         (">" #100# #0#)
 
 - `=`
 
-        `equal`
+        `EQUAL`
         ("=" #100# #100#)
 
 - `?`
 
-        `conditional`
+        `CONDITIONAL`
         ("?" #1# "true" "false")
 
 - `o`
 
-        `loop`
+        `LOOP`
         ("x<-" "i" #1#)
         ("o" ("<" ("x->" "i") #50#) ("x<-" "i" ("+" ("x->" "i") #1#)))
         ("x->" "i")
 
 - `...`
 
-        `chain`
+        `CHAIN`
         ("..." "first" "second" "..." "last")
 
 - `><`
 
-        `catch`
+        `CATCH`
         ("><" ("/" #100# #0#))
 
 - `<>`
 
-        `throw`
+        `THROW`
         ("<>" "[ERROR] invalid format")
 
 - `_`
 
-        `type`
+        `TYPE`
         ("_" "any value")
 
 - `#`
 
-        `number`
+        `NUMBER`
         ("#" "100")
 
 - `"`
 
-        `string`
+        `STRING`
         ("\"" #100#)
 
 - `| |`
 
-        `length`
+        `LENGTH`
         ("| |" "a string, list, or map")
 
 - `()<-`
 
-        `overload`
+        `OVERLOAD`
         ("()<-" "WRAP" "[(\"x->\" \"@\")]")
         ("WRAP" "item")
 
 - `x^`
 
-        `ripoff`
+        `RIPOFF`
         ("x<-" "caller" "parent")
         ("~" "(\"x^\" \"caller\") (\"x->\" \"caller\")" ?)
 
 - `()^`
 
-        `mime`
+        `MIME`
         ("()<-" "EXCLAIM" "(\"+\" (\"x->\" \"@\") \"!\")")
         ("~" "(\"()^\" \"EXCLAIM\") (\"EXCLAIM\" \"Mine\")" ?)
 
 - `()--`
 
-        `resume`
+        `RESUME`
         ("()<-" "SQUARE" "(\"*\" (\"x->\" \"@\") (\"x->\" \"@\"))")
         ("()--" "SQUARE")
         ("SQUARE" #8#)
 
 - `~`
 
-        `evaluate`
+        `EVALUATE`
         ("~" "(\"<\" (\"x->\" \"@\") #0#)" #-1#)
 
 - `x[]`
 
-        `variables`
+        `VARIABLES`
         ("x[]")
 
 - `$[]`
 
-        `keys`
+        `KEYS`
         ("$[]" {"first" #1# "second" #2# "third" #3#})
 
 - `()[]`
 
-        `operators`
+        `OPERATORS`
         ("()[]")
 
 - `<|>`
 
-        `sort`
+        `SORT`
         ("<|>" [#3# #2# #5# #1# #4#])
 
 - `[# #]`
 
-        `slice`
+        `SLICE`
         ("[# #]" "find me in this text" #6# #7#)
 
 - `::`
 
-        `hash`
+        `HASH`
         ("::" [#2# "bucket"])
 
 - `;`
 
-        `represent`
+        `REPRESENT`
         (";" [#2# "code"])
 
 ## License
