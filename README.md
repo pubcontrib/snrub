@@ -311,7 +311,7 @@ Run code from a file:
 
 Run code from a file with an argument:
 
-    snrub -f power.txt '#8#'
+    snrub -f square.txt '#8#'
 
 Run code from text:
 
