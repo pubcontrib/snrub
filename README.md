@@ -46,12 +46,31 @@ living documentation.
 - `##`
 
         `NUMBER`
-        #123456789#
+
+        `positive number`
+        #5000#
+
+        `negative number`
+        #-5000#
+
+        `smallest number`
+        #-999999999#
+
+        `largest number`
+        #999999999#
 
 - `""`
 
         `STRING`
+
+        `plain string`
         "text and words"
+
+        `string with escaped symbols`
+        "\n New Line \t Tab \r Carriage Return \\ Backslash \" Double Quote"
+
+        `string with non-printable symbols`
+        "A bell goes \a007"
 
 - `[]`
 
