@@ -1499,10 +1499,50 @@ static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *fra
 
 static value_t *operator_operators(argument_iterator_t *arguments, stack_frame_t *frame)
 {
+    map_t *operators;
     value_t *sorted;
 
-    sorted = list_map_keys(frame->operators);
+    operators = empty_map(hash_string, free, 64);
+
+    if (frame->overloads->length > 0)
+    {
+        size_t index;
+
+        for (index = 0; index < frame->overloads->capacity; index++)
+        {
+            if (frame->overloads->chains[index])
+            {
+                map_chain_t *chain;
+
+                for (chain = frame->overloads->chains[index]; chain != NULL; chain = chain->next)
+                {
+                    set_map_item(operators, copy_string(chain->key), NULL);
+                }
+            }
+        }
+    }
+
+    if (frame->operators->length > 0)
+    {
+        size_t index;
+
+        for (index = 0; index < frame->operators->capacity; index++)
+        {
+            if (frame->operators->chains[index])
+            {
+                map_chain_t *chain;
+
+                for (chain = frame->operators->chains[index]; chain != NULL; chain = chain->next)
+                {
+                    set_map_item(operators, copy_string(chain->key), NULL);
+                }
+            }
+        }
+    }
+
+    sorted = list_map_keys(operators);
     sort_collection(sorted, 0);
+    destroy_map(operators);
 
     return sorted;
 }
