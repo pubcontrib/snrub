@@ -746,7 +746,6 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
 static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *frame)
 {
     value_t *path;
-    string_t *file;
 
     if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
     {
@@ -754,14 +753,8 @@ static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *fra
     }
 
     path = arguments->value;
-    file = read_file(view_string(path));
 
-    if (!file)
-    {
-        return new_null();
-    }
-
-    return new_string(file);
+    return read_file(view_string(path));
 }
 
 static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *frame)

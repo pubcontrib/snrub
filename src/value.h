@@ -68,7 +68,7 @@ int number_multiply(int left, int right, int *out);
 int number_divide(int left, int right, int *out);
 int number_modulo(int left, int right, int *out);
 int string_add(string_t *left, string_t *right, string_t **out);
-string_t *read_file(string_t *path);
+value_t *read_file(string_t *path);
 void destroy_value(value_t *value);
 void destroy_items(value_t **items, size_t length);
 

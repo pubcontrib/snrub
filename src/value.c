@@ -1042,7 +1042,7 @@ int string_add(string_t *left, string_t *right, string_t **out)
     return 1;
 }
 
-string_t *read_file(string_t *path)
+value_t *read_file(string_t *path)
 {
     FILE *file;
     char *cPath;
@@ -1063,7 +1063,7 @@ string_t *read_file(string_t *path)
         if (length > NUMBER_MAX)
         {
             fclose(file);
-            return NULL;
+            return throw_error(ERROR_BOUNDS);
         }
 
         if (length > 0)
@@ -1084,16 +1084,16 @@ string_t *read_file(string_t *path)
             }
 
             fclose(file);
-            return NULL;
+            return new_null();
         }
         else
         {
             fclose(file);
-            return create_string(bytes, length);
+            return new_string(create_string(bytes, length));
         }
     }
 
-    return NULL;
+    return new_null();
 }
 
 void destroy_value(value_t *value)

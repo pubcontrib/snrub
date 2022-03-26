@@ -149,17 +149,26 @@ static int run_version(void)
 
 static int run_file(string_t *file, string_t *initial)
 {
-    string_t *document;
+    value_t *document;
     int exit;
 
     document = read_file(file);
+    exit = 0;
 
-    if (!document)
+    if (document->thrown || document->type == VALUE_TYPE_NULL)
     {
-        document = create_string(NULL, 0);
+        exit = print_value(document);
+    }
+    else if (document->type == VALUE_TYPE_STRING)
+    {
+        exit = run_text(copy_string(view_string(document)), initial);
+    }
+    else
+    {
+        crash_with_message("unsupported branch %s", "CLI_FILE_TYPE");
     }
 
-    exit = run_text(document, initial);
+    destroy_value(document);
 
     return exit;
 }
