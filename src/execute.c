@@ -151,6 +151,7 @@ static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, st
     list_node_t *node;
     stack_frame_t frame;
     value_t *last;
+    string_t *identifier;
 
     if (caller->depth + 1 > LIMIT_DEPTH)
     {
@@ -175,7 +176,9 @@ static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, st
     frame.depth = caller->depth + 1;
     frame.caller = caller;
 
-    last = set_variable(frame.variables, cstring_to_string("@"), arguments);
+    identifier = cstring_to_string("@");
+    last = set_variable(frame.variables, identifier, arguments);
+    destroy_string(identifier);
 
     if (last->type == VALUE_TYPE_NULL)
     {
@@ -406,7 +409,7 @@ static value_t *operator_memorize(argument_iterator_t *arguments, stack_frame_t 
 
     value = arguments->value;
 
-    return set_variable(frame->variables, copy_string(view_string(identifier)), value);
+    return set_variable(frame->variables, view_string(identifier), value);
 }
 
 static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1355,7 +1358,7 @@ static value_t *operator_overload(argument_iterator_t *arguments, stack_frame_t 
     scanner = start_scanner(copy_string(view_string(document)));
     expressions = parse_expressions(scanner);
     destroy_scanner(scanner);
-    result = set_overload(frame->overloads, copy_string(view_string(identifier)), expressions);
+    result = set_overload(frame->overloads, view_string(identifier), expressions);
     destroy_list(expressions);
 
     return result;
@@ -1386,7 +1389,7 @@ static value_t *operator_ripoff(argument_iterator_t *arguments, stack_frame_t *f
         }
         else
         {
-            return set_variable(frame->variables, copy_string(view_string(identifier)), variable);
+            return set_variable(frame->variables, view_string(identifier), variable);
         }
     }
 
@@ -1418,7 +1421,7 @@ static value_t *operator_mime(argument_iterator_t *arguments, stack_frame_t *fra
         }
         else
         {
-            return set_overload(frame->overloads, copy_string(view_string(identifier)), overload);
+            return set_overload(frame->overloads, view_string(identifier), overload);
         }
     }
 
@@ -1745,7 +1748,7 @@ static value_t *set_overload(map_t *overloads, string_t *identifier, list_t *ove
         return throw_error(ERROR_BOUNDS);
     }
 
-    set_map_item(overloads, identifier, copy_expressions(overload));
+    set_map_item(overloads, copy_string(identifier), copy_expressions(overload));
 
     return new_null();
 }
@@ -1753,9 +1756,17 @@ static value_t *set_overload(map_t *overloads, string_t *identifier, list_t *ove
 static void set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *))
 {
     string_t *key;
+    int exists;
     operator_t *operator;
 
     key = cstring_to_string(name);
+    exists = has_map_item(operators, key);
+
+    if (!exists && operators->length >= NUMBER_MAX)
+    {
+        crash_with_message("too many operators set");
+    }
+
     operator = allocate(sizeof(operator_t *));
     operator->call = call;
 
@@ -1770,11 +1781,10 @@ static value_t *set_variable(map_t *variables, string_t *identifier, value_t *va
 
     if (!exists && variables->length >= NUMBER_MAX)
     {
-        destroy_string(identifier);
         return throw_error(ERROR_BOUNDS);
     }
 
-    set_map_item(variables, identifier, copy_value(variable));
+    set_map_item(variables, copy_string(identifier), copy_value(variable));
 
     return new_null();
 }
