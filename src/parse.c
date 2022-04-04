@@ -3,6 +3,7 @@
 #include "lex.h"
 #include "value.h"
 #include "list.h"
+#include "string.h"
 #include "common.h"
 
 typedef enum

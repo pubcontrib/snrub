@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include "map.h"
+#include "string.h"
 
 #define NUMBER_MAX 999999999
 #define NUMBER_MIN -999999999

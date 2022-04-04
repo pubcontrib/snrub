@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "cli.h"
 #include "execute.h"
 #include "parse.h"
 #include "lex.h"
 #include "value.h"
 #include "map.h"
 #include "list.h"
+#include "string.h"
 #include "common.h"
 
 #define VALUE_TYPES_ANY (VALUE_TYPE_NULL | VALUE_TYPE_NUMBER | VALUE_TYPE_STRING | VALUE_TYPE_LIST | VALUE_TYPE_MAP)

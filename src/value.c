@@ -4,6 +4,7 @@
 #include <limits.h>
 #include "value.h"
 #include "map.h"
+#include "string.h"
 #include "common.h"
 
 static value_t *create_value(value_type_t type, void *data, size_t size, int thrown);
