@@ -325,13 +325,16 @@ value_t *represent_string(string_t *string)
 
 value_t *represent_list(value_t **items, size_t length)
 {
-    string_t *body, *swap, *delimiter, *end;
+    string_t delimiter, end;
+    string_t *body, *swap;
     size_t index;
     int fit;
 
+    delimiter.bytes = " ";
+    delimiter.length = 1;
+    end.bytes = "]";
+    end.length = 1;
     body = cstring_to_string("[");
-    delimiter = cstring_to_string(" ");
-    end = cstring_to_string("]");
 
     for (index = 0; index < length; index++)
     {
@@ -339,14 +342,12 @@ value_t *represent_list(value_t **items, size_t length)
 
         if (index > 0)
         {
-            fit = string_add(body, delimiter, &swap);
+            fit = string_add(body, &delimiter, &swap);
             destroy_string(body);
 
             if (!fit)
             {
                 destroy_string(swap);
-                destroy_string(delimiter);
-                destroy_string(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
@@ -359,8 +360,6 @@ value_t *represent_list(value_t **items, size_t length)
         if (represent->thrown)
         {
             destroy_string(swap);
-            destroy_string(delimiter);
-            destroy_string(end);
             return represent;
         }
 
@@ -371,18 +370,14 @@ value_t *represent_list(value_t **items, size_t length)
         if (!fit)
         {
             destroy_string(swap);
-            destroy_string(delimiter);
-            destroy_string(end);
             return throw_error(ERROR_BOUNDS);
         }
 
         body = swap;
     }
 
-    fit = string_add(body, end, &swap);
+    fit = string_add(body, &end, &swap);
     destroy_string(body);
-    destroy_string(delimiter);
-    destroy_string(end);
 
     if (!fit)
     {
@@ -395,12 +390,15 @@ value_t *represent_list(value_t **items, size_t length)
 
 value_t *represent_map(map_t *pairs)
 {
-    string_t *body, *swap, *delimiter, *end;
+    string_t delimiter, end;
+    string_t *body, *swap;
     int fit;
 
+    delimiter.bytes = " ";
+    delimiter.length = 1;
+    end.bytes = "}";
+    end.length = 1;
     body = cstring_to_string("{");
-    delimiter = cstring_to_string(" ");
-    end = cstring_to_string("}");
 
     if (pairs->length > 0)
     {
@@ -419,14 +417,12 @@ value_t *represent_map(map_t *pairs)
 
             if (index > 0)
             {
-                fit = string_add(body, delimiter, &swap);
+                fit = string_add(body, &delimiter, &swap);
                 destroy_string(body);
 
                 if (!fit)
                 {
                     destroy_string(swap);
-                    destroy_string(delimiter);
-                    destroy_string(end);
                     return throw_error(ERROR_BOUNDS);
                 }
 
@@ -438,8 +434,6 @@ value_t *represent_map(map_t *pairs)
             if (represent->thrown)
             {
                 destroy_string(swap);
-                destroy_string(delimiter);
-                destroy_string(end);
                 return represent;
             }
 
@@ -450,20 +444,16 @@ value_t *represent_map(map_t *pairs)
             if (!fit)
             {
                 destroy_string(swap);
-                destroy_string(delimiter);
-                destroy_string(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
             body = swap;
-            fit = string_add(body, delimiter, &swap);
+            fit = string_add(body, &delimiter, &swap);
             destroy_string(body);
 
             if (!fit)
             {
                 destroy_string(swap);
-                destroy_string(delimiter);
-                destroy_string(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
@@ -473,8 +463,6 @@ value_t *represent_map(map_t *pairs)
             if (represent->thrown)
             {
                 destroy_string(swap);
-                destroy_string(delimiter);
-                destroy_string(end);
                 return represent;
             }
 
@@ -485,8 +473,6 @@ value_t *represent_map(map_t *pairs)
             if (!fit)
             {
                 destroy_string(swap);
-                destroy_string(delimiter);
-                destroy_string(end);
                 return throw_error(ERROR_BOUNDS);
             }
 
@@ -496,10 +482,8 @@ value_t *represent_map(map_t *pairs)
         destroy_keys(keys, pairs->length);
     }
 
-    fit = string_add(body, end, &swap);
+    fit = string_add(body, &end, &swap);
     destroy_string(body);
-    destroy_string(delimiter);
-    destroy_string(end);
 
     if (!fit)
     {

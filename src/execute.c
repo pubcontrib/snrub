@@ -151,7 +151,7 @@ static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, st
     list_node_t *node;
     stack_frame_t frame;
     value_t *last;
-    string_t *identifier;
+    string_t identifier;
 
     if (caller->depth + 1 > LIMIT_DEPTH)
     {
@@ -176,9 +176,9 @@ static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, st
     frame.depth = caller->depth + 1;
     frame.caller = caller;
 
-    identifier = cstring_to_string("@");
-    last = set_variable(frame.variables, identifier, arguments);
-    destroy_string(identifier);
+    identifier.bytes = "@";
+    identifier.length = 1;
+    last = set_variable(frame.variables, &identifier, arguments);
 
     if (last->type == VALUE_TYPE_NULL)
     {
