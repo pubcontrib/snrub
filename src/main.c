@@ -15,7 +15,7 @@ static int run_version(void);
 static int run_file(string_t *file, string_t *initial);
 static int run_text(string_t *text, string_t *initial);
 static int run_interactive(void);
-static int record_script(string_t *document, value_t *arguments, map_t *variables, map_t *overloads);
+static int record_script(string_t *document, value_t *arguments, stack_frame_t *frame);
 static int print_value(value_t *value);
 static value_t *initialize_arguments(string_t *document);
 
@@ -176,16 +176,20 @@ static int run_file(string_t *file, string_t *initial)
 static int run_text(string_t *text, string_t *initial)
 {
     value_t *arguments;
-    map_t *variables, *overloads;
+    stack_frame_t frame;
     int success;
 
     arguments = initialize_arguments(initial);
-    variables = empty_variables();
-    overloads = empty_overloads();
-    success = record_script(text, arguments, variables, overloads);
+    frame.variables = empty_variables();
+    frame.overloads = empty_overloads();
+    frame.operators = default_operators();
+    frame.depth = 0;
+    frame.caller = NULL;
+    success = record_script(text, arguments, &frame);
     destroy_value(arguments);
-    destroy_map(variables);
-    destroy_map(overloads);
+    destroy_map(frame.variables);
+    destroy_map(frame.overloads);
+    destroy_map(frame.operators);
 
     return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
 }
@@ -193,11 +197,14 @@ static int run_text(string_t *text, string_t *initial)
 static int run_interactive(void)
 {
     value_t *arguments;
-    map_t *variables, *overloads;
+    stack_frame_t frame;
 
     arguments = new_null();
-    variables = empty_variables();
-    overloads = empty_overloads();
+    frame.variables = empty_variables();
+    frame.overloads = empty_overloads();
+    frame.operators = default_operators();
+    frame.depth = 0;
+    frame.caller = NULL;
 
     while (1)
     {
@@ -210,21 +217,23 @@ static int run_interactive(void)
         if (line->exit)
         {
             destroy_value(arguments);
-            destroy_map(variables);
-            destroy_map(overloads);
+            destroy_map(frame.variables);
+            destroy_map(frame.overloads);
+            destroy_map(frame.operators);
             destroy_line(line);
             return PROGRAM_SUCCESS;
         }
 
-        success = record_script(line->string, arguments, variables, overloads);
+        success = record_script(line->string, arguments, &frame);
         line->string = NULL;
         destroy_line(line);
 
         if (!success)
         {
             destroy_value(arguments);
-            destroy_map(variables);
-            destroy_map(overloads);
+            destroy_map(frame.variables);
+            destroy_map(frame.overloads);
+            destroy_map(frame.operators);
             return PROGRAM_ERROR;
         }
 
@@ -232,12 +241,12 @@ static int run_interactive(void)
     }
 }
 
-static int record_script(string_t *document, value_t *arguments, map_t *variables, map_t *overloads)
+static int record_script(string_t *document, value_t *arguments, stack_frame_t *frame)
 {
     value_t *value;
     int success;
 
-    value = execute_script(document, arguments, variables, overloads);
+    value = execute_script(document, arguments, frame);
     success = print_value(value);
     destroy_value(value);
 
@@ -283,17 +292,21 @@ static value_t *initialize_arguments(string_t *document)
     if (document)
     {
         value_t *null, *arguments;
-        map_t *variables, *overloads;
+        stack_frame_t frame;
         int success;
 
         null = new_null();
-        variables = empty_variables();
-        overloads = empty_overloads();
-        arguments = execute_script(document, null, variables, overloads);
+        frame.variables = empty_variables();
+        frame.overloads = empty_overloads();
+        frame.operators = default_operators();
+        frame.depth = 0;
+        frame.caller = NULL;
+        arguments = execute_script(document, null, &frame);
         success = !arguments->thrown;
         destroy_value(null);
-        destroy_map(variables);
-        destroy_map(overloads);
+        destroy_map(frame.variables);
+        destroy_map(frame.overloads);
+        destroy_map(frame.operators);
 
         if (!success)
         {

@@ -24,22 +24,12 @@ typedef struct
     int interception;
 } argument_iterator_t;
 
-typedef struct stack_frame_t
-{
-    map_t *variables;
-    map_t *overloads;
-    map_t *operators;
-    int depth;
-    struct stack_frame_t *caller;
-} stack_frame_t;
-
 typedef struct
 {
     value_t *(*call)(argument_iterator_t *, stack_frame_t *);
 } operator_t;
 
-static value_t *evaluate_script(string_t *document, value_t *arguments, stack_frame_t *caller);
-static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, stack_frame_t *caller);
+static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, stack_frame_t *frame);
 static value_t *apply_expression(expression_t *expression, stack_frame_t *frame);
 static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *apply_map(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -85,7 +75,6 @@ static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *fra
 static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_hash(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t *frame);
-static map_t *default_operators(void);
 static value_t *set_overload(map_t *overloads, string_t *identifier, list_t *overload);
 static void set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
 static value_t *set_variable(map_t *variables, string_t *identifier, value_t *variable);
@@ -103,35 +92,68 @@ static void destroy_value_unsafe(void *value);
 static void destroy_list_unsafe(void *value);
 static void destroy_expression_unsafe(void *expression);
 
-map_t *empty_overloads(void)
-{
-    return empty_map(hash_string, destroy_list_unsafe, 64);
-}
-
 map_t *empty_variables(void)
 {
     return empty_map(hash_string, destroy_value_unsafe, 64);
 }
 
-value_t *execute_script(string_t *document, value_t *arguments, map_t *variables, map_t *overloads)
+map_t *empty_overloads(void)
 {
-    stack_frame_t frame;
-    value_t *value;
-
-    frame.variables = variables;
-    frame.overloads = overloads;
-    frame.operators = default_operators();
-    frame.depth = 0;
-    frame.caller = NULL;
-
-    value = evaluate_script(document, arguments, &frame);
-
-    destroy_map(frame.operators);
-
-    return value;
+    return empty_map(hash_string, destroy_list_unsafe, 64);
 }
 
-static value_t *evaluate_script(string_t *document, value_t *arguments, stack_frame_t *caller)
+map_t *default_operators(void)
+{
+    map_t *operators;
+
+    operators = empty_map(hash_string, free, 64);
+
+    set_operator(operators, "x->", operator_recall);
+    set_operator(operators, "x<-", operator_memorize);
+    set_operator(operators, "x--", operator_forget);
+    set_operator(operators, "$->", operator_get);
+    set_operator(operators, "$<-", operator_set);
+    set_operator(operators, "$--", operator_unset);
+    set_operator(operators, "[o]->", operator_read);
+    set_operator(operators, "[o]<-", operator_write);
+    set_operator(operators, "[o]--", operator_remove);
+    set_operator(operators, "+", operator_add);
+    set_operator(operators, "-", operator_subtract);
+    set_operator(operators, "*", operator_multiply);
+    set_operator(operators, "/", operator_divide);
+    set_operator(operators, "%", operator_modulo);
+    set_operator(operators, "&", operator_and);
+    set_operator(operators, "|", operator_or);
+    set_operator(operators, "!", operator_not);
+    set_operator(operators, "<", operator_less);
+    set_operator(operators, ">", operator_greater);
+    set_operator(operators, "=", operator_equal);
+    set_operator(operators, "?", operator_conditional);
+    set_operator(operators, "o", operator_loop);
+    set_operator(operators, "...", operator_chain);
+    set_operator(operators, "><", operator_catch);
+    set_operator(operators, "<>", operator_throw);
+    set_operator(operators, "_", operator_type);
+    set_operator(operators, "#", operator_number);
+    set_operator(operators, "\"", operator_string);
+    set_operator(operators, "| |", operator_length);
+    set_operator(operators, "()<-", operator_overload);
+    set_operator(operators, "x^", operator_ripoff);
+    set_operator(operators, "()^", operator_mime);
+    set_operator(operators, "()--", operator_resume);
+    set_operator(operators, "~", operator_evaluate);
+    set_operator(operators, "x[]", operator_variables);
+    set_operator(operators, "$[]", operator_keys);
+    set_operator(operators, "()[]", operator_operators);
+    set_operator(operators, "<|>", operator_sort);
+    set_operator(operators, "[# #]", operator_slice);
+    set_operator(operators, "::", operator_hash);
+    set_operator(operators, ";", operator_represent);
+
+    return operators;
+}
+
+value_t *execute_script(string_t *document, value_t *arguments, stack_frame_t *frame)
 {
     scanner_t *scanner;
     list_t *expressions;
@@ -140,20 +162,19 @@ static value_t *evaluate_script(string_t *document, value_t *arguments, stack_fr
     scanner = start_scanner(document);
     expressions = parse_expressions(scanner);
     destroy_scanner(scanner);
-    value = evaluate_expressions(expressions, arguments, caller);
+    value = evaluate_expressions(expressions, arguments, frame);
     destroy_list(expressions);
 
     return value;
 }
 
-static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, stack_frame_t *caller)
+static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, stack_frame_t *frame)
 {
     list_node_t *node;
-    stack_frame_t frame;
     value_t *last;
     string_t identifier;
 
-    if (caller->depth + 1 > LIMIT_DEPTH)
+    if (frame->depth + 1 > LIMIT_DEPTH)
     {
         return throw_error(ERROR_BOUNDS);
     }
@@ -170,15 +191,9 @@ static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, st
         }
     }
 
-    frame.variables = empty_variables();
-    frame.overloads = empty_overloads();
-    frame.operators = caller->operators;
-    frame.depth = caller->depth + 1;
-    frame.caller = caller;
-
     identifier.bytes = "@";
     identifier.length = 1;
-    last = set_variable(frame.variables, &identifier, arguments);
+    last = set_variable(frame->variables, &identifier, arguments);
 
     if (last->type == VALUE_TYPE_NULL)
     {
@@ -192,7 +207,7 @@ static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, st
             {
                 value_t *value;
 
-                value = apply_expression(expression, &frame);
+                value = apply_expression(expression, frame);
                 destroy_value(last);
                 last = value;
 
@@ -203,9 +218,6 @@ static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, st
             }
         }
     }
-
-    destroy_map(frame.variables);
-    destroy_map(frame.overloads);
 
     return last;
 }
@@ -354,7 +366,8 @@ static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
 
     if (overload)
     {
-        value_t *initial;
+        value_t *initial, *result;
+        stack_frame_t caller;
 
         if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
         {
@@ -362,8 +375,18 @@ static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
         }
 
         initial = arguments->value;
+        caller.variables = empty_variables();
+        caller.overloads = empty_overloads();
+        caller.operators = frame->operators;
+        caller.depth = frame->depth + 1;
+        caller.caller = frame;
 
-        return evaluate_expressions(overload, initial, frame);
+        result = evaluate_expressions(overload, initial, &caller);
+
+        destroy_map(caller.variables);
+        destroy_map(caller.overloads);
+
+        return result;
     }
 
     operator = get_map_item(frame->operators, view_string(name));
@@ -1446,8 +1469,9 @@ static value_t *operator_resume(argument_iterator_t *arguments, stack_frame_t *f
 
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *document, *initial;
+    value_t *document, *initial, *result;
     string_t *copy;
+    stack_frame_t caller;
 
     if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
     {
@@ -1463,8 +1487,18 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
 
     initial = arguments->value;
     copy = copy_string(view_string(document));
+    caller.variables = empty_variables();
+    caller.overloads = empty_overloads();
+    caller.operators = frame->operators;
+    caller.depth = frame->depth + 1;
+    caller.caller = frame;
 
-    return evaluate_script(copy, initial, frame);
+    result = execute_script(copy, initial, &caller);
+
+    destroy_map(caller.variables);
+    destroy_map(caller.overloads);
+
+    return result;
 }
 
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1684,57 +1718,6 @@ static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t
     solo = arguments->value;
 
     return represent_value(solo);
-}
-
-static map_t *default_operators(void)
-{
-    map_t *operators;
-
-    operators = empty_map(hash_string, free, 64);
-
-    set_operator(operators, "x->", operator_recall);
-    set_operator(operators, "x<-", operator_memorize);
-    set_operator(operators, "x--", operator_forget);
-    set_operator(operators, "$->", operator_get);
-    set_operator(operators, "$<-", operator_set);
-    set_operator(operators, "$--", operator_unset);
-    set_operator(operators, "[o]->", operator_read);
-    set_operator(operators, "[o]<-", operator_write);
-    set_operator(operators, "[o]--", operator_remove);
-    set_operator(operators, "+", operator_add);
-    set_operator(operators, "-", operator_subtract);
-    set_operator(operators, "*", operator_multiply);
-    set_operator(operators, "/", operator_divide);
-    set_operator(operators, "%", operator_modulo);
-    set_operator(operators, "&", operator_and);
-    set_operator(operators, "|", operator_or);
-    set_operator(operators, "!", operator_not);
-    set_operator(operators, "<", operator_less);
-    set_operator(operators, ">", operator_greater);
-    set_operator(operators, "=", operator_equal);
-    set_operator(operators, "?", operator_conditional);
-    set_operator(operators, "o", operator_loop);
-    set_operator(operators, "...", operator_chain);
-    set_operator(operators, "><", operator_catch);
-    set_operator(operators, "<>", operator_throw);
-    set_operator(operators, "_", operator_type);
-    set_operator(operators, "#", operator_number);
-    set_operator(operators, "\"", operator_string);
-    set_operator(operators, "| |", operator_length);
-    set_operator(operators, "()<-", operator_overload);
-    set_operator(operators, "x^", operator_ripoff);
-    set_operator(operators, "()^", operator_mime);
-    set_operator(operators, "()--", operator_resume);
-    set_operator(operators, "~", operator_evaluate);
-    set_operator(operators, "x[]", operator_variables);
-    set_operator(operators, "$[]", operator_keys);
-    set_operator(operators, "()[]", operator_operators);
-    set_operator(operators, "<|>", operator_sort);
-    set_operator(operators, "[# #]", operator_slice);
-    set_operator(operators, "::", operator_hash);
-    set_operator(operators, ";", operator_represent);
-
-    return operators;
 }
 
 static value_t *set_overload(map_t *overloads, string_t *identifier, list_t *overload)
