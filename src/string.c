@@ -20,7 +20,7 @@ int compare_strings(string_t *left, string_t *right)
             return 1;
         }
 
-        different = left->bytes[index] - right->bytes[index];
+        different = (unsigned char) left->bytes[index] - (unsigned char) right->bytes[index];
 
         if (different)
         {
