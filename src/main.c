@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "cli.h"
 #include "execute.h"
 #include "value.h"
 #include "map.h"
@@ -208,25 +207,41 @@ static int run_interactive(void)
 
     while (1)
     {
-        line_t *line;
-        int success;
+        string_t *line;
+        size_t capacity, fill;
+        int key, success;
 
         printf("> ");
-        line = next_line();
+        capacity = 1024;
+        fill = 0;
+        line = create_string(allocate(sizeof(char) * capacity), capacity);
 
-        if (line->exit)
+        do
         {
-            destroy_value(arguments);
-            destroy_map(frame.variables);
-            destroy_map(frame.overloads);
-            destroy_map(frame.operators);
-            destroy_line(line);
-            return PROGRAM_SUCCESS;
-        }
+            key = getchar();
 
-        success = record_script(line->string, arguments, &frame);
-        line->string = NULL;
-        destroy_line(line);
+            if (key == EOF)
+            {
+                destroy_value(arguments);
+                destroy_map(frame.variables);
+                destroy_map(frame.overloads);
+                destroy_map(frame.operators);
+                destroy_string(line);
+                return PROGRAM_SUCCESS;
+            }
+            else
+            {
+                if (fill == line->length)
+                {
+                    resize_string(line, fill * 2);
+                }
+
+                line->bytes[fill++] = key;
+            }
+        } while (key != '\n');
+
+        resize_string(line, fill);
+        success = record_script(line, arguments, &frame);
 
         if (!success)
         {

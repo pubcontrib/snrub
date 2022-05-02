@@ -14,7 +14,7 @@ PREFIX = /usr/local
 all: bin/snrub
 
 clean:
-	$(RM) -f bin/snrub obj/main.o obj/cli.o obj/execute.o obj/parse.o obj/lex.o obj/value.o obj/map.o obj/list.o obj/string.o obj/common.o
+	$(RM) -f bin/snrub obj/main.o obj/execute.o obj/parse.o obj/lex.o obj/value.o obj/map.o obj/list.o obj/string.o obj/common.o
 
 check: bin/snrub
 	$(SH) test/run.sh bin/snrub
@@ -25,14 +25,11 @@ install: bin/snrub
 uninstall:
 	$(RM) -f $(DESTDIR)$(PREFIX)/bin/snrub
 
-bin/snrub: bin obj obj/main.o obj/cli.o obj/execute.o obj/parse.o obj/lex.o obj/value.o obj/map.o obj/list.o obj/string.o obj/common.o
-	$(CC) $(LDFLAGS) -o bin/snrub obj/main.o obj/cli.o obj/execute.o obj/parse.o obj/lex.o obj/value.o obj/map.o obj/list.o obj/string.o obj/common.o
+bin/snrub: bin obj obj/main.o obj/execute.o obj/parse.o obj/lex.o obj/value.o obj/map.o obj/list.o obj/string.o obj/common.o
+	$(CC) $(LDFLAGS) -o bin/snrub obj/main.o obj/execute.o obj/parse.o obj/lex.o obj/value.o obj/map.o obj/list.o obj/string.o obj/common.o
 
-obj/main.o: src/main.c obj/cli.o obj/execute.o obj/value.o obj/map.o obj/string.o obj/common.o
+obj/main.o: src/main.c obj/execute.o obj/value.o obj/map.o obj/string.o obj/common.o
 	$(CC) $(CFLAGS) -c src/main.c -o obj/main.o
-
-obj/cli.o: src/cli.h src/cli.c obj/string.o obj/common.o
-	$(CC) $(CFLAGS) -c src/cli.c -o obj/cli.o
 
 obj/execute.o: src/execute.h src/execute.c obj/parse.o obj/lex.o obj/value.o obj/map.o obj/list.o obj/string.o obj/common.o
 	$(CC) $(CFLAGS) -c src/execute.c -o obj/execute.o
