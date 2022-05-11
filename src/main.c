@@ -236,10 +236,16 @@ static int run_text(string_t *text, string_t *initial)
 
 static int run_interactive(void)
 {
+    expression_t *item;
     argument_iterator_t arguments;
     stack_frame_t frame;
 
+    item = allocate(sizeof(expression_t));
+    item->type = EXPRESSION_TYPE_VALUE;
+    item->value = new_null();
+    item->arguments = NULL;
     arguments.expressions = empty_list(destroy_expression_unsafe);
+    add_list_item(arguments.expressions, item);
     arguments.index = 0;
 
     if (arguments.expressions && arguments.expressions->length > 0)
