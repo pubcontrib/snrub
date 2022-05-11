@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "execute.h"
+#include "parse.h"
 #include "value.h"
 #include "map.h"
 #include "string.h"
@@ -14,9 +15,10 @@ static int run_version(void);
 static int run_file(string_t *file, string_t *initial);
 static int run_text(string_t *text, string_t *initial);
 static int run_interactive(void);
-static int record_script(string_t *document, value_t *arguments, stack_frame_t *frame);
+static int record_script(string_t *document, stack_frame_t *frame);
 static int print_value(value_t *value);
 static value_t *initialize_arguments(string_t *document);
+static void destroy_expression_unsafe(void *expression);
 
 int main(int argc, char **argv)
 {
@@ -174,35 +176,87 @@ static int run_file(string_t *file, string_t *initial)
 
 static int run_text(string_t *text, string_t *initial)
 {
-    value_t *arguments;
+    expression_t *item;
+    argument_iterator_t arguments;
     stack_frame_t frame;
     int success;
 
-    arguments = initialize_arguments(initial);
+    item = allocate(sizeof(expression_t));
+    item->type = EXPRESSION_TYPE_VALUE;
+    item->value = initialize_arguments(initial);
+    item->arguments = NULL;
+    arguments.expressions = empty_list(destroy_expression_unsafe);
+    add_list_item(arguments.expressions, item);
+    arguments.index = 0;
+
+    if (arguments.expressions && arguments.expressions->length > 0)
+    {
+        arguments.current = arguments.expressions->head;
+        arguments.evaluated = allocate(sizeof(value_t *) * arguments.expressions->length);
+    }
+    else
+    {
+        arguments.evaluated = NULL;
+    }
+
     frame.variables = empty_variables();
     frame.overloads = empty_overloads();
     frame.operators = default_operators();
     frame.depth = 0;
+    frame.arguments = &arguments;
     frame.caller = NULL;
-    success = record_script(text, arguments, &frame);
-    destroy_value(arguments);
+    success = record_script(text, &frame);
     destroy_map(frame.variables);
     destroy_map(frame.overloads);
     destroy_map(frame.operators);
+
+    if (arguments.evaluated)
+    {
+        size_t index;
+
+        for (index = 0; index < arguments.index; index++)
+        {
+            value_t *value;
+
+            value = arguments.evaluated[index];
+
+            if (value)
+            {
+                destroy_value(value);
+            }
+        }
+
+        free(arguments.evaluated);
+    }
+
+    destroy_list(arguments.expressions);
 
     return success ? PROGRAM_SUCCESS : PROGRAM_ERROR;
 }
 
 static int run_interactive(void)
 {
-    value_t *arguments;
+    argument_iterator_t arguments;
     stack_frame_t frame;
 
-    arguments = new_null();
+    arguments.expressions = empty_list(destroy_expression_unsafe);
+    arguments.index = 0;
+
+    if (arguments.expressions && arguments.expressions->length > 0)
+    {
+        arguments.current = arguments.expressions->head;
+        arguments.evaluated = allocate(sizeof(value_t *) * arguments.expressions->length);
+    }
+    else
+    {
+        arguments.evaluated = NULL;
+    }
+
     frame.variables = empty_variables();
     frame.overloads = empty_overloads();
     frame.operators = default_operators();
     frame.depth = 0;
+    frame.arguments = &arguments;
     frame.caller = NULL;
 
     while (1)
@@ -222,11 +276,32 @@ static int run_interactive(void)
 
             if (key == EOF)
             {
-                destroy_value(arguments);
                 destroy_map(frame.variables);
                 destroy_map(frame.overloads);
                 destroy_map(frame.operators);
                 destroy_string(line);
+
+                if (arguments.evaluated)
+                {
+                    size_t index;
+
+                    for (index = 0; index < arguments.index; index++)
+                    {
+                        value_t *value;
+
+                        value = arguments.evaluated[index];
+
+                        if (value)
+                        {
+                            destroy_value(value);
+                        }
+                    }
+
+                    free(arguments.evaluated);
+                }
+
+                destroy_list(arguments.expressions);
+
                 return PROGRAM_SUCCESS;
             }
             else
@@ -241,14 +316,35 @@ static int run_interactive(void)
         } while (key != '\n');
 
         resize_string(line, fill);
-        success = record_script(line, arguments, &frame);
+        success = record_script(line, &frame);
 
         if (!success)
         {
-            destroy_value(arguments);
             destroy_map(frame.variables);
             destroy_map(frame.overloads);
             destroy_map(frame.operators);
+
+            if (arguments.evaluated)
+            {
+                size_t index;
+
+                for (index = 0; index < arguments.index; index++)
+                {
+                    value_t *value;
+
+                    value = arguments.evaluated[index];
+
+                    if (value)
+                    {
+                        destroy_value(value);
+                    }
+                }
+
+                free(arguments.evaluated);
+            }
+
+            destroy_list(arguments.expressions);
+
             return PROGRAM_ERROR;
         }
 
@@ -256,12 +352,12 @@ static int run_interactive(void)
     }
 }
 
-static int record_script(string_t *document, value_t *arguments, stack_frame_t *frame)
+static int record_script(string_t *document, stack_frame_t *frame)
 {
     value_t *value;
     int success;
 
-    value = execute_script(document, arguments, frame);
+    value = execute_script(document, frame);
     success = print_value(value);
     destroy_value(value);
 
@@ -306,31 +402,69 @@ static value_t *initialize_arguments(string_t *document)
 {
     if (document)
     {
-        value_t *null, *arguments;
+        argument_iterator_t arguments;
+        value_t *result;
         stack_frame_t frame;
         int success;
 
-        null = new_null();
+        arguments.expressions = empty_list(destroy_expression_unsafe);
+        arguments.index = 0;
+
+        if (arguments.expressions && arguments.expressions->length > 0)
+        {
+            arguments.current = arguments.expressions->head;
+            arguments.evaluated = allocate(sizeof(value_t *) * arguments.expressions->length);
+        }
+        else
+        {
+            arguments.evaluated = NULL;
+        }
+
         frame.variables = empty_variables();
         frame.overloads = empty_overloads();
         frame.operators = default_operators();
         frame.depth = 0;
         frame.caller = NULL;
-        arguments = execute_script(document, null, &frame);
-        success = !arguments->thrown;
-        destroy_value(null);
+        result = execute_script(document, &frame);
+        success = !result->thrown;
         destroy_map(frame.variables);
         destroy_map(frame.overloads);
         destroy_map(frame.operators);
 
+        if (arguments.evaluated)
+        {
+            size_t index;
+
+            for (index = 0; index < arguments.index; index++)
+            {
+                value_t *value;
+
+                value = arguments.evaluated[index];
+
+                if (value)
+                {
+                    destroy_value(value);
+                }
+            }
+
+            free(arguments.evaluated);
+        }
+
+        destroy_list(arguments.expressions);
+
         if (!success)
         {
-            print_value(arguments);
+            print_value(result);
             crash();
         }
 
-        return arguments;
+        return result;
     }
 
     return new_null();
+}
+
+static void destroy_expression_unsafe(void *expression)
+{
+    destroy_expression((expression_t *) expression);
 }

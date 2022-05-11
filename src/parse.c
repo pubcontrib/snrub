@@ -152,16 +152,7 @@ static expression_t *next_expression(scanner_t *scanner, token_t *token, int dep
                     }
                     else if (expression->type == EXPRESSION_TYPE_CALL && token->name == TOKEN_NAME_CALL_END)
                     {
-                        if (expression->arguments->length > 0)
-                        {
-                            state = PARSER_STATE_SUCCESS;
-                        }
-                        else
-                        {
-                            state = PARSER_STATE_ERROR;
-                            destroy_expression(expression);
-                            expression = create_expression(EXPRESSION_TYPE_VALUE, throw_error(ERROR_ARGUMENT), NULL);
-                        }
+                        state = PARSER_STATE_SUCCESS;
                     }
                     else
                     {

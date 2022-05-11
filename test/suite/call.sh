@@ -77,8 +77,6 @@ fail '()' '#4#'
 fail '(?)' '#4#'
 fail '(#1#)' '#4#'
 fail '("unknown")' '#4#'
-fail '("()<-" "OP" "") ("OP")' '#4#'
 
 # Error Propogation
 fail '(("<>" "ERROR"))' '"ERROR"'
-fail '("()<-" "OP" "") ("OP" ("<>" "ERROR"))' '"ERROR"'

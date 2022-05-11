@@ -16,20 +16,10 @@
 
 typedef struct
 {
-    list_t *expressions;
-    list_node_t *current;
-    value_t **evaluated;
-    size_t index;
-    value_t *value;
-    int interception;
-} argument_iterator_t;
-
-typedef struct
-{
     value_t *(*call)(argument_iterator_t *, stack_frame_t *);
 } operator_t;
 
-static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, stack_frame_t *frame);
+static value_t *evaluate_expressions(list_t *expressions, stack_frame_t *frame);
 static value_t *apply_expression(expression_t *expression, stack_frame_t *frame);
 static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *apply_map(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -68,6 +58,7 @@ static value_t *operator_ripoff(argument_iterator_t *arguments, stack_frame_t *f
 static value_t *operator_mime(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_resume(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_advance(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_operators(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -78,10 +69,6 @@ static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t
 static value_t *set_overload(map_t *overloads, string_t *identifier, list_t *overload);
 static void set_operator(map_t *operators, char *name, value_t *(*call)(argument_iterator_t *, stack_frame_t *));
 static value_t *set_variable(map_t *variables, string_t *identifier, value_t *variable);
-static int has_next_argument(argument_iterator_t *arguments);
-static int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, int types);
-static void skip_argument(argument_iterator_t *arguments);
-static void reset_arguments(argument_iterator_t *arguments);
 static value_t *list_map_keys(map_t *map);
 static void sort_collection(value_t *collection, int reversed);
 static list_t *copy_expressions(list_t *this);
@@ -142,6 +129,7 @@ map_t *default_operators(void)
     set_operator(operators, "()^", operator_mime);
     set_operator(operators, "()--", operator_resume);
     set_operator(operators, "~", operator_evaluate);
+    set_operator(operators, "@", operator_advance);
     set_operator(operators, "x[]", operator_variables);
     set_operator(operators, "$[]", operator_keys);
     set_operator(operators, "()[]", operator_operators);
@@ -153,7 +141,76 @@ map_t *default_operators(void)
     return operators;
 }
 
-value_t *execute_script(string_t *document, value_t *arguments, stack_frame_t *frame)
+int has_next_argument(argument_iterator_t *arguments)
+{
+    return arguments->index < arguments->expressions->length;
+}
+
+int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, int types)
+{
+    value_t *result;
+
+    if (!has_next_argument(arguments))
+    {
+        arguments->value = throw_error(ERROR_ARGUMENT);
+        return 0;
+    }
+
+    result = apply_expression(arguments->current->value, frame);
+    arguments->current = arguments->current->next;
+    arguments->evaluated[arguments->index] = result;
+    arguments->index += 1;
+    arguments->interception = 0;
+
+    if (result->thrown)
+    {
+        arguments->value = copy_value(result);
+        arguments->interception = 1;
+        return 0;
+    }
+
+    if (!(types & result->type))
+    {
+        arguments->value = throw_error(ERROR_ARGUMENT);
+        return 0;
+    }
+
+    arguments->value = result;
+    return 1;
+}
+
+void skip_argument(argument_iterator_t *arguments)
+{
+    if (has_next_argument(arguments))
+    {
+        arguments->current = arguments->current->next;
+        arguments->evaluated[arguments->index] = NULL;
+        arguments->index += 1;
+        arguments->value = NULL;
+        arguments->interception = 0;
+    }
+}
+
+void reset_arguments(argument_iterator_t *arguments)
+{
+    size_t index;
+
+    for (index = 0; index < arguments->index; index++)
+    {
+        if (arguments->evaluated[index])
+        {
+            destroy_value(arguments->evaluated[index]);
+            arguments->evaluated[index] = NULL;
+        }
+    }
+
+    arguments->current = arguments->expressions->head;
+    arguments->index = 0;
+    arguments->value = NULL;
+    arguments->interception = 0;
+}
+
+value_t *execute_script(string_t *document, stack_frame_t *frame)
 {
     scanner_t *scanner;
     list_t *expressions;
@@ -162,17 +219,16 @@ value_t *execute_script(string_t *document, value_t *arguments, stack_frame_t *f
     scanner = start_scanner(document);
     expressions = parse_expressions(scanner);
     destroy_scanner(scanner);
-    value = evaluate_expressions(expressions, arguments, frame);
+    value = evaluate_expressions(expressions, frame);
     destroy_list(expressions);
 
     return value;
 }
 
-static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, stack_frame_t *frame)
+static value_t *evaluate_expressions(list_t *expressions, stack_frame_t *frame)
 {
     list_node_t *node;
     value_t *last;
-    string_t identifier;
 
     if (frame->depth + 1 > LIMIT_DEPTH)
     {
@@ -191,30 +247,25 @@ static value_t *evaluate_expressions(list_t *expressions, value_t *arguments, st
         }
     }
 
-    identifier.bytes = "@";
-    identifier.length = 1;
-    last = set_variable(frame->variables, &identifier, arguments);
+    last = new_null();
 
-    if (last->type == VALUE_TYPE_NULL)
+    for (node = expressions->head; node != NULL; node = node->next)
     {
-        for (node = expressions->head; node != NULL; node = node->next)
+        expression_t *expression;
+
+        expression = node->value;
+
+        if (expression->type != EXPRESSION_TYPE_UNSET)
         {
-            expression_t *expression;
+            value_t *value;
 
-            expression = node->value;
+            value = apply_expression(expression, frame);
+            destroy_value(last);
+            last = value;
 
-            if (expression->type != EXPRESSION_TYPE_UNSET)
+            if (last->thrown)
             {
-                value_t *value;
-
-                value = apply_expression(expression, frame);
-                destroy_value(last);
-                last = value;
-
-                if (last->thrown)
-                {
-                    break;
-                }
+                break;
             }
         }
     }
@@ -366,22 +417,17 @@ static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
 
     if (overload)
     {
-        value_t *initial, *result;
+        value_t *result;
         stack_frame_t caller;
 
-        if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-        {
-            return arguments->value;
-        }
-
-        initial = arguments->value;
         caller.variables = empty_variables();
         caller.overloads = empty_overloads();
         caller.operators = frame->operators;
         caller.depth = frame->depth + 1;
+        caller.arguments = arguments;
         caller.caller = frame;
 
-        result = evaluate_expressions(overload, initial, &caller);
+        result = evaluate_expressions(overload, &caller);
 
         destroy_map(caller.variables);
         destroy_map(caller.overloads);
@@ -1469,7 +1515,7 @@ static value_t *operator_resume(argument_iterator_t *arguments, stack_frame_t *f
 
 static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *document, *initial, *result;
+    value_t *document, *result;
     string_t *copy;
     stack_frame_t caller;
 
@@ -1480,25 +1526,37 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
 
     document = arguments->value;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
-    {
-        return arguments->value;
-    }
-
-    initial = arguments->value;
     copy = copy_string(view_string(document));
     caller.variables = empty_variables();
     caller.overloads = empty_overloads();
     caller.operators = frame->operators;
     caller.depth = frame->depth + 1;
+    caller.arguments = arguments;
     caller.caller = frame;
 
-    result = execute_script(copy, initial, &caller);
+    result = execute_script(copy, &caller);
 
     destroy_map(caller.variables);
     destroy_map(caller.overloads);
 
     return result;
+}
+
+static value_t *operator_advance(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    stack_frame_t *caller;
+    value_t *argument;
+
+    caller = frame->caller ? frame->caller : frame;
+
+    if (!next_argument(frame->arguments, caller, VALUE_TYPES_ANY))
+    {
+        return frame->arguments->value;
+    }
+
+    argument = frame->arguments->value;
+
+    return copy_value(argument);
 }
 
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1770,75 +1828,6 @@ static value_t *set_variable(map_t *variables, string_t *identifier, value_t *va
     set_map_item(variables, copy_string(identifier), copy_value(variable));
 
     return new_null();
-}
-
-static int has_next_argument(argument_iterator_t *arguments)
-{
-    return arguments->index < arguments->expressions->length;
-}
-
-static int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, int types)
-{
-    value_t *result;
-
-    if (!has_next_argument(arguments))
-    {
-        arguments->value = throw_error(ERROR_ARGUMENT);
-        return 0;
-    }
-
-    result = apply_expression(arguments->current->value, frame);
-    arguments->current = arguments->current->next;
-    arguments->evaluated[arguments->index] = result;
-    arguments->index += 1;
-    arguments->interception = 0;
-
-    if (result->thrown)
-    {
-        arguments->value = copy_value(result);
-        arguments->interception = 1;
-        return 0;
-    }
-
-    if (!(types & result->type))
-    {
-        arguments->value = throw_error(ERROR_ARGUMENT);
-        return 0;
-    }
-
-    arguments->value = result;
-    return 1;
-}
-
-static void skip_argument(argument_iterator_t *arguments)
-{
-    if (has_next_argument(arguments))
-    {
-        arguments->current = arguments->current->next;
-        arguments->evaluated[arguments->index] = NULL;
-        arguments->index += 1;
-        arguments->value = NULL;
-        arguments->interception = 0;
-    }
-}
-
-static void reset_arguments(argument_iterator_t *arguments)
-{
-    size_t index;
-
-    for (index = 0; index < arguments->index; index++)
-    {
-        if (arguments->evaluated[index])
-        {
-            destroy_value(arguments->evaluated[index]);
-            arguments->evaluated[index] = NULL;
-        }
-    }
-
-    arguments->current = arguments->expressions->head;
-    arguments->index = 0;
-    arguments->value = NULL;
-    arguments->interception = 0;
 }
 
 static value_t *list_map_keys(map_t *map)

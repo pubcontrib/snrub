@@ -11,8 +11,6 @@ pass '("x<-" "map" {"key" "value"}) ("x--" "map") ("x->" "map")' '?'
 pass '("x<-" "found" #1#) ("x--" "found")' '?'
 pass '("x--" "missing")' '?'
 pass '("x--" "missing") ("x->" "missing")' '?'
-pass '("x--" "@") ("x[]")' '[]'
-pass '("x<-" "value" #100#) ("x--" "value") ("x[]")' '["@"]'
 
 # Argument Error
 fail '("x--")' '#4#'
