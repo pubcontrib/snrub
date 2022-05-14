@@ -146,13 +146,13 @@ int has_next_argument(argument_iterator_t *arguments)
     return arguments->index < arguments->expressions->length;
 }
 
-int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, int types)
+int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, int types, value_t **out)
 {
     value_t *result;
 
     if (!has_next_argument(arguments))
     {
-        arguments->value = throw_error(ERROR_ARGUMENT);
+        (*out) = throw_error(ERROR_ARGUMENT);
         return 0;
     }
 
@@ -160,22 +160,20 @@ int next_argument(argument_iterator_t *arguments, stack_frame_t *frame, int type
     arguments->current = arguments->current->next;
     arguments->evaluated[arguments->index] = result;
     arguments->index += 1;
-    arguments->interception = 0;
 
     if (result->thrown)
     {
-        arguments->value = copy_value(result);
-        arguments->interception = 1;
+        (*out) = copy_value(result);
         return 0;
     }
 
     if (!(types & result->type))
     {
-        arguments->value = throw_error(ERROR_ARGUMENT);
+        (*out) = throw_error(ERROR_ARGUMENT);
         return 0;
     }
 
-    arguments->value = result;
+    (*out) = result;
     return 1;
 }
 
@@ -186,8 +184,6 @@ void skip_argument(argument_iterator_t *arguments)
         arguments->current = arguments->current->next;
         arguments->evaluated[arguments->index] = NULL;
         arguments->index += 1;
-        arguments->value = NULL;
-        arguments->interception = 0;
     }
 }
 
@@ -206,8 +202,6 @@ void reset_arguments(argument_iterator_t *arguments)
 
     arguments->current = arguments->expressions->head;
     arguments->index = 0;
-    arguments->value = NULL;
-    arguments->interception = 0;
 }
 
 value_t *execute_script(string_t *document, stack_frame_t *frame)
@@ -347,16 +341,15 @@ static value_t *apply_list(argument_iterator_t *arguments, stack_frame_t *frame)
 
         for (index = 0; index < length; index++)
         {
-            value_t *copy;
+            value_t *item;
 
-            if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+            if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &item))
             {
                 destroy_items(items, index);
-                return arguments->value;
+                return item;
             }
 
-            copy = copy_value(arguments->value);
-            items[index] = copy;
+            items[index] = copy_value(item);
         }
     }
     else
@@ -379,21 +372,17 @@ static value_t *apply_map(argument_iterator_t *arguments, stack_frame_t *frame)
     {
         value_t *key, *value;
 
-        if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+        if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &key))
         {
             destroy_map(pairs);
-            return arguments->value;
+            return key;
         }
 
-        key = arguments->value;
-
-        if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+        if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &value))
         {
             destroy_map(pairs);
-            return arguments->value;
+            return value;
         }
-
-        value = arguments->value;
 
         set_map_item(pairs, copy_string(view_string(key)), copy_value(value));
     }
@@ -407,12 +396,11 @@ static value_t *apply_call(argument_iterator_t *arguments, stack_frame_t *frame)
     operator_t *operator;
     list_t *overload;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &name))
     {
-        return arguments->value;
+        return name;
     }
 
-    name = arguments->value;
     overload = get_map_item(frame->overloads, view_string(name));
 
     if (overload)
@@ -449,12 +437,11 @@ static value_t *operator_recall(argument_iterator_t *arguments, stack_frame_t *f
 {
     value_t *identifier, *value;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &identifier))
     {
-        return arguments->value;
+        return identifier;
     }
 
-    identifier = arguments->value;
     value = get_map_item(frame->variables, view_string(identifier));
 
     return value ? copy_value(value) : new_null();
@@ -464,19 +451,15 @@ static value_t *operator_memorize(argument_iterator_t *arguments, stack_frame_t 
 {
     value_t *identifier, *value;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &identifier))
     {
-        return arguments->value;
+        return identifier;
     }
 
-    identifier = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &value))
     {
-        return arguments->value;
+        return value;
     }
-
-    value = arguments->value;
 
     return set_variable(frame->variables, view_string(identifier), value);
 }
@@ -485,12 +468,11 @@ static value_t *operator_forget(argument_iterator_t *arguments, stack_frame_t *f
 {
     value_t *identifier;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &identifier))
     {
-        return arguments->value;
+        return identifier;
     }
 
-    identifier = arguments->value;
     remove_map_item(frame->variables, view_string(identifier));
 
     return new_null();
@@ -500,12 +482,10 @@ static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *fram
 {
     value_t *collection;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION))
+    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION, &collection))
     {
-        return arguments->value;
+        return collection;
     }
-
-    collection = arguments->value;
 
     switch (collection->type)
     {
@@ -515,12 +495,11 @@ static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *fram
             char *bytes;
             int adjusted;
 
-            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &index))
             {
-                return arguments->value;
+                return index;
             }
 
-            index = arguments->value;
             adjusted = view_number(index) - 1;
 
             if (adjusted < 0 || adjusted >= length_value(collection))
@@ -538,12 +517,11 @@ static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *fram
             value_t *index;
             int adjusted;
 
-            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &index))
             {
-                return arguments->value;
+                return index;
             }
 
-            index = arguments->value;
             adjusted = view_number(index) - 1;
 
             if (adjusted < 0 || adjusted >= length_value(collection))
@@ -557,12 +535,11 @@ static value_t *operator_get(argument_iterator_t *arguments, stack_frame_t *fram
         {
             value_t *key, *value;
 
-            if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+            if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &key))
             {
-                return arguments->value;
+                return key;
             }
 
-            key = arguments->value;
             value = get_map_item(collection->data, view_string(key));
 
             return value ? copy_value(value) : new_null();
@@ -576,12 +553,10 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
 {
     value_t *collection;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION))
+    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION, &collection))
     {
-        return arguments->value;
+        return collection;
     }
-
-    collection = arguments->value;
 
     switch (collection->type)
     {
@@ -592,20 +567,18 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
             int adjusted;
             size_t length, collectionLength, valueLength;
 
-            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &index))
             {
-                return arguments->value;
+                return index;
             }
 
-            index = arguments->value;
             adjusted = view_number(index) - 1;
 
-            if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+            if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &value))
             {
-                return arguments->value;
+                return value;
             }
 
-            value = arguments->value;
             valueLength = length_value(value);
             collectionLength = length_value(collection);
 
@@ -637,21 +610,18 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
             int adjusted;
             size_t length, left, right;
 
-            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &index))
             {
-                return arguments->value;
+                return index;
             }
 
-            index = arguments->value;
             adjusted = view_number(index) - 1;
             length = length_value(collection);
 
-            if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+            if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &value))
             {
-                return arguments->value;
+                return value;
             }
-
-            value = arguments->value;
 
             if (adjusted < 0 || adjusted >= length)
             {
@@ -681,19 +651,16 @@ static value_t *operator_set(argument_iterator_t *arguments, stack_frame_t *fram
         {
             value_t *key, *value, *copy;
 
-            if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+            if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &key))
             {
-                return arguments->value;
+                return key;
             }
 
-            key = arguments->value;
-
-            if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+            if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &value))
             {
-                return arguments->value;
+                return value;
             }
 
-            value = arguments->value;
             copy = copy_value(collection);
 
             remove_map_item(copy->data, view_string(key));
@@ -710,12 +677,10 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
 {
     value_t *collection;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION))
+    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION, &collection))
     {
-        return arguments->value;
+        return collection;
     }
-
-    collection = arguments->value;
 
     switch (collection->type)
     {
@@ -726,12 +691,11 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
             int adjusted;
             size_t length;
 
-            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &index))
             {
-                return arguments->value;
+                return index;
             }
 
-            index = arguments->value;
             adjusted = view_number(index) - 1;
             length = length_value(collection);
 
@@ -760,12 +724,11 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
             int adjusted;
             size_t length, left, right;
 
-            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+            if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &index))
             {
-                return arguments->value;
+                return index;
             }
 
-            index = arguments->value;
             adjusted = view_number(index) - 1;
             length = length_value(collection);
 
@@ -798,12 +761,11 @@ static value_t *operator_unset(argument_iterator_t *arguments, stack_frame_t *fr
         {
             value_t *key, *copy;
 
-            if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+            if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &key))
             {
-                return arguments->value;
+                return key;
             }
 
-            key = arguments->value;
             copy = copy_value(collection);
 
             remove_map_item(copy->data, view_string(key));
@@ -819,12 +781,10 @@ static value_t *operator_read(argument_iterator_t *arguments, stack_frame_t *fra
 {
     value_t *path;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &path))
     {
-        return arguments->value;
+        return path;
     }
-
-    path = arguments->value;
 
     return read_file(view_string(path));
 }
@@ -835,19 +795,16 @@ static value_t *operator_write(argument_iterator_t *arguments, stack_frame_t *fr
     char *cPath;
     FILE *file;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &path))
     {
-        return arguments->value;
+        return path;
     }
 
-    path = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &text))
     {
-        return arguments->value;
+        return text;
     }
 
-    text = arguments->value;
     cPath = string_to_cstring(view_string(path));
     file = fopen(cPath, "wb");
     free(cPath);
@@ -869,12 +826,11 @@ static value_t *operator_remove(argument_iterator_t *arguments, stack_frame_t *f
     value_t *path;
     char *cPath;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &path))
     {
-        return arguments->value;
+        return path;
     }
 
-    path = arguments->value;
     cPath = string_to_cstring(view_string(path));
     remove(cPath);
     free(cPath);
@@ -886,19 +842,15 @@ static value_t *operator_add(argument_iterator_t *arguments, stack_frame_t *fram
 {
     value_t *left, *right;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_NONNULL))
+    if (!next_argument(arguments, frame, VALUE_TYPES_NONNULL, &left))
     {
-        return arguments->value;
+        return left;
     }
 
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_NONNULL))
+    if (!next_argument(arguments, frame, VALUE_TYPES_NONNULL, &right))
     {
-        return arguments->value;
+        return right;
     }
-
-    right = arguments->value;
 
     if (left->type != right->type)
     {
@@ -947,19 +899,15 @@ static value_t *operator_subtract(argument_iterator_t *arguments, stack_frame_t 
     value_t *left, *right;
     int difference;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &left))
     {
-        return arguments->value;
+        return left;
     }
 
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &right))
     {
-        return arguments->value;
+        return right;
     }
-
-    right = arguments->value;
 
     if (number_subtract(view_number(left), view_number(right), &difference))
     {
@@ -976,19 +924,15 @@ static value_t *operator_multiply(argument_iterator_t *arguments, stack_frame_t 
     value_t *left, *right;
     int product;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &left))
     {
-        return arguments->value;
+        return left;
     }
 
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &right))
     {
-        return arguments->value;
+        return right;
     }
-
-    right = arguments->value;
 
     if (number_multiply(view_number(left), view_number(right), &product))
     {
@@ -1005,19 +949,15 @@ static value_t *operator_divide(argument_iterator_t *arguments, stack_frame_t *f
     value_t *left, *right;
     int quotient;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &left))
     {
-        return arguments->value;
+        return left;
     }
 
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &right))
     {
-        return arguments->value;
+        return right;
     }
-
-    right = arguments->value;
 
     if (view_number(right) == 0)
     {
@@ -1039,19 +979,15 @@ static value_t *operator_modulo(argument_iterator_t *arguments, stack_frame_t *f
     value_t *left, *right;
     int remainder;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &left))
     {
-        return arguments->value;
+        return left;
     }
 
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &right))
     {
-        return arguments->value;
+        return right;
     }
-
-    right = arguments->value;
 
     if (view_number(right) == 0)
     {
@@ -1072,19 +1008,15 @@ static value_t *operator_and(argument_iterator_t *arguments, stack_frame_t *fram
 {
     value_t *left, *right;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &left))
     {
-        return arguments->value;
+        return left;
     }
 
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &right))
     {
-        return arguments->value;
+        return right;
     }
-
-    right = arguments->value;
 
     return new_number(view_number(left) && view_number(right));
 }
@@ -1093,19 +1025,15 @@ static value_t *operator_or(argument_iterator_t *arguments, stack_frame_t *frame
 {
     value_t *left, *right;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &left))
     {
-        return arguments->value;
+        return left;
     }
 
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &right))
     {
-        return arguments->value;
+        return right;
     }
-
-    right = arguments->value;
 
     return new_number(view_number(left) || view_number(right));
 }
@@ -1114,12 +1042,10 @@ static value_t *operator_not(argument_iterator_t *arguments, stack_frame_t *fram
 {
     value_t *solo;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &solo))
     {
-        return arguments->value;
+        return solo;
     }
-
-    solo = arguments->value;
 
     return new_number(!view_number(solo));
 }
@@ -1128,19 +1054,15 @@ static value_t *operator_less(argument_iterator_t *arguments, stack_frame_t *fra
 {
     value_t *left, *right;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &left))
     {
-        return arguments->value;
+        return left;
     }
 
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &right))
     {
-        return arguments->value;
+        return right;
     }
-
-    right = arguments->value;
 
     return new_number(compare_values(left, right) < 0);
 }
@@ -1149,19 +1071,15 @@ static value_t *operator_greater(argument_iterator_t *arguments, stack_frame_t *
 {
     value_t *left, *right;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &left))
     {
-        return arguments->value;
+        return left;
     }
 
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &right))
     {
-        return arguments->value;
+        return right;
     }
-
-    right = arguments->value;
 
     return new_number(compare_values(left, right) > 0);
 }
@@ -1170,34 +1088,29 @@ static value_t *operator_equal(argument_iterator_t *arguments, stack_frame_t *fr
 {
     value_t *left, *right;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &left))
     {
-        return arguments->value;
+        return left;
     }
 
-    left = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &right))
     {
-        return arguments->value;
+        return right;
     }
-
-    right = arguments->value;
 
     return new_number(compare_values(left, right) == 0);
 }
 
 static value_t *operator_conditional(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    value_t *condition;
+    value_t *condition, *result;
     int first;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &condition))
     {
-        return arguments->value;
+        return condition;
     }
 
-    condition = arguments->value;
     first = view_number(condition);
 
     if (!first)
@@ -1205,9 +1118,9 @@ static value_t *operator_conditional(argument_iterator_t *arguments, stack_frame
         skip_argument(arguments);
     }
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &result))
     {
-        return arguments->value;
+        return result;
     }
 
     if (first && !has_next_argument(arguments))
@@ -1215,7 +1128,7 @@ static value_t *operator_conditional(argument_iterator_t *arguments, stack_frame
         return throw_error(ERROR_ARGUMENT);
     }
 
-    return copy_value(arguments->value);
+    return copy_value(result);
 }
 
 static value_t *operator_loop(argument_iterator_t *arguments, stack_frame_t *frame)
@@ -1228,19 +1141,20 @@ static value_t *operator_loop(argument_iterator_t *arguments, stack_frame_t *fra
     {
         value_t *condition;
 
-        if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+        if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &condition))
         {
-            return arguments->value;
+            return condition;
         }
 
-        condition = arguments->value;
         proceed = view_number(condition);
 
         if (proceed)
         {
-            if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+            value_t *body;
+
+            if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &body))
             {
-                return arguments->value;
+                return body;
             }
 
             reset_arguments(arguments);
@@ -1260,12 +1174,11 @@ static value_t *operator_chain(argument_iterator_t *arguments, stack_frame_t *fr
 
     do
     {
-        if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+        if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &last))
         {
-            return arguments->value;
+            return last;
         }
 
-        last = arguments->value;
         count++;
     } while (has_next_argument(arguments));
 
@@ -1279,16 +1192,16 @@ static value_t *operator_chain(argument_iterator_t *arguments, stack_frame_t *fr
 
 static value_t *operator_catch(argument_iterator_t *arguments, stack_frame_t *frame)
 {
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    value_t *solo;
+
+    if (!has_next_argument(arguments))
     {
-        value_t *solo;
+        return throw_error(ERROR_ARGUMENT);
+    }
 
-        solo = arguments->value;
-
-        if (arguments->interception)
-        {
-            solo->thrown = 0;
-        }
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &solo))
+    {
+        solo->thrown = 0;
 
         return solo;
     }
@@ -1300,12 +1213,11 @@ static value_t *operator_throw(argument_iterator_t *arguments, stack_frame_t *fr
 {
     value_t *solo, *copy;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &solo))
     {
-        return arguments->value;
+        return solo;
     }
 
-    solo = arguments->value;
     copy = copy_value(solo);
     copy->thrown = 1;
 
@@ -1316,12 +1228,10 @@ static value_t *operator_type(argument_iterator_t *arguments, stack_frame_t *fra
 {
     value_t *solo;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &solo))
     {
-        return arguments->value;
+        return solo;
     }
-
-    solo = arguments->value;
 
     switch (solo->type)
     {
@@ -1344,12 +1254,10 @@ static value_t *operator_number(argument_iterator_t *arguments, stack_frame_t *f
 {
     value_t *solo;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &solo))
     {
-        return arguments->value;
+        return solo;
     }
-
-    solo = arguments->value;
 
     switch (solo->type)
     {
@@ -1371,12 +1279,10 @@ static value_t *operator_string(argument_iterator_t *arguments, stack_frame_t *f
 {
     value_t *solo;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &solo))
     {
-        return arguments->value;
+        return solo;
     }
-
-    solo = arguments->value;
 
     switch (solo->type)
     {
@@ -1394,12 +1300,10 @@ static value_t *operator_length(argument_iterator_t *arguments, stack_frame_t *f
 {
     value_t *solo;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION))
+    if (!next_argument(arguments, frame, VALUE_TYPES_COLLECTION, &solo))
     {
-        return arguments->value;
+        return solo;
     }
-
-    solo = arguments->value;
 
     return new_number(length_value(solo));
 }
@@ -1410,19 +1314,15 @@ static value_t *operator_overload(argument_iterator_t *arguments, stack_frame_t 
     scanner_t *scanner;
     list_t *expressions;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &identifier))
     {
-        return arguments->value;
+        return identifier;
     }
 
-    identifier = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &document))
     {
-        return arguments->value;
+        return document;
     }
-
-    document = arguments->value;
 
     scanner = start_scanner(copy_string(view_string(document)));
     expressions = parse_expressions(scanner);
@@ -1438,12 +1338,11 @@ static value_t *operator_ripoff(argument_iterator_t *arguments, stack_frame_t *f
     value_t *identifier;
     stack_frame_t *level;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &identifier))
     {
-        return arguments->value;
+        return identifier;
     }
 
-    identifier = arguments->value;
     level = frame->caller;
 
     while (level != NULL)
@@ -1470,12 +1369,11 @@ static value_t *operator_mime(argument_iterator_t *arguments, stack_frame_t *fra
     value_t *identifier;
     stack_frame_t *level;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &identifier))
     {
-        return arguments->value;
+        return identifier;
     }
 
-    identifier = arguments->value;
     level = frame->caller;
 
     while (level != NULL)
@@ -1501,12 +1399,10 @@ static value_t *operator_resume(argument_iterator_t *arguments, stack_frame_t *f
 {
     value_t *identifier;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &identifier))
     {
-        return arguments->value;
+        return identifier;
     }
-
-    identifier = arguments->value;
 
     remove_map_item(frame->overloads, view_string(identifier));
 
@@ -1519,12 +1415,10 @@ static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t 
     string_t *copy;
     stack_frame_t caller;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &document))
     {
-        return arguments->value;
+        return document;
     }
-
-    document = arguments->value;
 
     copy = copy_string(view_string(document));
     caller.variables = empty_variables();
@@ -1549,12 +1443,10 @@ static value_t *operator_advance(argument_iterator_t *arguments, stack_frame_t *
 
     caller = frame->caller ? frame->caller : frame;
 
-    if (!next_argument(frame->arguments, caller, VALUE_TYPES_ANY))
+    if (!next_argument(frame->arguments, caller, VALUE_TYPES_ANY, &argument))
     {
-        return frame->arguments->value;
+        return argument;
     }
-
-    argument = frame->arguments->value;
 
     return copy_value(argument);
 }
@@ -1573,12 +1465,11 @@ static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *fra
 {
     value_t *solo, *sorted;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_MAP))
+    if (!next_argument(arguments, frame, VALUE_TYPE_MAP, &solo))
     {
-        return arguments->value;
+        return solo;
     }
 
-    solo = arguments->value;
     sorted = list_map_keys(solo->data);
     sort_collection(sorted, 0);
 
@@ -1639,19 +1530,16 @@ static value_t *operator_sort(argument_iterator_t *arguments, stack_frame_t *fra
 {
     value_t *collection, *reversed, *sorted;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_LIST))
+    if (!next_argument(arguments, frame, VALUE_TYPE_LIST, &collection))
     {
-        return arguments->value;
+        return collection;
     }
 
-    collection = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &reversed))
     {
-        return arguments->value;
+        return reversed;
     }
 
-    reversed = arguments->value;
     sorted = copy_value(collection);
     sort_collection(sorted, view_number(reversed));
 
@@ -1664,26 +1552,21 @@ static value_t *operator_slice(argument_iterator_t *arguments, stack_frame_t *fr
     int adjustedStart, adjustedEnd;
     size_t limit, length;
 
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST))
+    if (!next_argument(arguments, frame, VALUE_TYPE_STRING | VALUE_TYPE_LIST, &collection))
     {
-        return arguments->value;
+        return collection;
     }
 
-    collection = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &start))
     {
-        return arguments->value;
+        return start;
     }
 
-    start = arguments->value;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER))
+    if (!next_argument(arguments, frame, VALUE_TYPE_NUMBER, &end))
     {
-        return arguments->value;
+        return end;
     }
 
-    end = arguments->value;
     adjustedStart = view_number(start) - 1;
     adjustedEnd = view_number(end) - 1;
     limit = length_value(collection);
@@ -1754,12 +1637,10 @@ static value_t *operator_hash(argument_iterator_t *arguments, stack_frame_t *fra
 {
     value_t *solo;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &solo))
     {
-        return arguments->value;
+        return solo;
     }
-
-    solo = arguments->value;
 
     return new_number(hash_value(solo));
 }
@@ -1768,12 +1649,10 @@ static value_t *operator_represent(argument_iterator_t *arguments, stack_frame_t
 {
     value_t *solo;
 
-    if (!next_argument(arguments, frame, VALUE_TYPES_ANY))
+    if (!next_argument(arguments, frame, VALUE_TYPES_ANY, &solo))
     {
-        return arguments->value;
+        return solo;
     }
-
-    solo = arguments->value;
 
     return represent_value(solo);
 }
