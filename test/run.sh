@@ -54,7 +54,6 @@ introduce
 . test/suite/operator/ripoff.sh
 . test/suite/operator/mime.sh
 . test/suite/operator/resume.sh
-. test/suite/operator/evaluate.sh
 . test/suite/operator/advance.sh
 . test/suite/operator/variables.sh
 . test/suite/operator/keys.sh

@@ -57,7 +57,6 @@ static value_t *operator_overload(argument_iterator_t *arguments, stack_frame_t 
 static value_t *operator_ripoff(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_mime(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_resume(argument_iterator_t *arguments, stack_frame_t *frame);
-static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_advance(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -128,7 +127,6 @@ map_t *default_operators(void)
     set_operator(operators, "x^", operator_ripoff);
     set_operator(operators, "()^", operator_mime);
     set_operator(operators, "()--", operator_resume);
-    set_operator(operators, "~", operator_evaluate);
     set_operator(operators, "@", operator_advance);
     set_operator(operators, "x[]", operator_variables);
     set_operator(operators, "$[]", operator_keys);
@@ -1407,33 +1405,6 @@ static value_t *operator_resume(argument_iterator_t *arguments, stack_frame_t *f
     remove_map_item(frame->overloads, view_string(identifier));
 
     return new_null();
-}
-
-static value_t *operator_evaluate(argument_iterator_t *arguments, stack_frame_t *frame)
-{
-    value_t *document, *result;
-    string_t *copy;
-    stack_frame_t caller;
-
-    if (!next_argument(arguments, frame, VALUE_TYPE_STRING, &document))
-    {
-        return document;
-    }
-
-    copy = copy_string(view_string(document));
-    caller.variables = empty_variables();
-    caller.overloads = empty_overloads();
-    caller.operators = frame->operators;
-    caller.depth = frame->depth + 1;
-    caller.arguments = arguments;
-    caller.caller = frame;
-
-    result = execute_script(copy, &caller);
-
-    destroy_map(caller.variables);
-    destroy_map(caller.overloads);
-
-    return result;
 }
 
 static value_t *operator_advance(argument_iterator_t *arguments, stack_frame_t *frame)

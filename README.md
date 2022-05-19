@@ -241,13 +241,15 @@ living documentation.
 
         `RIPOFF`
         ("x<-" "caller" "parent")
-        ("~" "(\"x^\" \"caller\") (\"x->\" \"caller\")" ?)
+        ("()<-" "DO" "(\"x^\" \"caller\") (\"x->\" \"caller\")")
+        ("DO")
 
 - `()^`
 
         `MIME`
         ("()<-" "EXCLAIM" "(\"+\" (\"@\") \"!\")")
-        ("~" "(\"()^\" \"EXCLAIM\") (\"EXCLAIM\" \"Mine\")" ?)
+        ("()<-" "DO" "(\"()^\" \"EXCLAIM\") (\"EXCLAIM\" \"Mine\")")
+        ("DO")
 
 - `()--`
 
@@ -256,15 +258,11 @@ living documentation.
         ("()--" "SQUARE")
         ("SQUARE" #8#)
 
-- `~`
-
-        `EVALUATE`
-        ("~" "(\"<\" (\"@\") #0#)" #-1#)
-
 - `@`
 
         `ADVANCE`
-        ("~" "[(\"@\") (\"@\") (\"@\")]" "first" "second" "third")
+        ("()<-" "ARGS" "[(\"@\") (\"@\") (\"@\")]")
+        ("ARGS" "first" "second" "third")
 
 - `x[]`
 

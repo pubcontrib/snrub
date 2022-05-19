@@ -67,8 +67,6 @@ end=`repeat ')' 33`
 fail "$start #1#$end" '#2#'
 center=`repeat '?' 1024`
 pass "(\"...\" $center)" '?'
-fail '("x<-" "code" "(\"x^\" \"code\") (\"~\" (\"x->\" \"code\") ?)")
-("~" ("x->" "code") ?)' '#2#'
 fail '("()<-" "recurse" "(\"()^\" \"recurse\") (\"recurse\" ?)")
 ("recurse" ?)' '#2#'
 
