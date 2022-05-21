@@ -264,6 +264,12 @@ living documentation.
         ("()<-" "ARGS" "[(\"@\") (\"@\") (\"@\")]")
         ("ARGS" "first" "second" "third")
 
+- `@>>`
+
+        `WARP`
+        ("()<-" "IF/ELSE" "(\"?\" (\"@\") (\"@\") (\"...\" (\"@>>\") (\"@\")))")
+        ("IF/ELSE" #0# "if" "else")
+
 - `x[]`
 
         `VARIABLES`

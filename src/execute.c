@@ -58,6 +58,7 @@ static value_t *operator_ripoff(argument_iterator_t *arguments, stack_frame_t *f
 static value_t *operator_mime(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_resume(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_advance(argument_iterator_t *arguments, stack_frame_t *frame);
+static value_t *operator_warp(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_keys(argument_iterator_t *arguments, stack_frame_t *frame);
 static value_t *operator_operators(argument_iterator_t *arguments, stack_frame_t *frame);
@@ -128,6 +129,7 @@ map_t *default_operators(void)
     set_operator(operators, "()^", operator_mime);
     set_operator(operators, "()--", operator_resume);
     set_operator(operators, "@", operator_advance);
+    set_operator(operators, "@>>", operator_warp);
     set_operator(operators, "x[]", operator_variables);
     set_operator(operators, "$[]", operator_keys);
     set_operator(operators, "()[]", operator_operators);
@@ -1420,6 +1422,13 @@ static value_t *operator_advance(argument_iterator_t *arguments, stack_frame_t *
     }
 
     return copy_value(argument);
+}
+
+static value_t *operator_warp(argument_iterator_t *arguments, stack_frame_t *frame)
+{
+    skip_argument(frame->arguments);
+
+    return new_null();
 }
 
 static value_t *operator_variables(argument_iterator_t *arguments, stack_frame_t *frame)
