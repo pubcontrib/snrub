@@ -56,6 +56,7 @@ introduce
 . test/suite/operator/resume.sh
 . test/suite/operator/advance.sh
 . test/suite/operator/warp.sh
+. test/suite/operator/reborn.sh
 . test/suite/operator/variables.sh
 . test/suite/operator/keys.sh
 . test/suite/operator/operators.sh

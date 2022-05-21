@@ -176,16 +176,21 @@ static int run_file(string_t *file, string_t *initial)
 
 static int run_text(string_t *text, string_t *initial)
 {
-    expression_t *item;
+    expression_t *name, *item;
     argument_iterator_t arguments;
     stack_frame_t frame;
     int success;
 
+    name = allocate(sizeof(expression_t));
+    name->type = EXPRESSION_TYPE_VALUE;
+    name->value = new_string(cstring_to_string(""));
+    name->arguments = NULL;
     item = allocate(sizeof(expression_t));
     item->type = EXPRESSION_TYPE_VALUE;
     item->value = initialize_arguments(initial);
     item->arguments = NULL;
     arguments.expressions = empty_list(destroy_expression_unsafe);
+    add_list_item(arguments.expressions, name);
     add_list_item(arguments.expressions, item);
     arguments.index = 0;
 
@@ -199,6 +204,7 @@ static int run_text(string_t *text, string_t *initial)
         arguments.evaluated = NULL;
     }
 
+    skip_argument(&arguments);
     frame.variables = empty_variables();
     frame.overloads = empty_overloads();
     frame.operators = default_operators();
@@ -236,15 +242,20 @@ static int run_text(string_t *text, string_t *initial)
 
 static int run_interactive(void)
 {
-    expression_t *item;
+    expression_t *name, *item;
     argument_iterator_t arguments;
     stack_frame_t frame;
 
+    name = allocate(sizeof(expression_t));
+    name->type = EXPRESSION_TYPE_VALUE;
+    name->value = new_string(cstring_to_string(""));
+    name->arguments = NULL;
     item = allocate(sizeof(expression_t));
     item->type = EXPRESSION_TYPE_VALUE;
     item->value = new_null();
     item->arguments = NULL;
     arguments.expressions = empty_list(destroy_expression_unsafe);
+    add_list_item(arguments.expressions, name);
     add_list_item(arguments.expressions, item);
     arguments.index = 0;
 
@@ -258,6 +269,7 @@ static int run_interactive(void)
         arguments.evaluated = NULL;
     }
 
+    skip_argument(&arguments);
     frame.variables = empty_variables();
     frame.overloads = empty_overloads();
     frame.operators = default_operators();
