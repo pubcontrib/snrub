@@ -3,11 +3,11 @@
 hint 'operator/ripoff'
 
 # Ripoff Variables
-pass '("x<-" "var" "val") ("x^" "var") ("x->" "var")' '"val"'
-pass '("x<-" "var" "val") ("()<-" "DO" "(\"x->\" \"var\")") ("DO")' '?'
-pass '("x<-" "var" "val") ("()<-" "DO" "(\"x^\" \"var\") (\"x->\" \"var\")") ("DO")' '"val"'
-pass '("x<-" "var" "val") ("()<-" "DO" "(\"x^\" \"var\") (\"x<-\" \"var\" \"updated\")") ("DO") ("x->" "var")' '"val"'
-pass '("x<-" "var" "val") ("()<-" "DO" "(\"x^\" \"var\") (\"x<-\" \"var\" \"updated\")") ("DO") ("x<-" "var" "last") ("x->" "var")' '"last"'
+pass '("x<-" "value" "first") ("x^" "value") ("x->" "value")' '"first"'
+pass '("x<-" "value" "first") ("()<-" "DO" "(\"x->\" \"value\")") ("DO")' '?'
+pass '("x<-" "value" "first") ("()<-" "DO" "(\"x^\" \"value\") (\"x->\" \"value\")") ("DO")' '"first"'
+pass '("x<-" "value" "first") ("()<-" "DO" "(\"x^\" \"value\") (\"x<-\" \"value\" \"updated\")") ("DO") ("x->" "value")' '"first"'
+pass '("x<-" "value" "first") ("()<-" "DO" "(\"x^\" \"value\") (\"x<-\" \"value\" \"updated\")") ("DO") ("x<-" "value" "last") ("x->" "value")' '"last"'
 pass '("x^" "var") ("x->" "var")' '?'
 
 # Argument Error

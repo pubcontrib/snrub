@@ -10,8 +10,8 @@ pass '("?" #1# #100# #200#)' '#100#'
 pass '("?" #500# #100# #200#)' '#100#'
 pass '("?" #0# "one" "two")' '"two"'
 pass '("?" #1# "one" "two")' '"one"'
-pass '("?" #0# ("x<-" "var" "one") ("x<-" "var" "two")) ("x->" "var")' '"two"'
-pass '("?" #1# ("x<-" "var" "one") ("x<-" "var" "two")) ("x->" "var")' '"one"'
+pass '("?" #0# ("x<-" "value" "one") ("x<-" "value" "two")) ("x->" "value")' '"two"'
+pass '("?" #1# ("x<-" "value" "one") ("x<-" "value" "two")) ("x->" "value")' '"one"'
 pass '("x<-" "count" #0#)
 ("?" #0# ("x<-" "count" ("+" ("x->" "count") #1#)) ("x<-" "count" ("+" ("x->" "count") #1#)))
 ("x->" "count")' '#1#'
