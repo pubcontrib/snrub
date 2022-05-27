@@ -16,6 +16,8 @@ pass '[("#" "10") ("#" "20") ("#" "30")]' '[#10# #20# #30#]'
 # Syntax Error
 fail '[' '#1#'
 fail ']' '#1#'
+fail '["one"' '#1#'
+fail '"two"]' '#1#'
 
 # Error Propogation
 fail '[("#" "10") ("<>" "ERROR") ("#" "30")]' '"ERROR"'

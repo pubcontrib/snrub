@@ -32,3 +32,5 @@ pass '`("<>" "ERROR")`' '?'
 
 # Syntax Error
 fail '`' '#1#'
+fail '`comment' '#1#'
+fail 'comment`' '#1#'

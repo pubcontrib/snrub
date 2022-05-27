@@ -22,8 +22,8 @@ pass '#999999999#' '#999999999#'
 
 # Syntax Error
 fail '#' '#1#'
-fail '#1' '#1#'
-fail '1#' '#1#'
+fail '#100' '#1#'
+fail '100#' '#1#'
 
 # Type Error
 fail '#word#' '#3#'

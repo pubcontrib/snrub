@@ -18,6 +18,8 @@ pass '{"1" ("#" "1")}' '{"1" #1#}'
 # Syntax Error
 fail '{' '#1#'
 fail '}' '#1#'
+fail '{"null" ?' '#1#'
+fail '"null" ?}' '#1#'
 
 # Argument Error
 fail '{""}' '#4#'
