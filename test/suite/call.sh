@@ -67,14 +67,14 @@ end=`repeat ')' 33`
 fail "$start #1#$end" '#2#'
 center=`repeat '?' 1024`
 pass "(\"...\" $center)" '?'
-fail '("()<-" "recurse" "(\"()^\" \"recurse\") (\"recurse\" ?)")
-("recurse" ?)' '#2#'
+fail '("()<-" "RECURSE" "(\"()^\" \"RECURSE\") (\"RECURSE\" ?)")
+("RECURSE" ?)' '#2#'
 
 # Argument Error
 fail '()' '#4#'
 fail '(?)' '#4#'
 fail '(#1#)' '#4#'
-fail '("unknown")' '#4#'
+fail '("UNKNOWN")' '#4#'
 
 # Error Propogation
 fail '(("<>" "ERROR"))' '"ERROR"'

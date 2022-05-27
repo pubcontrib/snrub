@@ -261,8 +261,8 @@ living documentation.
 - `@`
 
         `ADVANCE`
-        ("()<-" "ARGS" "[(\"@\") (\"@\") (\"@\")]")
-        ("ARGS" "first" "second" "third")
+        ("()<-" "ARGUMENTS" "[(\"@\") (\"@\") (\"@\")]")
+        ("ARGUMENTS" "first" "second" "third")
 
 - `@>>`
 
